@@ -1,0 +1,6 @@
+// Menu Textures
+java -cp gdx.jar:extensions/gdx-tools/gdx-tools.jar com.badlogic.gdx.tools.texturepacker.TexturePacker /media/DATA/Programmering/Workspaces/mBreak-libGDX/texturepackerassets/MenuTextures /media/DATA/Programmering/Workspaces/mBreak-libGDX/mBreak-android/assets/images menutextures
+
+// Game Textures
+java -cp gdx.jar:extensions/gdx-tools/gdx-tools.jar com.badlogic.gdx.tools.texturepacker.TexturePacker /media/DATA/Programmering/Workspaces/mBreak-libGDX/texturepackerassets/GameTextures /media/DATA/Programmering/Workspaces/mBreak-libGDX/mBreak-android/assets/images gametextures
+
