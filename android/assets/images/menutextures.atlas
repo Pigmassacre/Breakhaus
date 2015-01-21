@@ -1,5 +1,6 @@
 
-menutextures-1.png
+menutextures.png
+size: 783,1018
 format: RGBA8888
 filter: Nearest,Nearest
 repeat: none

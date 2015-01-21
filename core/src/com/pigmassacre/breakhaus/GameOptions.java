@@ -14,9 +14,9 @@ public class GameOptions {
 	}
 
 	public static Color getLeftColor() {
-//		if (leftColor == null) {
-//			return new Color(Color.WHITE);
-//		}
+		if (leftColor == null) {
+			return new Color(Color.RED);
+		}
 		return leftColor;
 	}
 
@@ -25,9 +25,9 @@ public class GameOptions {
 	}
 
 	public static Color getRightColor() {
-//		if (rightColor == null) {
-//			return new Color(Color.WHITE);
-//		}
+		if (rightColor == null) {
+			return new Color(Color.BLUE);
+		}
 		return rightColor;
 	}
 

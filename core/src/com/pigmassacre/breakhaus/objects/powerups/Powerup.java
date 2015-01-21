@@ -20,11 +20,9 @@ public class Powerup extends GameActor {
 		if (availablePowerups == null) {
 			availablePowerups = new Array<Class<? extends Powerup>>();
 			availablePowerups.add(ElectricityPowerup.class);
-//			availablePowerups.add(EnlargerPowerup.class);
 //			availablePowerups.add(FirePowerup.class);
 //			availablePowerups.add(FrostPowerup.class);
 //			availablePowerups.add(MultiballPowerup.class);
-//			availablePowerups.add(ReducerPowerup.class);
 //			availablePowerups.add(SpeedPowerup.class);
 		}
 		return availablePowerups;

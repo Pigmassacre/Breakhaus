@@ -1,267 +1,173 @@
 
-gametextures-1.png
+gametextures.png
+size: 62,30
 format: RGBA8888
 filter: Nearest,Nearest
 repeat: none
-background_tile
-  rotate: false
-  xy: 20, 19
-  size: 10, 10
-  orig: 10, 10
-  offset: 0, 0
-  index: -1
 ball
   rotate: false
-  xy: 102, 22
+  xy: 12, 2
   size: 6, 7
   orig: 6, 7
   offset: 0, 0
   index: -1
 block
   rotate: false
-  xy: 20, 3
-  size: 6, 14
-  orig: 6, 14
+  xy: 12, 22
+  size: 12, 8
+  orig: 12, 8
   offset: 0, 0
   index: -1
 doublespeed
   rotate: false
-  xy: 32, 20
+  xy: 12, 11
   size: 8, 9
   orig: 8, 9
   offset: 0, 0
   index: -1
 electricity
   rotate: false
-  xy: 42, 20
+  xy: 26, 21
   size: 8, 9
   orig: 8, 9
   offset: 0, 0
   index: -1
 enlarger
   rotate: false
-  xy: 52, 20
+  xy: 36, 21
   size: 8, 9
   orig: 8, 9
   offset: 0, 0
   index: -1
 fire
   rotate: false
-  xy: 62, 20
+  xy: 46, 21
   size: 8, 9
   orig: 8, 9
   offset: 0, 0
   index: -1
 frost
   rotate: false
-  xy: 2, 2
+  xy: 2, 3
   size: 8, 27
   orig: 8, 27
   offset: 0, 0
   index: -1
 multiball
   rotate: false
-  xy: 72, 20
+  xy: 22, 10
   size: 8, 9
   orig: 8, 9
   offset: 0, 0
   index: -1
-paddle
+paddle_left
   rotate: false
-  xy: 12, 5
-  size: 6, 24
-  orig: 6, 24
-  offset: 0, 0
-  index: -1
-paddle_bottom
-  rotate: false
-  xy: 110, 24
-  size: 6, 5
-  orig: 6, 5
+  xy: 56, 22
+  size: 3, 8
+  orig: 3, 8
   offset: 0, 0
   index: -1
 paddle_middle
   rotate: false
-  xy: 12, 2
-  size: 6, 1
-  orig: 6, 1
+  xy: 61, 22
+  size: 1, 8
+  orig: 1, 8
   offset: 0, 0
   index: -1
-paddle_top
+paddle_right
   rotate: false
-  xy: 118, 26
-  size: 6, 3
-  orig: 6, 3
+  xy: 52, 11
+  size: 3, 8
+  orig: 3, 8
   offset: 0, 0
   index: -1
 particle
   rotate: false
-  xy: 28, 16
+  xy: 57, 19
   size: 1, 1
   orig: 1, 1
   offset: 0, 0
   index: -1
 reducer
   rotate: false
-  xy: 82, 20
+  xy: 32, 10
   size: 8, 9
   orig: 8, 9
   offset: 0, 0
   index: -1
 rocket
   rotate: false
-  xy: 92, 21
+  xy: 42, 11
   size: 8, 8
   orig: 8, 8
   offset: 0, 0
   index: -1
 
-gametextures-2.png
+gametextures2.png
+size: 178,214
 format: RGBA8888
 filter: Nearest,Nearest
 repeat: none
 glass/corner_bottom_left
   rotate: false
-  xy: 180, 97
+  xy: 2, 11
   size: 2, 7
   orig: 2, 7
   offset: 0, 0
   index: -1
 glass/corner_bottom_right
   rotate: false
-  xy: 366, 115
+  xy: 124, 85
   size: 2, 7
   orig: 2, 7
   offset: 0, 0
   index: -1
 glass/corner_top_left
   rotate: false
-  xy: 180, 88
+  xy: 132, 207
   size: 2, 7
   orig: 2, 7
   offset: 0, 0
   index: -1
 glass/corner_top_right
   rotate: false
-  xy: 184, 97
+  xy: 2, 2
   size: 2, 7
   orig: 2, 7
   offset: 0, 0
   index: -1
 glass/floor
   rotate: false
-  xy: 2, 2
-  size: 176, 120
-  orig: 176, 120
+  xy: 2, 38
+  size: 120, 176
+  orig: 120, 176
   offset: 0, 0
   index: -1
 glass/wall_horizontal_bottom
   rotate: false
-  xy: 180, 115
+  xy: 2, 29
   size: 176, 7
   orig: 176, 7
   offset: 0, 0
   index: -1
 glass/wall_horizontal_top
   rotate: false
-  xy: 180, 106
+  xy: 2, 20
   size: 176, 7
   orig: 176, 7
   offset: 0, 0
   index: -1
 glass/wall_vertical_left
   rotate: false
-  xy: 358, 2
+  xy: 124, 94
   size: 2, 120
   orig: 2, 120
   offset: 0, 0
   index: -1
 glass/wall_vertical_right
   rotate: false
-  xy: 362, 2
+  xy: 128, 94
   size: 2, 120
   orig: 2, 120
-  offset: 0, 0
-  index: -1
-
-gametextures-3.png
-format: RGBA8888
-filter: Nearest,Nearest
-repeat: none
-planks/corner_bottom_left
-  rotate: false
-  xy: 180, 70
-  size: 14, 14
-  orig: 14, 14
-  offset: 0, 0
-  index: -1
-planks/corner_bottom_right
-  rotate: false
-  xy: 403, 108
-  size: 14, 14
-  orig: 14, 14
-  offset: 0, 0
-  index: -1
-planks/corner_top_left
-  rotate: false
-  xy: 180, 54
-  size: 14, 14
-  orig: 14, 14
-  offset: 0, 0
-  index: -1
-planks/corner_top_right
-  rotate: false
-  xy: 196, 70
-  size: 14, 14
-  orig: 14, 14
-  offset: 0, 0
-  index: -1
-planks/floor
-  rotate: false
-  xy: 2, 2
-  size: 176, 120
-  orig: 176, 120
-  offset: 0, 0
-  index: -1
-planks/wall_horizontal
-  rotate: false
-  xy: 180, 86
-  size: 176, 4
-  orig: 176, 4
-  offset: 0, 0
-  index: -1
-planks/wall_horizontal_bottom
-  rotate: false
-  xy: 180, 108
-  size: 176, 14
-  orig: 176, 14
-  offset: 0, 0
-  index: -1
-planks/wall_horizontal_top
-  rotate: false
-  xy: 180, 92
-  size: 176, 14
-  orig: 176, 14
-  offset: 0, 0
-  index: -1
-planks/wall_vertical
-  rotate: false
-  xy: 390, 2
-  size: 11, 120
-  orig: 11, 120
-  offset: 0, 0
-  index: -1
-planks/wall_vertical_left
-  rotate: false
-  xy: 358, 2
-  size: 14, 120
-  orig: 14, 120
-  offset: 0, 0
-  index: -1
-planks/wall_vertical_right
-  rotate: false
-  xy: 374, 2
-  size: 14, 120
-  orig: 14, 120
   offset: 0, 0
   index: -1

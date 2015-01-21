@@ -1,12 +1,11 @@
 package com.pigmassacre.breakhaus.android;
 
 import android.os.Bundle;
-
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.pigmassacre.breakhaus.Breakhaus;
 
-public class AndroidGame extends AndroidApplication {
+public class AndroidLauncher extends AndroidApplication {
 	public void onCreate (android.os.Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 

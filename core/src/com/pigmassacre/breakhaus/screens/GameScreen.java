@@ -281,7 +281,6 @@ public class GameScreen extends AbstractScreen {
 			@Override
 			public void onEvent(int type, BaseTween<?> source) {
 				((Ball) source.getUserData()).speed = oldSpeed;
-				Level.getCurrentLevel().startPowerupTimer();
 			}
 			
 		});

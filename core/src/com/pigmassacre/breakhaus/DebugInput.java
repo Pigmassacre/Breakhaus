@@ -87,18 +87,6 @@ public class DebugInput extends InputAdapter {
 				array.end();
 			}
 			break;
-		case Keys.P:
-			if (Settings.getDebugMode()) {
-				if (Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)) {
-					for (int i = 0; i < 10; i++) {
-						Level.getCurrentLevel().spawnPowerup();
-					}
-				} else {
-					Level.getCurrentLevel().spawnPowerup();
-				}
-				
-			}
-			break;
 		case Keys.O:
 			if (Settings.getDebugMode()) {
 				SnapshotArray<Actor> array = Groups.powerupGroup.getChildren();

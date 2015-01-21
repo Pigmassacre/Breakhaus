@@ -27,10 +27,6 @@ public class Level extends Actor {
 	private TextureRegion verticalWallLeft, verticalWallRight, horizontalWallBottom;
 	private TextureRegion topLeftCorner, bottomLeftCorner, topRightCorner, bottomRightCorner;
 	
-	public Array<Vector2> powerupSpawnPositions = new Array<Vector2>();
-	private float powerupSpawnStartTime = 5f;
-	private float powerupSpawnWaitTime = 5f;
-	
 	public static Level getCurrentLevel() {
 		return currentLevel;
 	}
@@ -58,71 +54,6 @@ public class Level extends Actor {
 		
 		background = new Background();
 		foreground = new Foreground();
-		
-		SpeedPowerup powerup = new SpeedPowerup(0, 0); 
-		powerupSpawnPositions = new Array<Vector2>();
-		powerupSpawnPositions.add(new Vector2(getX() + getWidth() / 2 - powerup.getWidth() / 2, getY() + getHeight() / 2 - powerup.getHeight() / 2));
-		powerupSpawnPositions.add(new Vector2(getX() + getWidth() * 0.35f - powerup.getWidth() / 2, getY() + getHeight() * 0.8f - powerup.getHeight() / 2));
-		powerupSpawnPositions.add(new Vector2(getX() + getWidth() / 2 - powerup.getWidth() / 2, getY() + getHeight() * 0.9f - powerup.getHeight() / 2));
-		powerupSpawnPositions.add(new Vector2(getX() + getWidth() * 0.65f - powerup.getWidth() / 2, getY() + getHeight() * 0.8f - powerup.getHeight() / 2));
-		powerupSpawnPositions.add(new Vector2(getX() + getWidth() * 0.35f - powerup.getWidth() / 2, getY() + getHeight() * 0.2f - powerup.getHeight() / 2));
-		powerupSpawnPositions.add(new Vector2(getX() + getWidth() / 2 - powerup.getWidth() / 2, getY() + getHeight() * 0.1f - powerup.getHeight() / 2));
-		powerupSpawnPositions.add(new Vector2(getX() + getWidth() * 0.65f - powerup.getWidth() / 2, getY() + getHeight() * 0.2f - powerup.getHeight() / 2));
-		powerup.destroy();
-	}
-	
-	public void startPowerupTimer() {
-		Timer.instance().scheduleTask(new Task() {
-			
-			@Override
-			public void run() {
-				onPowerupTimerFinish();
-			}
-			
-		}, powerupSpawnStartTime);
-	}
-	
-	private Task powerupTask;
-	
-	private void onPowerupTimerFinish() {
-		Level.getCurrentLevel().spawnPowerup();
-		powerupTask = getPowerupTask();
-		Timer.instance().scheduleTask(powerupTask, powerupSpawnWaitTime);
-	}
-	
-	private Task getPowerupTask() {
-		return new Task() {
-			
-			@Override
-			public void run() {
-				onPowerupTimerFinish();
-			}
-			
-		};
-	}
-
-	public void spawnPowerup() {
-		if (powerupSpawnPositions.size > 0) {
-			Vector2 pos = powerupSpawnPositions.get(MathUtils.random(powerupSpawnPositions.size - 1));
-			powerupSpawnPositions.removeValue(pos, false);
-			Powerup powerup;
-			try {
-				Constructor constructor = ClassReflection.getConstructor(Powerup.getAvailablePowerups().get(MathUtils.random(Powerup.getAvailablePowerups().size - 1)), float.class, float.class);
-				powerup = (Powerup) constructor.newInstance(pos.x, pos.y);
-				powerup.setDestroyCallback(new DestroyCallback() {
-					
-					@Override
-					public void execute(GameActor actor, Object data) {
-						Level.getCurrentLevel().powerupSpawnPositions.add((Vector2) data);
-					}
-					
-				}, pos);
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (ReflectionException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 
 	public Background getBackground() {

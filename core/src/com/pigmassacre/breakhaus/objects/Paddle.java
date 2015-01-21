@@ -15,10 +15,11 @@ public class Paddle extends GameActor {
 	public float maxSpeed;
 	public final float defaultMaxSpeed;
 
-	public boolean moveUp, moveDown;
+	public boolean moveLeft, moveRight;
 	public Rectangle touchRectangle;
 	private float touchGraceSize;
 	public int keyLeft, keyRight;
+	private float touchX;
 
 	private TextureRegion leftImage, middleImage, rightImage;
 	private float leftWidth, middleWidth, bottomWidth;
@@ -57,8 +58,8 @@ public class Paddle extends GameActor {
 		velocityX = 0f;
 
 		touchGraceSize = getWidth() / 8;
-		moveUp = false;
-		moveDown = false;
+		moveLeft = false;
+		moveRight = false;
 
 		shadow = Shadow.shadowPool.obtain();
 		shadow.init(this, false);
@@ -67,55 +68,38 @@ public class Paddle extends GameActor {
 	}
 
 	@Override
-	public void setHeight(float height) {
-		actualWidth = height;
-		if (height < smallestWidth) {
-			height = smallestWidth;
-		} else if (height > largestWidth) {
-			height = largestWidth;
-		}
-		middleWidth = height - leftWidth - bottomWidth + getDepth();
-		float oldHeight = getHeight();
-		super.setHeight(height);
-		setY(getY() + ((oldHeight - getHeight()) / 2));
-	}
-	
-	public void addHeight(float height) {
-		setHeight(actualWidth + height);
-	}
-
-	@Override
 	public void act(float delta) {
 		super.act(delta);
-		moveUp = false;
-		moveDown = false;
+		moveLeft = false;
+		moveRight = false;
 		if (Gdx.app.getType() == ApplicationType.Android) {
 			for (int i = 0; i < 10; i++) {
 				if (touchRectangle.contains(Gdx.input.getX(i), Gdx.input.getY(i)) && Gdx.input.isTouched(i)) {
-					touchY = Gdx.graphics.getHeight() - Gdx.input.getY(i);
-					moveUp = getY() + (getHeight() / 2) < touchY - touchGraceSize;
-					moveDown = getY() + (getHeight() / 2) > touchY + touchGraceSize;
-					if (moveUp || moveDown)
+					touchX = Gdx.graphics.getWidth() - Gdx.input.getX(i);
+					moveLeft = getX() + (getWidth() / 2) < touchX - touchGraceSize;
+					moveRight = getX() + (getWidth() / 2) > touchX + touchGraceSize;
+					if (moveLeft || moveRight) {
 						break;
+					}
 				}
 			}
 		} else {
-			moveUp = Gdx.input.isKeyPressed(keyLeft);
-			moveDown = Gdx.input.isKeyPressed(keyRight);
+			moveLeft = Gdx.input.isKeyPressed(keyLeft);
+			moveRight = Gdx.input.isKeyPressed(keyRight);
 		}
 
 		if (maxSpeed > 0) {
-			if (moveDown) {
+			if (moveRight) {
 				velocityX -= acceleration;
 				if (velocityX < -maxSpeed)
 					velocityX = -maxSpeed;
 			}
-			if (moveUp) {
+			if (moveLeft) {
 				velocityX += acceleration;
 				if (velocityX > maxSpeed)
 					velocityX = maxSpeed;
 			}
-			if (!moveUp && !moveDown) {
+			if (!moveLeft && !moveRight) {
 				if (velocityX > 0) {
 					velocityX -= retardation;
 					if (velocityX < 0)
@@ -138,7 +122,7 @@ public class Paddle extends GameActor {
 			}
 		}
 
-		setY(getY() + velocityX * delta);
+		setX(getX() + velocityX * delta);
 
 		Level.getCurrentLevel().checkCollision(this);
 	}
@@ -146,11 +130,11 @@ public class Paddle extends GameActor {
 	@Override
 	public void onHitWall(WallSide side) {
 		switch (side) {
-		case UP:
-			setY(Settings.LEVEL_MAX_Y - getHeight());
+		case RIGHT:
+			setY(Settings.LEVEL_MAX_X - getWidth());
 			break;
-		case DOWN:
-			setY(Settings.LEVEL_Y);
+		case LEFT:
+			setY(Settings.LEVEL_X);
 			break;
 		default:
 			break;
