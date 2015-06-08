@@ -320,8 +320,8 @@ public class GameScreen extends AbstractScreen {
 
 	@Override
 	public void resize(int width, int height) {
-		super.resize(width, height);
 		gameStage.getViewport().update(width, height, false);
+		super.resize(width, height);
 	}
 
 	@Override

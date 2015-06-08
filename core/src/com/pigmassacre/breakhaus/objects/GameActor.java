@@ -25,6 +25,8 @@ public class GameActor extends Actor {
 	public Group effectGroup;
 	
 	public boolean alive;
+	private DestroyCallback destroyCallback;
+	private Object destroyCallbackData;
 
 	public GameActor() {
 		rectangle = new Rectangle();
@@ -81,15 +83,6 @@ public class GameActor extends Actor {
 	public void setImage(TextureRegion image) {
 		this.image = image;
 	}
-	
-	public interface DestroyCallback {
-		
-		public void execute(GameActor actor, Object data);
-		
-	}
-	
-	private DestroyCallback destroyCallback;
-	private Object destroyCallbackData;
 	
 	public void setDestroyCallback(DestroyCallback destroyCallback, Object destroyCallbackData) {
 		this.destroyCallback = destroyCallback;
@@ -165,6 +158,12 @@ public class GameActor extends Actor {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		effectGroup.draw(batch, parentAlpha);
+	}
+
+	public interface DestroyCallback {
+
+		void execute(GameActor actor, Object data);
+
 	}
 
 }

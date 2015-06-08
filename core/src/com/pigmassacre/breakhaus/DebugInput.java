@@ -154,17 +154,17 @@ public class DebugInput extends InputAdapter {
 		debugTextItem = new TextItem(string);
 		debugTextItem.setScale(debugTextItem.getScaleX() * 0.75f, debugTextItem.getScaleY() * 0.75f);
 		debugTextItem.setColor(1f, 1f, 1f, 0.75f);
-		debugTextItem.setX((Gdx.graphics.getWidth() - debugTextItem.getWidth()) / 2);
-		debugTextItem.setY(Gdx.graphics.getHeight() + debugTextItem.getHeight());
+		debugTextItem.setX((stage.getWidth() - debugTextItem.getWidth()) / 2);
+		debugTextItem.setY(stage.getHeight() + debugTextItem.getHeight());
 		stage.addActor(debugTextItem);
 
 		debugTextSequence = Timeline.createSequence()
 			.push(Tween.to(debugTextItem, ActorAccessor.POSITION_Y, 2f)
-					.target(Gdx.graphics.getHeight() - 2f * debugTextItem.getScaleY())
+					.target(stage.getHeight() - 2f * debugTextItem.getScaleY())
 					.ease(TweenEquations.easeOutExpo))
 			.pushPause(0.25f)
 			.push(Tween.to(debugTextItem, ActorAccessor.POSITION_Y, 2f)
-					.target(Gdx.graphics.getHeight() + debugTextItem.getHeight())
+					.target(stage.getHeight() + debugTextItem.getHeight())
 					.ease(TweenEquations.easeInExpo))
 					.setCallback(new TweenCallback() {
 						
@@ -184,7 +184,7 @@ public class DebugInput extends InputAdapter {
 			fpsCounterTextItem = new TextItem(Integer.toString(Gdx.graphics.getFramesPerSecond()));
 			fpsCounterTextItem.setColor(1f, 1f, 1f, 0.75f);
 			fpsCounterTextItem.setX(4 * Settings.GAME_SCALE);
-			fpsCounterTextItem.setY(Gdx.graphics.getHeight() - 2 * Settings.GAME_SCALE);
+			fpsCounterTextItem.setY(stage.getHeight() - 2 * Settings.GAME_SCALE);
 			fpsCounterTextItem.setActCallback(new ItemCallback() {
 				
 				@Override
