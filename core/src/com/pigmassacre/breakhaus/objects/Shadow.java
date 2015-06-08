@@ -64,12 +64,12 @@ public class Shadow extends GameActor implements Poolable {
 	public float getY() {
 		return parentActor.getY();
 	}
-	
+
 	@Override
 	public float getWidth() {
 		return parentActor.getWidth();
 	}
-	
+
 	@Override
 	public float getHeight() {
 		return parentActor.getHeight();
@@ -82,12 +82,10 @@ public class Shadow extends GameActor implements Poolable {
 //		offsetX = MathUtils.sin(stateTime) * 0.5f * Settings.GAME_SCALE;
 //		offsetY = MathUtils.sin(stateTime * 2) * -0.5f * Settings.GAME_SCALE;
 //	}
-	
-	private Color temp;
-	
+
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		temp = batch.getColor();
+		Color temp = batch.getColor();
 		batch.setColor(getColor());
 		if (parentActor instanceof Paddle) {
 			Paddle paddle = (Paddle) parentActor;

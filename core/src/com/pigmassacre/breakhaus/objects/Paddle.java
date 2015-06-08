@@ -22,7 +22,7 @@ public class Paddle extends GameActor {
 	private float touchX;
 
 	private TextureRegion leftImage, middleImage, rightImage;
-	private float leftWidth, middleWidth, bottomWidth;
+	private float leftWidth, middleWidth, rightWidth;
 	private float smallestWidth, largestWidth;
 	
 	public float actualWidth, actualHeight;
@@ -42,11 +42,11 @@ public class Paddle extends GameActor {
 
 		setDepth(2 * Settings.GAME_SCALE);
 		setZ(2 * Settings.GAME_SCALE);
-		setHeight((middleImage.getRegionHeight() - getDepth()) * Settings.GAME_SCALE);
+		setHeight((middleImage.getRegionHeight() * Settings.GAME_SCALE) - getDepth());
 		leftWidth = leftImage.getRegionWidth() * Settings.GAME_SCALE;
-		bottomWidth = rightImage.getRegionWidth() * Settings.GAME_SCALE;
-		middleWidth = 26 * Settings.GAME_SCALE - leftWidth - bottomWidth;
-		setWidth(leftWidth + middleWidth + bottomWidth);
+		rightWidth = rightImage.getRegionWidth() * Settings.GAME_SCALE;
+		middleWidth = (26 * Settings.GAME_SCALE) - (leftWidth + rightWidth);
+		setWidth(leftWidth + middleWidth + rightWidth);
 		actualHeight = getWidth();
 		actualWidth = getHeight();
 
@@ -89,12 +89,12 @@ public class Paddle extends GameActor {
 		}
 
 		if (maxSpeed > 0) {
-			if (moveRight) {
+			if (moveLeft) {
 				velocityX -= acceleration;
 				if (velocityX < -maxSpeed)
 					velocityX = -maxSpeed;
 			}
-			if (moveLeft) {
+			if (moveRight) {
 				velocityX += acceleration;
 				if (velocityX > maxSpeed)
 					velocityX = maxSpeed;
@@ -131,21 +131,19 @@ public class Paddle extends GameActor {
 	public void onHitWall(WallSide side) {
 		switch (side) {
 		case RIGHT:
-			setY(Settings.LEVEL_MAX_X - getWidth());
+			setX(Settings.LEVEL_MAX_X - getWidth());
 			break;
 		case LEFT:
-			setY(Settings.LEVEL_X);
+			setX(Settings.LEVEL_X);
 			break;
 		default:
 			break;
 		}
 	}
-	
-	private Color temp;
 
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		temp = new Color(batch.getColor());
+		Color temp = new Color(batch.getColor());
 		batch.setColor(getColor());
 		drawImages(batch, parentAlpha, 0, 0, 0);
 		batch.setColor(temp);
@@ -155,9 +153,22 @@ public class Paddle extends GameActor {
 	}
 	
 	public void drawImages(Batch batch, float parentAlpha, float offsetX, float offsetY, float offsetHeight) {
-		batch.draw(leftImage, getX() + offsetX, getY() + Settings.getLevelYOffset() + getZ() + bottomWidth + middleWidth + offsetY + offsetHeight, getWidth(), leftWidth);
-		batch.draw(middleImage, getX() + offsetX, getY() + Settings.getLevelYOffset() + getZ() + bottomWidth + offsetY, getWidth(), middleWidth + offsetHeight);
-		batch.draw(rightImage, getX() + offsetX, getY() + Settings.getLevelYOffset() + getZ() + offsetY, getWidth(), bottomWidth);
+		// TODO: Weirdness with height n stuff
+		batch.draw(leftImage,
+				getX() + offsetX,
+				getY() + Settings.getLevelYOffset() + getZ() + offsetY + offsetHeight,
+				leftWidth,
+				getHeight());
+		batch.draw(middleImage,
+				getX() + leftWidth + offsetX,
+				getY() + Settings.getLevelYOffset() + getZ() + offsetY + offsetHeight,
+				middleWidth,
+				getHeight());
+		batch.draw(rightImage,
+				getX() + leftWidth + middleWidth + offsetX,
+				getY() + Settings.getLevelYOffset() + getZ() + offsetY + offsetHeight,
+				rightWidth,
+				getHeight());
 	}
 	
 }

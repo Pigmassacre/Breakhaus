@@ -80,16 +80,7 @@ public class AbstractScreen implements Screen {
 	public void draw(float delta) {
 		renderClearScreen(delta);
 		
-		Camera camera = stage.getCamera();
-		camera.update();
-
-		Batch batch = stage.getBatch();
-		if (batch != null) {
-			batch.setProjectionMatrix(camera.combined);
-			batch.begin();
-			stage.getRoot().draw(batch, 1);
-			batch.end();
-		}
+		renderStage(delta);
 
 		postRender(delta);
 	}
@@ -100,7 +91,20 @@ public class AbstractScreen implements Screen {
 		Gdx.gl.glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 	}
-	
+
+	public void renderStage(float delta) {
+		Camera camera = stage.getCamera();
+		camera.update();
+
+		Batch batch = stage.getBatch();
+		if (batch != null) {
+			batch.setProjectionMatrix(camera.combined);
+			batch.begin();
+			stage.getRoot().draw(batch, 1);
+			batch.end();
+		}
+	}
+
 	public void postRender(float delta) {
 		
 	}

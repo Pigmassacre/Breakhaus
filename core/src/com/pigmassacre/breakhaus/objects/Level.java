@@ -47,8 +47,8 @@ public class Level extends Actor {
 		topRightCorner = Assets.getTextureRegion(id + "/corner_top_right");
 		bottomRightCorner = Assets.getTextureRegion(id + "/corner_bottom_right");
 		
-		setX(Settings.LEVEL_X);// - (Settings.LEVEL_WIDTH - backgroundImage.getRegionWidth() * Settings.GAME_SCALE));
-		setY(Settings.LEVEL_Y);// - (Settings.LEVEL_HEIGHT - backgroundImage.getRegionHeight() * Settings.GAME_SCALE));
+		setX(Settings.LEVEL_X);
+		setY(Settings.LEVEL_Y);
 		setWidth(Settings.LEVEL_WIDTH);
 		setHeight(Settings.LEVEL_HEIGHT);
 		
@@ -68,8 +68,19 @@ public class Level extends Actor {
 		
 		@Override
 		public void draw(Batch batch, float parentAlpha) {
-			batch.draw(horizontalWallTop, Level.getCurrentLevel().getX(), Level.getCurrentLevel().getY() + Level.getCurrentLevel().getHeight() + Settings.getLevelYOffset(), horizontalWallTop.getRegionWidth() * Settings.GAME_SCALE, horizontalWallTop.getRegionHeight() * Settings.GAME_SCALE);
-			batch.draw(backgroundImage, Level.getCurrentLevel().getX(), Level.getCurrentLevel().getY() + Settings.getLevelYOffset(), backgroundImage.getRegionWidth() * Settings.GAME_SCALE, backgroundImage.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(horizontalWallTop,
+					Level.getCurrentLevel().getX(),
+					Level.getCurrentLevel().getY() + Level.getCurrentLevel().getHeight() + Settings.getLevelYOffset(),
+					Level.getCurrentLevel().getWidth(),
+					//horizontalWallTop.getRegionWidth() * Settings.GAME_SCALE,
+					horizontalWallTop.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(backgroundImage,
+					Level.getCurrentLevel().getX(),
+					Level.getCurrentLevel().getY() + Settings.getLevelYOffset(),
+					Level.getCurrentLevel().getWidth(),
+					Level.getCurrentLevel().getHeight());
+					//backgroundImage.getRegionWidth() * Settings.GAME_SCALE,
+					//backgroundImage.getRegionHeight() * Settings.GAME_SCALE);
 		}
 		
 	}
@@ -78,13 +89,44 @@ public class Level extends Actor {
 		
 		@Override
 		public void draw(Batch batch, float parentAlpha) {
-			batch.draw(topLeftCorner, Level.getCurrentLevel().getX() - topLeftCorner.getRegionWidth() * Settings.GAME_SCALE, Level.getCurrentLevel().getY() + Level.getCurrentLevel().getHeight() + Settings.getLevelYOffset(), topLeftCorner.getRegionWidth() * Settings.GAME_SCALE, topLeftCorner.getRegionHeight() * Settings.GAME_SCALE);
-			batch.draw(topRightCorner, Level.getCurrentLevel().getX() + Level.getCurrentLevel().getWidth(), Level.getCurrentLevel().getY() + Level.getCurrentLevel().getHeight() + Settings.getLevelYOffset(), topLeftCorner.getRegionWidth() * Settings.GAME_SCALE, topLeftCorner.getRegionHeight() * Settings.GAME_SCALE);
-			batch.draw(verticalWallLeft, Level.getCurrentLevel().getX() - verticalWallLeft.getRegionWidth() * Settings.GAME_SCALE, Level.getCurrentLevel().getY() + Settings.getLevelYOffset(), verticalWallLeft.getRegionWidth() * Settings.GAME_SCALE, verticalWallLeft.getRegionHeight() * Settings.GAME_SCALE);
-			batch.draw(verticalWallRight, Level.getCurrentLevel().getX() + Level.getCurrentLevel().getWidth(), Level.getCurrentLevel().getY() + Settings.getLevelYOffset(), verticalWallRight.getRegionWidth() * Settings.GAME_SCALE, verticalWallRight.getRegionHeight() * Settings.GAME_SCALE);
-			batch.draw(bottomLeftCorner, Level.getCurrentLevel().getX() - bottomLeftCorner.getRegionWidth() * Settings.GAME_SCALE, Level.getCurrentLevel().getY() - 1 * Settings.GAME_SCALE + Settings.getLevelYOffset(), bottomLeftCorner.getRegionWidth() * Settings.GAME_SCALE, bottomLeftCorner.getRegionHeight() * Settings.GAME_SCALE);
-			batch.draw(bottomRightCorner, Level.getCurrentLevel().getX() + Level.getCurrentLevel().getWidth(), Level.getCurrentLevel().getY() - 1 * Settings.GAME_SCALE + Settings.getLevelYOffset(), bottomLeftCorner.getRegionWidth() * Settings.GAME_SCALE, bottomLeftCorner.getRegionHeight() * Settings.GAME_SCALE);
-			batch.draw(horizontalWallBottom, Level.getCurrentLevel().getX(), Level.getCurrentLevel().getY() - 1 * Settings.GAME_SCALE + Settings.getLevelYOffset(), horizontalWallBottom.getRegionWidth() * Settings.GAME_SCALE, horizontalWallBottom.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(topLeftCorner,
+					Level.getCurrentLevel().getX() - topLeftCorner.getRegionWidth() * Settings.GAME_SCALE,
+					Level.getCurrentLevel().getY() + Level.getCurrentLevel().getHeight() + Settings.getLevelYOffset(),
+					topLeftCorner.getRegionWidth() * Settings.GAME_SCALE,
+					topLeftCorner.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(topRightCorner,
+					Level.getCurrentLevel().getX() + Level.getCurrentLevel().getWidth(),
+					Level.getCurrentLevel().getY() + Level.getCurrentLevel().getHeight() + Settings.getLevelYOffset(),
+					topLeftCorner.getRegionWidth() * Settings.GAME_SCALE,
+					topLeftCorner.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(verticalWallLeft,
+					Level.getCurrentLevel().getX() - verticalWallLeft.getRegionWidth() * Settings.GAME_SCALE,
+					Level.getCurrentLevel().getY() + Settings.getLevelYOffset(),
+					verticalWallLeft.getRegionWidth() * Settings.GAME_SCALE,
+					Level.getCurrentLevel().getHeight());
+					//verticalWallLeft.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(verticalWallRight,
+					Level.getCurrentLevel().getX() + Level.getCurrentLevel().getWidth(),
+					Level.getCurrentLevel().getY() + Settings.getLevelYOffset(),
+					verticalWallRight.getRegionWidth() * Settings.GAME_SCALE,
+					Level.getCurrentLevel().getHeight());
+					//verticalWallRight.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(bottomLeftCorner,
+					Level.getCurrentLevel().getX() - bottomLeftCorner.getRegionWidth() * Settings.GAME_SCALE,
+					Level.getCurrentLevel().getY() - 1 * Settings.GAME_SCALE + Settings.getLevelYOffset(),
+					bottomLeftCorner.getRegionWidth() * Settings.GAME_SCALE,
+					bottomLeftCorner.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(bottomRightCorner,
+					Level.getCurrentLevel().getX() + Level.getCurrentLevel().getWidth(),
+					Level.getCurrentLevel().getY() - 1 * Settings.GAME_SCALE + Settings.getLevelYOffset(),
+					bottomLeftCorner.getRegionWidth() * Settings.GAME_SCALE,
+					bottomLeftCorner.getRegionHeight() * Settings.GAME_SCALE);
+			batch.draw(horizontalWallBottom,
+					Level.getCurrentLevel().getX(),
+					Level.getCurrentLevel().getY() - 1 * Settings.GAME_SCALE + Settings.getLevelYOffset(),
+					Level.getCurrentLevel().getWidth(),
+					//horizontalWallBottom.getRegionWidth() * Settings.GAME_SCALE,
+					horizontalWallBottom.getRegionHeight() * Settings.GAME_SCALE);
 		}
 		
 	}

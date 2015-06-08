@@ -5,13 +5,21 @@ import aurelienribon.tweenengine.equations.Expo;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.SnapshotArray;
 import com.badlogic.gdx.utils.Timer;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.ScalingViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.pigmassacre.breakhaus.*;
 import com.pigmassacre.breakhaus.gui.*;
 import com.pigmassacre.breakhaus.gui.Item.ItemCallback;
@@ -19,8 +27,11 @@ import com.pigmassacre.breakhaus.objects.*;
 
 public class GameScreen extends AbstractScreen {
 
-	Player leftPlayer, rightPlayer;
-	Paddle leftPaddle, rightPaddle;
+	Stage gameStage;
+	OrthographicCamera camera;
+
+	Player player;
+	Paddle paddle;
 	
 	Sunrays sunrays;
 	
@@ -28,39 +39,45 @@ public class GameScreen extends AbstractScreen {
 	
 	public GameScreen(Breakhaus game, Sunrays givenSunrays) {
 		super(game);
+
+		camera = new OrthographicCamera();
+		gameStage = new Stage(new ScalingViewport(Scaling.fillX, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), camera), game.spriteBatch);
 		
 		if (givenSunrays == null) {
 			sunrays = new Sunrays();
 		} else {
 			sunrays = givenSunrays;
 		}
-		sunrays.setX(Gdx.graphics.getWidth() / 2 - sunrays.getWidth() / 2);
-		sunrays.setY(Gdx.graphics.getHeight() / 2 - sunrays.getHeight() / 2);
+		sunrays.setX(-sunrays.getWidth() / 2);
+		sunrays.setY(-sunrays.getHeight() / 2);
 		sunrays.offsetY = Settings.getLevelYOffset();
-		stage.addActor(sunrays);
+		gameStage.addActor(sunrays);
 		
 		Settings.LEVEL_WIDTH = Assets.getTextureRegion("glass/floor").getRegionWidth() * Settings.GAME_SCALE;
 		Settings.LEVEL_HEIGHT = Assets.getTextureRegion("glass/floor").getRegionHeight() * Settings.GAME_SCALE;
-		Settings.LEVEL_X = (Gdx.graphics.getWidth() - Settings.LEVEL_WIDTH) / 2f;
-		Settings.LEVEL_Y = (Gdx.graphics.getHeight() - Settings.LEVEL_HEIGHT) / 2f;
+		Settings.LEVEL_X = -Settings.LEVEL_WIDTH / 2f;
+		Settings.LEVEL_Y = -Settings.LEVEL_HEIGHT / 2f;
 		Settings.LEVEL_MAX_X = Settings.LEVEL_X + Settings.LEVEL_WIDTH;
 		Settings.LEVEL_MAX_Y = Settings.LEVEL_Y + Settings.LEVEL_HEIGHT;
 		
 		Level.setCurrentLevel("glass");
+
+		camera.translate(-Gdx.graphics.getWidth() / 2f,
+				-Gdx.graphics.getHeight() / 2f);
 		
-		leftPlayer = new Player("left");
-		leftPlayer.setX(2.5f * Settings.GAME_SCALE);
-		leftPlayer.setY(2.5f * Settings.GAME_SCALE);
-		leftPlayer.setColor(GameOptions.getLeftColor());
-		Groups.playerGroup.addActor(leftPlayer);
+		player = new Player("H.E.N.");
+		player.setX(2.5f * Settings.GAME_SCALE);
+		player.setY(2.5f * Settings.GAME_SCALE);
+		player.setColor(GameOptions.getLeftColor());
+		Groups.playerGroup.addActor(player);
 		
 		float delay = 0.25f;
 		float z;
 		Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK));
-		for (int x = 0; x < 3; x++) {
-			for (int y = 0; y < (int) Settings.LEVEL_HEIGHT / tempBlock.getHeight(); y++) {
-				Block block = new Block(Settings.LEVEL_X + x * tempBlock.getWidth(), Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()), leftPlayer,
-						leftPlayer.getColor());
+		for (int x = 0; x < (int) Settings.LEVEL_WIDTH / tempBlock.getWidth(); x++) {
+			for (int y = 0; y < 4; y++) {
+				Block block = new Block(Settings.LEVEL_X + x * tempBlock.getWidth(), Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()), player,
+						player.getColor());
 				z = block.getZ();
 				block.setZ(350 * Settings.GAME_SCALE);
 				Tween.to(block, GameActorAccessor.Z, 2f)
@@ -72,54 +89,16 @@ public class GameScreen extends AbstractScreen {
 			}
 		}
 		
-		leftPaddle = new Paddle(leftPlayer);
-		leftPaddle.setX(Settings.LEVEL_X + leftPaddle.getWidth() * 4);
-		leftPaddle.setY((Gdx.graphics.getHeight() - leftPaddle.getHeight()) / 2);
-		leftPaddle.touchRectangle = new Rectangle(0, 0, Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight());
-		leftPaddle.keyLeft = Keys.W;
-		leftPaddle.keyRight = Keys.S;
+		paddle = new Paddle(player);
+		paddle.setX(Settings.LEVEL_X + paddle.getWidth() * 4);
+		paddle.setY(Settings.LEVEL_Y + Settings.LEVEL_HEIGHT / 8f + -paddle.getHeight() / 2);
+		paddle.touchRectangle = new Rectangle(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		paddle.keyLeft = Keys.LEFT;
+		paddle.keyRight = Keys.RIGHT;
 
-		z = leftPaddle.getZ();
-		leftPaddle.setZ(1000);
-		Tween.to(leftPaddle, GameActorAccessor.Z, 2f)
-			.target(z)
-			.ease(TweenEquations.easeOutExpo)
-			.delay(delay + 0.025f)
-			.start(getTweenManager());
-
-		rightPlayer = new Player("right");
-		rightPlayer.setX(Gdx.graphics.getWidth() - 5f * Settings.GAME_SCALE - 2.5f * Settings.GAME_SCALE);
-		rightPlayer.setY(Gdx.graphics.getHeight() - 5f * Settings.GAME_SCALE - 2.5f * Settings.GAME_SCALE);
-		rightPlayer.setColor(GameOptions.getRightColor());
-		Groups.playerGroup.addActor(rightPlayer);
-		
-		delay = 0.25f;
-		for (int x = 0; x < 3; x++) {
-			for (int y = 0; y < (int) Settings.LEVEL_HEIGHT / tempBlock.getHeight(); y++) {
-				Block block = new Block(Settings.LEVEL_MAX_X - ((x + 1) * tempBlock.getWidth()), Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()),
-						rightPlayer, rightPlayer.getColor());
-				z = block.getZ();
-				block.setZ(350 * Settings.GAME_SCALE);
-				Tween.to(block, GameActorAccessor.Z, 2f)
-					.target(z)
-					.ease(TweenEquations.easeOutExpo)
-					.delay(delay)
-					.start(getTweenManager());
-				delay += 0.025f;
-			}
-		}
-		
-		rightPaddle = new Paddle(rightPlayer);
-		rightPaddle.setX(Settings.LEVEL_MAX_X - rightPaddle.getWidth() * 5);
-		rightPaddle.setY((Gdx.graphics.getHeight() - rightPaddle.getHeight()) / 2);
-
-		rightPaddle.touchRectangle = new Rectangle(Gdx.graphics.getWidth() / 2, 0, Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight());
-		rightPaddle.keyLeft = Keys.UP;
-		rightPaddle.keyRight = Keys.DOWN;
-		
-		z = rightPaddle.getZ();
-		rightPaddle.setZ(1000);
-		Tween.to(rightPaddle, GameActorAccessor.Z, 2f)
+		z = paddle.getZ();
+		paddle.setZ(1000);
+		Tween.to(paddle, GameActorAccessor.Z, 2f)
 			.target(z)
 			.ease(TweenEquations.easeOutExpo)
 			.delay(delay + 0.025f)
@@ -128,18 +107,10 @@ public class GameScreen extends AbstractScreen {
 		tempBlock.destroy(false);
 		
 		Ball ball = Ball.ballPool.obtain();
+
+		float angle = MathUtils.PI / 2f;
 		
-		Player startingPlayer;
-		float angle;
-		if (MathUtils.randomBoolean()) {
-			startingPlayer = leftPlayer;
-			angle = MathUtils.PI;
-		} else {
-			startingPlayer = rightPlayer;
-			angle = 0f;
-		}
-		
-		ball.init(Settings.LEVEL_X + (Settings.LEVEL_WIDTH - ball.getWidth()) / 2, Settings.LEVEL_Y + (Settings.LEVEL_HEIGHT - ball.getHeight()) / 2, angle, startingPlayer);
+		ball.init(Settings.LEVEL_X + (Settings.LEVEL_WIDTH - ball.getWidth()) / 2, Settings.LEVEL_Y + (Settings.LEVEL_HEIGHT - ball.getHeight()) / 2, angle, player);
 		oldSpeed = ball.speed;
 		ball.speed = 0f;
 		z = ball.getZ();
@@ -167,18 +138,18 @@ public class GameScreen extends AbstractScreen {
 		MusicHandler.setShuffle(true);
 		MusicHandler.play();
 		
-		stage.addActor(Level.getCurrentLevel().getBackground());
-		stage.addActor(Groups.playerGroup);
-		stage.addActor(Groups.residueGroup);
-		stage.addActor(Groups.shadowGroup);
-		stage.addActor(Groups.traceGroup);
-		stage.addActor(Groups.blockGroup);
-		stage.addActor(Groups.powerupGroup);
-		stage.addActor(Groups.ballGroup);
-		stage.addActor(Groups.paddleGroup);
-		stage.addActor(Groups.particleGroup);
-		stage.addActor(Level.getCurrentLevel().getForeground());
-		stage.addActor(Groups.textItemGroup);
+		gameStage.addActor(Level.getCurrentLevel().getBackground());
+		gameStage.addActor(Groups.playerGroup);
+		gameStage.addActor(Groups.residueGroup);
+		gameStage.addActor(Groups.shadowGroup);
+		gameStage.addActor(Groups.traceGroup);
+		gameStage.addActor(Groups.blockGroup);
+		gameStage.addActor(Groups.powerupGroup);
+		gameStage.addActor(Groups.ballGroup);
+		gameStage.addActor(Groups.paddleGroup);
+		gameStage.addActor(Groups.particleGroup);
+		gameStage.addActor(Level.getCurrentLevel().getForeground());
+		gameStage.addActor(Groups.textItemGroup);
 	}
 	
 	private Array<TextItem> countdownTextItems;
@@ -192,8 +163,8 @@ public class GameScreen extends AbstractScreen {
 		for (int i = countdown; i > 0; i--) {
 			TextItem countdownTextItem = new TextItem(String.valueOf(i));
 			countdownTextItem.setColor(1f, 1f, 1f, 1f);
-			float x = Gdx.graphics.getWidth() / 2 - countdownTextItem.getWidth() / 2 + MathUtils.cos(angle) * angleOffset;
-			float y = Gdx.graphics.getHeight() / 2 - countdownTextItem.getHeight() / 2 + MathUtils.sin(angle) * angleOffset + countdownTextItem.getHeight();
+			float x = -countdownTextItem.getWidth() / 2 + MathUtils.cos(angle) * angleOffset;
+			float y = -countdownTextItem.getHeight() / 2 + MathUtils.sin(angle) * angleOffset + countdownTextItem.getHeight();
 			countdownTextItem.setX(x + MathUtils.cos(angle) * (Gdx.graphics.getWidth() - countdownTextItem.getX()));
 			countdownTextItem.setY(y + MathUtils.sin(angle) * (Gdx.graphics.getHeight() - countdownTextItem.getY()));
 			timeline.push(Tween.to(countdownTextItem, ActorAccessor.POSITION_XY, 0.4f)
@@ -201,7 +172,7 @@ public class GameScreen extends AbstractScreen {
 						.ease(Expo.OUT));
 			angle += MathUtils.PI2 / 3f;
 			countdownTextItems.add(countdownTextItem);
-			stage.addActor(countdownTextItem);
+			gameStage.addActor(countdownTextItem);
 		}
 		
 		timeline.pushPause(0.1f);
@@ -226,18 +197,18 @@ public class GameScreen extends AbstractScreen {
 		TextItem goTextItem = new TextItem("GO");
 		goTextItem.setColor(1f, 1f, 1f, 0f);
 		goTextItem.setScale(0.1f * Settings.GAME_SCALE);
-		goTextItem.setX(Gdx.graphics.getWidth() / 2 - goTextItem.getWidth() / 2);
-		goTextItem.setY(Gdx.graphics.getHeight() / 2 - goTextItem.getHeight() / 2 + goTextItem.getHeight());
+		goTextItem.setX(-goTextItem.getWidth() / 2);
+		goTextItem.setY(-goTextItem.getHeight() / 2 + goTextItem.getHeight());
 		goTextItem.setActCallback(new ItemCallback() {
 			
 			@Override
 			public void execute(Item data) {
-				data.setX(Gdx.graphics.getWidth() / 2 - data.getWidth() / 2);
-				data.setY(Gdx.graphics.getHeight() / 2 - data.getHeight() / 2 + data.getHeight());
+				data.setX(-data.getWidth() / 2);
+				data.setY(-data.getHeight() / 2 + data.getHeight());
 			}
 			
 		});
-		stage.addActor(goTextItem);
+		gameStage.addActor(goTextItem);
 		
 		timeline.beginSequence();
 		
@@ -289,41 +260,28 @@ public class GameScreen extends AbstractScreen {
 
 	@Override
 	public void renderClearScreen(float delta) {
-		float leftPlayerBlockCount = 0, rightPlayerBlockCount = 0;
-		SnapshotArray<Actor> array = Groups.blockGroup.getChildren();
-		Object[] items = array.begin();
-		for (int i = 0, n = array.size; i < n; i++) {
-			Object item = items[i];
-			Block block = (Block) item;
-			if (block.owner == leftPlayer) {
-				leftPlayerBlockCount++;
-			} else {
-				rightPlayerBlockCount++;
-			}
-		}
-		array.end();
-		
-		float strength = 0;
-		Player winningPlayer = null;
-		if (leftPlayerBlockCount > rightPlayerBlockCount) {
-			strength = (leftPlayerBlockCount - rightPlayerBlockCount) / (leftPlayerBlockCount + rightPlayerBlockCount);
-			winningPlayer = leftPlayer;
-		} else if (leftPlayerBlockCount < rightPlayerBlockCount) {
-			strength = (rightPlayerBlockCount - leftPlayerBlockCount) / (leftPlayerBlockCount + rightPlayerBlockCount);
-			winningPlayer = rightPlayer;
-		} else {
-			backgroundColor.lerp(leftPlayer.getColor().cpy().mul(0.5f).add(rightPlayer.getColor().cpy().mul(0.5f)), 0.05f);
-		}
-		
-		if (winningPlayer != null) {
-			backgroundColor.lerp(winningPlayer.getColor().cpy().mul(strength, strength, strength, 1f).add(winningPlayer.getColor().cpy().mul(0.25f)), 0.05f);
-		}
-		
+		backgroundColor.lerp(player.getColor().cpy().mul(0.5f), 0.25f);
 		super.renderClearScreen(delta);
 	}
-	
+
+	@Override
+	public void renderStage(float delta) {
+		Camera camera = gameStage.getCamera();
+		camera.update();
+
+		Batch batch = gameStage.getBatch();
+		if (batch != null) {
+			batch.setProjectionMatrix(camera.combined);
+			batch.begin();
+			gameStage.getRoot().draw(batch, 1);
+			batch.end();
+		}
+		super.renderStage(delta);
+	}
+
 	@Override
 	public void act(float delta) {
+		gameStage.act(delta);
 		super.act(delta);
 		Level.getCurrentLevel().act(delta);
 	}
@@ -346,7 +304,7 @@ public class GameScreen extends AbstractScreen {
 			}
 
 		});
-		getInputMultiplexer().addProcessor(new DebugInput(this, stage));
+		getInputMultiplexer().addProcessor(new DebugInput(this, gameStage));
 		super.show();
 	}
 
@@ -361,8 +319,15 @@ public class GameScreen extends AbstractScreen {
 	}
 
 	@Override
+	public void resize(int width, int height) {
+		super.resize(width, height);
+		gameStage.getViewport().update(width, height, false);
+	}
+
+	@Override
 	public void dispose() {
 		super.dispose();
+		gameStage.dispose();
 		Groups.playerGroup.clear();
 		Groups.ballGroup.clear();
 		Groups.traceGroup.clear();
