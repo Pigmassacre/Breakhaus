@@ -5,11 +5,15 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.pigmassacre.breakhaus.Assets;
 import com.pigmassacre.breakhaus.Settings;
 
 public class Paddle extends GameActor {
+
+	private static final float DEPTH = 2f;
+	private static final float HEIGHT_FROM_GROUND = 2f;
 
 	private float acceleration, retardation, velocityX;
 	public float maxSpeed;
@@ -40,19 +44,23 @@ public class Paddle extends GameActor {
 		smallestWidth = 12f * Settings.GAME_SCALE;
 		largestWidth = smallestWidth * 4f;
 
-		setDepth(2 * Settings.GAME_SCALE);
-		setZ(2 * Settings.GAME_SCALE);
-		setHeight((middleImage.getRegionHeight() * Settings.GAME_SCALE) - getDepth());
+		setDepth(DEPTH * Settings.GAME_SCALE);
+		setZ(HEIGHT_FROM_GROUND * Settings.GAME_SCALE);
+		setHeight((middleImage.getRegionHeight() - DEPTH) * Settings.GAME_SCALE);
 		leftWidth = leftImage.getRegionWidth() * Settings.GAME_SCALE;
 		rightWidth = rightImage.getRegionWidth() * Settings.GAME_SCALE;
 		middleWidth = (26 * Settings.GAME_SCALE) - (leftWidth + rightWidth);
 		setWidth(leftWidth + middleWidth + rightWidth);
-		actualHeight = getWidth();
-		actualWidth = getHeight();
+		actualWidth = getWidth();
+		actualHeight = getHeight();
 
 		rectangle = new Rectangle(getX(), getY(), getWidth(), getHeight());
 
-		defaultMaxSpeed = maxSpeed = 10f * Settings.GAME_FPS * Settings.GAME_SCALE;
+		if (Gdx.app.getType() == ApplicationType.Android) {
+			defaultMaxSpeed = maxSpeed = 100f * Settings.GAME_FPS * Settings.GAME_SCALE;
+		} else {
+			defaultMaxSpeed = maxSpeed = 10f * Settings.GAME_FPS * Settings.GAME_SCALE;
+		}
 		acceleration = retardation = defaultMaxSpeed;
 
 		velocityX = 0f;
@@ -151,24 +159,23 @@ public class Paddle extends GameActor {
 		batch.begin();
 		super.draw(batch, parentAlpha);
 	}
-	
+
 	public void drawImages(Batch batch, float parentAlpha, float offsetX, float offsetY, float offsetHeight) {
-		// TODO: Weirdness with height n stuff
 		batch.draw(leftImage,
 				getX() + offsetX,
 				getY() + Settings.getLevelYOffset() + getZ() + offsetY + offsetHeight,
 				leftWidth,
-				getHeight());
+				getHeight() + getDepth());
 		batch.draw(middleImage,
 				getX() + leftWidth + offsetX,
 				getY() + Settings.getLevelYOffset() + getZ() + offsetY + offsetHeight,
 				middleWidth,
-				getHeight());
+				getHeight() + getDepth());
 		batch.draw(rightImage,
 				getX() + leftWidth + middleWidth + offsetX,
 				getY() + Settings.getLevelYOffset() + getZ() + offsetY + offsetHeight,
 				rightWidth,
-				getHeight());
+				getHeight() + getDepth());
 	}
 	
 }

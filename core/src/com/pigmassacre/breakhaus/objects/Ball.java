@@ -35,7 +35,7 @@ public class Ball extends GameActor implements Poolable {
 	
 	private float angle;
 	public float speed, baseSpeed, maxSpeed, tickSpeed, speedStep, speedHandled;
-	private float leastAllowedVerticalAngle = 0.32f;
+	private float leastAllowedHorizontalAngle = 0.32f;
 	
 	private float traceTime, traceRate;
 	
@@ -126,18 +126,18 @@ public class Ball extends GameActor implements Poolable {
 			checkCollisionPaddles();
 			checkCollisionPowerups();
 			
-			if (angle > (Math.PI / 2) - leastAllowedVerticalAngle && angle < Math.PI / 2) {
-				angle = (float) ((Math.PI / 2) - leastAllowedVerticalAngle);
-			} else if (angle < (Math.PI / 2) + leastAllowedVerticalAngle && angle > Math.PI / 2) {
-				angle = (float) ((Math.PI / 2) + leastAllowedVerticalAngle);
-			} else if (angle > ((3 * Math.PI) / 2) - leastAllowedVerticalAngle && angle < ((3 * Math.PI) / 2)) {
-				angle = (float) (((3 * Math.PI) / 2) - leastAllowedVerticalAngle);
-			} else if (angle < ((3 * Math.PI) / 2) + leastAllowedVerticalAngle && angle > ((3 * Math.PI) / 2)) {
-				angle = (float) (((3 * Math.PI) / 2) + leastAllowedVerticalAngle);
-			} else if (angle == Math.PI / 2) {
-				angle = (float) ((Math.PI / 2) - leastAllowedVerticalAngle);
-			} else if (angle == (3 * Math.PI) / 2) {
-				angle = (float) (((3 * Math.PI) / 2) + leastAllowedVerticalAngle);
+			if (angle > Math.PI - leastAllowedHorizontalAngle && angle < Math.PI) {
+				angle = (float) (Math.PI - leastAllowedHorizontalAngle);
+			} else if (angle < Math.PI + leastAllowedHorizontalAngle && angle > Math.PI) {
+				angle = (float) (Math.PI + leastAllowedHorizontalAngle);
+			} else if (angle > 0 - leastAllowedHorizontalAngle && angle < 0) {
+				angle = (float) (0 - leastAllowedHorizontalAngle);
+			} else if (angle < 0 + leastAllowedHorizontalAngle && angle > 0) {
+				angle = (float) (0 + leastAllowedHorizontalAngle);
+			} else if (angle == Math.PI) {
+				angle = (float) (Math.PI - leastAllowedHorizontalAngle);
+			} else if (angle == 0) {
+				angle = (float) (0 + leastAllowedHorizontalAngle);
 			}
 			
 			if (angle > 2 * Math.PI) {
@@ -146,9 +146,10 @@ public class Ball extends GameActor implements Poolable {
 				angle += 2 * Math.PI;
 			}
 			
-			if (speed > maxSpeed)
+			if (speed > maxSpeed) {
 				speed = maxSpeed;
-			
+			}
+
 			setX((float) (circle.x + (Math.cos(angle) * tickSpeed * delta)));
 			setY((float) (circle.y + (Math.sin(angle) * tickSpeed * delta)));
 			
@@ -168,7 +169,17 @@ public class Ball extends GameActor implements Poolable {
 			traceTime = 0f;
 		}
 	}
-	
+
+	private void hitTopSideOfPaddle(Paddle paddle) {
+		angle = (float) Math.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
+		setY(paddle.rectangle.getY() + paddle.getHeight() + circle.radius + 1);
+	}
+
+	private void hitBottomSideOfPaddle(Paddle paddle) {
+		angle = (float) Math.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
+		setY(paddle.getY() - circle.radius - 1);
+	}
+
 	private void hitLeftSideOfPaddle(Paddle paddle) {
 		angle = (float) Math.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
 		setX(paddle.rectangle.getX() - circle.radius - 1);
@@ -201,27 +212,29 @@ public class Ball extends GameActor implements Poolable {
 					bHeight = paddle.rectangle.getHeight();
 					
 					if (rY - rRadius <= bY + bHeight && rY + rRadius > bY + bHeight) {
+						hitTopSideOfPaddle(paddle);
 						if (bX - (rX - rRadius) > (rY + rRadius) - (bY + bHeight)) {
 							hitLeftSideOfPaddle(paddle);
 						} else if (rX + rRadius - (bX + bWidth) > (rY + rRadius) - (bY + bHeight)) {
 							hitRightSideOfPaddle(paddle);
-						} else {
+						}/* else {
 							if (angle > Math.PI)
 								angle = -angle;
-							
+
 							setY(bY + bHeight + rRadius + 1);
-						}
+						}*/
 					} else if (rY + rRadius >= bY && (rY - rRadius) < bY) {
+						hitBottomSideOfPaddle(paddle);
 						if (bX - (rX - rRadius) > bY - (rY - rRadius)) {
 							hitLeftSideOfPaddle(paddle);
 						} else if (rX + rRadius - (bX + bWidth) > bY - (rY - rRadius)) {
 							hitRightSideOfPaddle(paddle);
-						} else {
-							if (angle < Math.PI) 
+						}/* else {
+							if (angle < Math.PI)
 								angle = -angle;
 							
 							setY(bY - rRadius - 1);
-						}
+						}*/
 					} else if (rX + rRadius >= bX && (rX - rRadius) < bX) {
 						hitLeftSideOfPaddle(paddle);
 					} else if (rX - rRadius <= bX + bWidth && rX + rRadius > bX + bWidth) {

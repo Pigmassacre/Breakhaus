@@ -145,8 +145,8 @@ public class GameScreen extends AbstractScreen {
 		gameStage.addActor(Groups.traceGroup);
 		gameStage.addActor(Groups.blockGroup);
 		gameStage.addActor(Groups.powerupGroup);
-		gameStage.addActor(Groups.ballGroup);
 		gameStage.addActor(Groups.paddleGroup);
+		gameStage.addActor(Groups.ballGroup);
 		gameStage.addActor(Groups.particleGroup);
 		gameStage.addActor(Level.getCurrentLevel().getForeground());
 		gameStage.addActor(Groups.textItemGroup);
