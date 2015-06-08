@@ -33,7 +33,7 @@ public class IntroLoadingScreen extends AbstractScreen {
 			dispose();
 		}
 		
-		loadingTextItem.setString("Now Loading " + (int) (Assets.getAssetManager().getProgress() * 100) + "%");
+		loadingTextItem.setText("Now Loading " + (int) (Assets.getAssetManager().getProgress() * 100) + "%");
 		loadingTextItem.setX((Gdx.graphics.getWidth() - loadingTextItem.getWidth()) / 2);
 	}
 	

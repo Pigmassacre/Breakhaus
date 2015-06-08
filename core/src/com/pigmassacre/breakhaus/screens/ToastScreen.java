@@ -6,7 +6,7 @@ import aurelienribon.tweenengine.equations.Expo;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.graphics.g2d.BitmapFont.HAlignment;
+import com.badlogic.gdx.utils.Align;
 import com.pigmassacre.breakhaus.Breakhaus;
 import com.pigmassacre.breakhaus.MusicHandler;
 import com.pigmassacre.breakhaus.gui.*;
@@ -41,7 +41,7 @@ public class ToastScreen extends AbstractScreen {
 		
 		
 		messageTextItem = new TextItem(message);
-		messageTextItem.setAlignment(HAlignment.CENTER);
+		messageTextItem.setAlignment(Align.center);
 		messageTextItem.setWrapped(true);
 		messageTextItem.setColor(0.9f, 0.25f, 0.25f, 1f);
 		stage.addActor(messageTextItem);

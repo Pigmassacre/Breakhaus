@@ -4,72 +4,78 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.BitmapFont.HAlignment;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Align;
 import com.pigmassacre.breakhaus.Assets;
 import com.pigmassacre.breakhaus.Settings;
 
 public class TextItem extends Item {
-	
+
+	private static GlyphLayout layout;
 	private static BitmapFont font;
-	private CharSequence string;
-	
+	private CharSequence text;
+
 	private Color shadowColor;
-	
+
 	public boolean blink = false;
 	private float blinkRate = 0.75f;
 	private float stateBlinkTime;
-	
+
 	private boolean wrapped;
-	
+
 	private float textSideBounds;
 
-	private HAlignment alignment;
-	
+	private int alignment;
+
 	public TextItem() {
 		this("");
 	}
-	
-	public TextItem(CharSequence string) {
+
+	public TextItem(CharSequence text) {
 		super();
+
+		if (layout == null) {
+			layout = new GlyphLayout();
+		}
 
 		if (font == null) {
 			font = Assets.getBitmapFont("fonts/ADDLG__.fnt");
 		}
 		setScale(Settings.GAME_SCALE);
 		shadowColor = new Color(0.196f, 0.196f, 0.196f, 1.0f);
-		
-		this.string = string;
-		
+
+		this.text = text;
+
 		shadowOffsetX = 0f;
 		shadowOffsetY = -1f * Settings.GAME_SCALE;
-		
+
 		textSideBounds = 25f * Settings.GAME_SCALE;
 		wrapped = false;
-		alignment = HAlignment.LEFT;
-		
+		alignment = Align.left;
+
 		stateBlinkTime = 0f;
 
 		float selectionWidthIncrease = 1.0f;
 		float selectionHeightIncrease = 1.5f;
-		rectangle = new Rectangle(getX() + (getWidth() - getWidth() * selectionWidthIncrease), 
-								  getY() + (getHeight() - getHeight() * selectionHeightIncrease), 
-								  getWidth() * selectionWidthIncrease, 
-								  getHeight() * selectionHeightIncrease);
+		rectangle = new Rectangle(getX() + (getWidth() - getWidth() * selectionWidthIncrease),
+				getY() + (getHeight() - getHeight() * selectionHeightIncrease),
+				getWidth() * selectionWidthIncrease,
+				getHeight() * selectionHeightIncrease);
 	}
-	
-	public void setString(CharSequence string) {
-		this.string = string;
+
+	public void setText(CharSequence text) {
+		this.text = text;
 	}
-	
-	public void setAlignment(HAlignment alignment) {
+
+	public void setAlignment(int alignment) {
 		this.alignment = alignment;
 	}
-	
-	public HAlignment getAlignment() {
+
+	public int getAlignment() {
 		return alignment;
 	}
-	
+
 	public boolean isWrapped() {
 		return wrapped;
 	}
@@ -77,83 +83,71 @@ public class TextItem extends Item {
 	public void setWrapped(boolean wrapped) {
 		this.wrapped = wrapped;
 	}
-	
+
 	public float getWrapWidth() {
 		return Gdx.graphics.getWidth() - textSideBounds;
 	}
-	
+
 	public float getWidth() {
-		font.setScale(getScaleX(), getScaleY());
-		if (wrapped) {
-			return font.getWrappedBounds(string, Gdx.graphics.getWidth() - textSideBounds).width;
-		} else {
-			return font.getBounds(string).width;
-		}
+		font.getData().setScale(getScaleX(), getScaleY());
+		layout.setText(font, text, font.getColor(), Gdx.graphics.getWidth() - textSideBounds, Align.left, wrapped);
+		return layout.width;
 	}
-	
+
 	public float getHeight() {
-		font.setScale(getScaleX(), getScaleY());
-		if (wrapped) {
-			return font.getWrappedBounds(string, Gdx.graphics.getWidth() - textSideBounds).height;
-		} else {
-			return font.getBounds(string).height;
-		}
+		font.getData().setScale(getScaleX(), getScaleY());
+		layout.setText(font, text, font.getColor(), Gdx.graphics.getWidth() - textSideBounds, Align.left, wrapped);
+		return layout.height;
 	}
-	
+
 	/*
 	 *  Static methods for accessing width and height of a given string.
 	 */
-	
+
 	public static float getWidth(String string) {
 		return getWidth(string, Settings.GAME_SCALE, Settings.GAME_SCALE, false, 0f);
 	}
-	
+
 	public static float getWidth(String string, float scaleX, float scaleY) {
 		return getWidth(string, scaleX, scaleY, false, 0f);
 	}
-	
+
 	public static float getWidth(String string, boolean wrapped) {
 		return getWidth(string, Settings.GAME_SCALE, Settings.GAME_SCALE, wrapped, 25 * Settings.GAME_SCALE);
 	}
-	
+
 	public static float getWidth(String string, float scaleX, float scaleY, boolean wrapped) {
 		return getWidth(string, scaleX, scaleY, wrapped, 25 * Settings.GAME_SCALE);
 	}
-	
+
 	public static float getWidth(String string, float scaleX, float scaleY, boolean wrapped, float textSideBounds) {
-		font.setScale(scaleX, scaleY);
-		if (wrapped) {
-			return font.getWrappedBounds(string, Gdx.graphics.getWidth() - textSideBounds).width;
-		} else {
-			return font.getBounds(string).width;
-		}
+		font.getData().setScale(scaleX, scaleY);
+		layout.setText(font, string, font.getColor(), Gdx.graphics.getWidth() - textSideBounds, Align.left, wrapped);
+		return layout.width;
 	}
-	
+
 	public static float getHeight(String string) {
 		return getHeight(string, Settings.GAME_SCALE, Settings.GAME_SCALE, false, 0f);
 	}
-	
+
 	public static float getHeight(String string, float scaleX, float scaleY) {
 		return getHeight(string, scaleX, scaleY, false, 0f);
 	}
-	
+
 	public static float getHeight(String string, boolean wrapped) {
 		return getHeight(string, Settings.GAME_SCALE, Settings.GAME_SCALE, wrapped, 25 * Settings.GAME_SCALE);
 	}
-	
+
 	public static float getHeight(String string, float scaleX, float scaleY, boolean wrapped) {
 		return getHeight(string, scaleX, scaleY, wrapped, 25 * Settings.GAME_SCALE);
 	}
-	
+
 	public static float getHeight(String string, float scaleX, float scaleY, boolean wrapped, float textSideBounds) {
-		font.setScale(scaleX, scaleY);
-		if (wrapped) {
-			return font.getWrappedBounds(string, Gdx.graphics.getWidth() - textSideBounds).height;
-		} else {
-			return font.getBounds(string).height;
-		}
+		font.getData().setScale(scaleX, scaleY);
+		layout.setText(font, string, font.getColor(), Gdx.graphics.getWidth() - textSideBounds, Align.left, wrapped);
+		return layout.height;
 	}
-	
+
 	public void setHide(Boolean hide) {
 		if (hide) {
 			getColor().set(getColor().r, getColor().g, getColor().b, 0.0f);
@@ -163,10 +157,10 @@ public class TextItem extends Item {
 			shadowColor.set(shadowColor.r, shadowColor.g, shadowColor.b, 1.0f);
 		}
 	}
-	
+
 	public void act(float delta) {
 		super.act(delta);
-		
+
 		if (blink) {
 			stateBlinkTime += delta;
 			if (stateBlinkTime > blinkRate) {
@@ -180,15 +174,15 @@ public class TextItem extends Item {
 			}
 		}
 	}
-	
+
 	public void draw(Batch batch, float parentAlpha) {
-		font.setScale(getScaleX(), getScaleY());
+		font.getData().setScale(getScaleX(), getScaleY());
 		shadowColor.a = getColor().a;
 		font.setColor(shadowColor);
 		if (wrapped) {
-			font.drawWrapped(batch, string, getX() + getOffsetX() + getShadowOffsetX(), getY() + getOffsetY() + getShadowOffsetY(), getWrapWidth(), alignment);
+			font.draw(batch, text, getX() + getOffsetX() + getShadowOffsetX(), getY() + getOffsetY() + getShadowOffsetY(), getWrapWidth(), alignment, true);
 		} else {
-			font.draw(batch, string, getX() + getOffsetX() + getShadowOffsetX(), getY() + getOffsetY() + getShadowOffsetY());
+			font.draw(batch, text, getX() + getOffsetX() + getShadowOffsetX(), getY() + getOffsetY() + getShadowOffsetY());
 		}
 		if (getSelected()) {
 			font.setColor(selectedColor);
@@ -196,10 +190,10 @@ public class TextItem extends Item {
 			font.setColor(getColor());
 		}
 		if (wrapped) {
-			font.drawWrapped(batch, string, getX() + getOffsetX(), getY() + getOffsetY(), getWrapWidth(), alignment);
+			font.draw(batch, text, getX() + getOffsetX(), getY() + getOffsetY(), getWrapWidth(), alignment, true);
 		} else {
-			font.draw(batch, string, getX() + getOffsetX(), getY() + getOffsetY());
+			font.draw(batch, text, getX() + getOffsetX(), getY() + getOffsetY());
 		}
 	}
-	
+
 }

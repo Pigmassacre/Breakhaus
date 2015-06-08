@@ -1,6 +1,6 @@
 
 gametextures.png
-size: 62,30
+size: 64,32
 format: RGBA8888
 filter: Nearest,Nearest
 repeat: none
@@ -104,7 +104,7 @@ rocket
   index: -1
 
 gametextures2.png
-size: 178,214
+size: 256,256
 format: RGBA8888
 filter: Nearest,Nearest
 repeat: none

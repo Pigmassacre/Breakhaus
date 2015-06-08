@@ -189,7 +189,7 @@ public class DebugInput extends InputAdapter {
 				
 				@Override
 				public void execute(Item data) {
-					fpsCounterTextItem.setString(Integer.toString(Gdx.graphics.getFramesPerSecond()));
+					fpsCounterTextItem.setText(Integer.toString(Gdx.graphics.getFramesPerSecond()));
 				}
 				
 			});
