@@ -40,8 +40,6 @@ public class Block extends GameActor {
 		
 		shadow = Shadow.shadowPool.obtain();
 		shadow.init(this, false);
-		
-		Groups.blockGroup.addActor(this);
 	}
 	
 	@Override

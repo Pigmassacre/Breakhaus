@@ -42,9 +42,8 @@ public class DebugInput extends InputAdapter {
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 		if (Settings.getDebugMode()) {
-			Vector3 coords = new Vector3(screenX, screenY, 0);
-			stage.getCamera().unproject(coords);
-			if (stage != null && (pointer == 0 || button == Buttons.LEFT) && rectangle.contains(coords.x, coords.y)) {
+			Vector3 coords = stage.getCamera().unproject(new Vector3(screenX, screenY, 0));
+			if ((pointer == 0 || button == Buttons.LEFT) && rectangle.contains(coords.x, coords.y)) {
 				Ball ball = Ball.ballPool.obtain();
 				ball.init(coords.x, coords.y, (float) (MathUtils.random() * 2 * Math.PI), player);
 			}
@@ -146,17 +145,17 @@ public class DebugInput extends InputAdapter {
 		debugTextItem = new TextItem(string);
 		debugTextItem.setScale(debugTextItem.getScaleX() * 0.75f, debugTextItem.getScaleY() * 0.75f);
 		debugTextItem.setColor(1f, 1f, 1f, 0.75f);
-		debugTextItem.setX((stage.getWidth() - debugTextItem.getWidth()) / 2);
-		debugTextItem.setY(stage.getHeight() + debugTextItem.getHeight());
+		debugTextItem.setX((Gdx.graphics.getWidth() - debugTextItem.getWidth()) / 2);
+		debugTextItem.setY(Gdx.graphics.getHeight() + debugTextItem.getHeight());
 		stage.addActor(debugTextItem);
 
 		debugTextSequence = Timeline.createSequence()
 			.push(Tween.to(debugTextItem, ActorAccessor.POSITION_Y, 2f)
-					.target(stage.getHeight() - 2f * debugTextItem.getScaleY())
+					.target(Gdx.graphics.getHeight() - 2f * debugTextItem.getScaleY())
 					.ease(TweenEquations.easeOutExpo))
 			.pushPause(0.25f)
 			.push(Tween.to(debugTextItem, ActorAccessor.POSITION_Y, 2f)
-					.target(stage.getHeight() + debugTextItem.getHeight())
+					.target(Gdx.graphics.getHeight() + debugTextItem.getHeight())
 					.ease(TweenEquations.easeInExpo))
 					.setCallback(new TweenCallback() {
 						
@@ -176,7 +175,7 @@ public class DebugInput extends InputAdapter {
 			fpsCounterTextItem = new TextItem(Integer.toString(Gdx.graphics.getFramesPerSecond()));
 			fpsCounterTextItem.setColor(1f, 1f, 1f, 0.75f);
 			fpsCounterTextItem.setX(4 * Settings.GAME_SCALE);
-			fpsCounterTextItem.setY(stage.getHeight() - 2 * Settings.GAME_SCALE);
+			fpsCounterTextItem.setY(Gdx.graphics.getHeight() - 2 * Settings.GAME_SCALE);
 			fpsCounterTextItem.setActCallback(new ItemCallback() {
 				
 				@Override

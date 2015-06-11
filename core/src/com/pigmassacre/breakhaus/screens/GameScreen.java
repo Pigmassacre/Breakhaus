@@ -10,7 +10,10 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.Timer;
@@ -29,6 +32,7 @@ public class GameScreen extends AbstractScreen {
 
 	private final Player player;
 	private final Paddle paddle;
+	private final Player opposingPlayer;
 	
 	private final Sunrays sunrays;
 	
@@ -67,7 +71,7 @@ public class GameScreen extends AbstractScreen {
 		player.setY(2.5f * Settings.GAME_SCALE);
 		player.setColor(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
 
-		Player opposingPlayer = new Player("Just Blocks");
+		opposingPlayer = new Player("Just Blocks");
 		opposingPlayer.setColor(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
 
 		float delay = 0.25f;
@@ -77,6 +81,7 @@ public class GameScreen extends AbstractScreen {
 			for (int y = 0; y < 4; y++) {
 				Block block = new Block(Settings.LEVEL_X + x * tempBlock.getWidth(), Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()), opposingPlayer,
 						opposingPlayer.getColor());
+				Groups.blockGroup.addActor(block);
 				z = block.getZ();
 				block.setZ(350 * Settings.GAME_SCALE);
 				Tween.to(block, GameActorAccessor.Z, 2f)
@@ -275,6 +280,28 @@ public class GameScreen extends AbstractScreen {
 	@Override
 	public void act(float delta) {
 		gameStage.act(delta);
+		if (player.getPaddle().getHitCount() > 7) {
+			player.getPaddle().resetHitCount();
+
+			/* Move all current blocks down one row. */
+			for (Actor actor : Groups.blockGroup.getChildren()) {
+				actor.setY(actor.getY() - actor.getHeight());
+			}
+
+			/* Create a new row of blocks. */
+			Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK));
+			for (int x = 0; x < (int) Settings.LEVEL_WIDTH / tempBlock.getWidth(); x++) {
+				Block block = new Block(
+						Settings.LEVEL_X + x * tempBlock.getWidth(),
+						Settings.LEVEL_MAX_Y - tempBlock.getHeight(),
+						opposingPlayer,
+						opposingPlayer.getColor());
+
+				/* Add the new block to the start of the group, so it renders correctly. */
+				Groups.blockGroup.addActorBefore(Groups.blockGroup.getChildren().first(), block);
+			}
+			tempBlock.destroy(false);
+		}
 		super.act(delta);
 		Level.getCurrentLevel().act(delta);
 	}

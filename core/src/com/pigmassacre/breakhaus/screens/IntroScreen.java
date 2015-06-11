@@ -91,7 +91,7 @@ public class IntroScreen extends AbstractScreen {
 		
 		for (int i = 0; i < string.length(); i++) {
 			introMessage[i] = new TextItem(string.subSequence(i, i + 1));
-			introMessage[i].setMaxOffsetY(10 * Settings.GAME_SCALE);
+			introMessage[i].setMaxOffsetY(6 * Settings.GAME_SCALE);
 			introMessage[i].setColor(1.0f, 1.0f, 1.0f, 1.0f);
 			stage.addActor(introMessage[i]);
 		}

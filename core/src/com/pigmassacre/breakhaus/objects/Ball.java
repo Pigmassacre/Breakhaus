@@ -374,6 +374,7 @@ public class Ball extends GameActor implements Poolable {
 	public void onHitPaddle(Paddle paddle) {
 		owner = paddle.owner;
 		setColor(paddle.owner.getColor());
+		paddle.hitByBall(this);
 	}
 	
 	@Override

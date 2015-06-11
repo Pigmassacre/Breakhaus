@@ -21,6 +21,7 @@ public class Paddle extends GameActor {
 
 	private final float smallestWidth, largestWidth;
 	private float actualWidth, actualHeight;
+	private int hitCount = 0;
 
 	public Paddle(Player owner) {
 		super();
@@ -65,11 +66,23 @@ public class Paddle extends GameActor {
 		this.speed = speed;
 	}
 
+	public int getHitCount() {
+		return hitCount;
+	}
+
+	public void resetHitCount() {
+		hitCount = 0;
+	}
+
 	@Override
 	public void act(float delta) {
 		super.act(delta);
 		setX(MathUtils.lerp(getX(), targetX, delta * speed));
 		Level.getCurrentLevel().checkCollision(this);
+	}
+
+	public void hitByBall(Ball ball) {
+		hitCount++;
 	}
 
 	@Override
