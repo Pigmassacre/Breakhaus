@@ -169,22 +169,22 @@ public class Ball extends GameActor implements Poolable {
 	}
 
 	private void hitTopSideOfPaddle(Paddle paddle) {
-		angle = (float) Math.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
+		angle = MathUtils.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
 		setY(paddle.rectangle.getY() + paddle.getHeight() + circle.radius + 1);
 	}
 
 	private void hitBottomSideOfPaddle(Paddle paddle) {
-		angle = (float) Math.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
+		angle = MathUtils.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
 		setY(paddle.getY() - circle.radius - 1);
 	}
 
 	private void hitLeftSideOfPaddle(Paddle paddle) {
-		angle = (float) Math.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
+		angle = MathUtils.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
 		setX(paddle.rectangle.getX() - circle.radius - 1);
 	}
 	
 	private void hitRightSideOfPaddle(Paddle paddle) {
-		angle = (float) Math.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
+		angle = MathUtils.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
 		setX(paddle.getX() + paddle.getWidth() + circle.radius + 1);
 	}
 	
@@ -235,7 +235,7 @@ public class Ball extends GameActor implements Poolable {
 	
 	public void checkCollisionBalls() {
 		Ball ball;
-		double deltaX, deltaY;
+		float deltaX, deltaY;
 		float rX, rY, rRadius, bX, bY, bRadius;
 		
 		for (Actor actor : Groups.ballGroup.getChildren().items) {
@@ -277,11 +277,11 @@ public class Ball extends GameActor implements Poolable {
 
 					deltaX = rX - bX;
 					deltaY = rY - bY;
-					angle = (float) Math.atan2(deltaY, deltaX);
+					angle = MathUtils.atan2(deltaY, deltaX);
 
 					deltaX = bX - rX;
 					deltaY = bY - rY;
-					ball.angle = (float) Math.atan2(deltaY, deltaX);
+					ball.angle = MathUtils.atan2(deltaY, deltaX);
 				}
 			}
 		}
