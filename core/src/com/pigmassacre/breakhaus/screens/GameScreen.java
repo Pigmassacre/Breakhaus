@@ -280,7 +280,7 @@ public class GameScreen extends AbstractScreen {
 	@Override
 	public void act(float delta) {
 		gameStage.act(delta);
-		if (player.getPaddle().getHitCount() > 7) {
+		if (player.getPaddle().getHitCount() == 0) {
 			player.getPaddle().resetHitCount();
 
 			/* Move all current blocks down one row. */

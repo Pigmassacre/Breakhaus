@@ -45,7 +45,7 @@ public class DebugInput extends InputAdapter {
 			Vector3 coords = stage.getCamera().unproject(new Vector3(screenX, screenY, 0));
 			if ((pointer == 0 || button == Buttons.LEFT) && rectangle.contains(coords.x, coords.y)) {
 				Ball ball = Ball.ballPool.obtain();
-				ball.init(coords.x, coords.y, (float) (MathUtils.random() * 2 * Math.PI), player);
+				ball.init(coords.x, coords.y, (float) (MathUtils.random() * 2 * MathUtils.PI), player);
 			}
 		}
 		return false;

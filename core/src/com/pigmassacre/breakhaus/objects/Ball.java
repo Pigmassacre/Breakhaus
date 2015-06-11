@@ -215,24 +215,14 @@ public class Ball extends GameActor implements Poolable {
 							hitLeftSideOfPaddle(paddle);
 						} else if (rX + rRadius - (bX + bWidth) > (rY + rRadius) - (bY + bHeight)) {
 							hitRightSideOfPaddle(paddle);
-						}/* else {
-							if (angle > Math.PI)
-								angle = -angle;
-
-							setY(bY + bHeight + rRadius + 1);
-						}*/
+						}
 					} else if (rY + rRadius >= bY && (rY - rRadius) < bY) {
 						hitBottomSideOfPaddle(paddle);
 						if (bX - (rX - rRadius) > bY - (rY - rRadius)) {
 							hitLeftSideOfPaddle(paddle);
 						} else if (rX + rRadius - (bX + bWidth) > bY - (rY - rRadius)) {
 							hitRightSideOfPaddle(paddle);
-						}/* else {
-							if (angle < Math.PI)
-								angle = -angle;
-							
-							setY(bY - rRadius - 1);
-						}*/
+						}
 					} else if (rX + rRadius >= bX && (rX - rRadius) < bX) {
 						hitLeftSideOfPaddle(paddle);
 					} else if (rX - rRadius <= bX + bWidth && rX + rRadius > bX + bWidth) {
@@ -322,10 +312,10 @@ public class Ball extends GameActor implements Poolable {
 			if (rY - rRadius <= bY + bHeight && rY + rRadius > bY + bHeight) {
 				if (bX - (rX - rRadius) > (rY + rRadius) - (bY + bHeight)) {
 					setX(bX - rRadius - 1);
-					angle = (float) (Math.PI - angle);
+					angle = MathUtils.PI - angle;
 				} else if (rX + rRadius - (bX + bWidth) > (rY + rRadius) - (bY + bHeight)) {
 					setX(bX + bWidth + rRadius + 1);
-					angle = (float) (Math.PI - angle);
+					angle = MathUtils.PI - angle;
 				} else {
 					setY(bY + bHeight + rRadius + 1);
 					angle = -angle;
@@ -333,20 +323,20 @@ public class Ball extends GameActor implements Poolable {
 			} else if (rY + rRadius >= bY && (rY - rRadius) < bY) {
 				if (bX - (rX - rRadius) > bY - (rY - rRadius)) {
 					setX(bX - rRadius - 1);
-					angle = (float) (Math.PI - angle);
+					angle = MathUtils.PI - angle;
 				} else if (rX + rRadius - (bX + bWidth) > bY - (rY - rRadius)) {
 					setX(bX + bWidth + rRadius + 1);
-					angle = (float) (Math.PI - angle);
+					angle = MathUtils.PI - angle;
 				} else {
 					setY(bY - rRadius - 1);
 					angle = -angle;
 				}
 			} else if (rX + rRadius >= bX && (rX - rRadius) < bX) {
 				setX(bX - rRadius - 1);
-				angle = (float) (Math.PI - angle);
+				angle = MathUtils.PI - angle;
 			} else if (rX - rRadius <= bX + bWidth && rX + rRadius > bX + bWidth) {
 				setX(bX + bWidth + rRadius + 1);
-				angle = (float) (Math.PI - angle);
+				angle = MathUtils.PI - angle;
 			}
 		}
 		
@@ -381,12 +371,12 @@ public class Ball extends GameActor implements Poolable {
 	public void onHitWall(WallSide side) {
 		switch (side) {
 		case LEFT:
-			angle = (float) (Math.PI - angle);
+			angle = MathUtils.PI - angle;
 			setX(Settings.LEVEL_X + circle.radius);
 			collided = true;
 			break;
 		case RIGHT:
-			angle = (float) (Math.PI - angle);
+			angle = MathUtils.PI - angle;
 			setX(Settings.LEVEL_MAX_X - circle.radius);
 			collided = true;
 			break;
