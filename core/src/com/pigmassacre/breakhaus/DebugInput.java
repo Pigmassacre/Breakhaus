@@ -11,13 +11,12 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.SnapshotArray;
-import com.pigmassacre.breakhaus.gui.ActorAccessor;
+import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
 import com.pigmassacre.breakhaus.gui.Item;
 import com.pigmassacre.breakhaus.gui.Item.ItemCallback;
 import com.pigmassacre.breakhaus.gui.TextItem;
 import com.pigmassacre.breakhaus.objects.Ball;
 import com.pigmassacre.breakhaus.objects.Groups;
-import com.pigmassacre.breakhaus.objects.Level;
 import com.pigmassacre.breakhaus.objects.Player;
 import com.pigmassacre.breakhaus.objects.powerups.Powerup;
 import com.pigmassacre.breakhaus.screens.AbstractScreen;
@@ -28,17 +27,17 @@ public class DebugInput extends InputAdapter {
 	private Stage stage;
 	
 	private Rectangle rectangle;
+	private Player player;
 	
-	public DebugInput(AbstractScreen screen, Stage stage) {
+	public DebugInput(AbstractScreen screen, Stage stage, Player player) {
 		this.screen = screen;
 		this.stage = stage;
+		this.player = player;
 		rectangle = new Rectangle(Settings.LEVEL_X, Settings.LEVEL_Y, Settings.LEVEL_WIDTH, Settings.LEVEL_HEIGHT);
 		if (Settings.getDebugMode()) {
 			showFPSCounter();
 		}
 	}
-	
-	private boolean leftPlayer = true;
 	
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
@@ -47,13 +46,6 @@ public class DebugInput extends InputAdapter {
 			stage.getCamera().unproject(coords);
 			if (stage != null && (pointer == 0 || button == Buttons.LEFT) && rectangle.contains(coords.x, coords.y)) {
 				Ball ball = Ball.ballPool.obtain();
-				Player player;
-				if (leftPlayer) {
-					player = (Player) Groups.playerGroup.getChildren().first();
-				} else {
-					player = (Player) Groups.playerGroup.getChildren().peek();
-				}
-				leftPlayer = !leftPlayer;
 				ball.init(coords.x, coords.y, (float) (MathUtils.random() * 2 * Math.PI), player);
 			}
 		}

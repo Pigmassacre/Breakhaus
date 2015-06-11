@@ -9,6 +9,7 @@ import com.pigmassacre.breakhaus.Breakhaus;
 import com.pigmassacre.breakhaus.MusicHandler;
 import com.pigmassacre.breakhaus.Settings;
 import com.pigmassacre.breakhaus.gui.*;
+import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
 
 public class IntroScreen extends AbstractScreen {
 

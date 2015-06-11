@@ -1,11 +1,9 @@
 package com.pigmassacre.breakhaus.objects;
 
-import com.badlogic.gdx.Application.ApplicationType;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.pigmassacre.breakhaus.Assets;
 import com.pigmassacre.breakhaus.Settings;
@@ -15,20 +13,12 @@ public class Paddle extends GameActor {
 	private static final float DEPTH = 2f;
 	private static final float HEIGHT_FROM_GROUND = 2f;
 
-	private float acceleration, retardation, velocityX;
-	public float maxSpeed;
-	public final float defaultMaxSpeed;
-
-	public boolean moveLeft, moveRight;
-	public Rectangle touchRectangle;
-	private float touchGraceSize;
-	public int keyLeft, keyRight;
-	private float touchX;
+	private float targetX;
 
 	private TextureRegion leftImage, middleImage, rightImage;
 	private float leftWidth, middleWidth, rightWidth;
+
 	private float smallestWidth, largestWidth;
-	
 	public float actualWidth, actualHeight;
 
 	public Paddle(Player owner) {
@@ -56,82 +46,20 @@ public class Paddle extends GameActor {
 
 		rectangle = new Rectangle(getX(), getY(), getWidth(), getHeight());
 
-		if (Gdx.app.getType() == ApplicationType.Android) {
-			defaultMaxSpeed = maxSpeed = 100f * Settings.GAME_FPS * Settings.GAME_SCALE;
-		} else {
-			defaultMaxSpeed = maxSpeed = 10f * Settings.GAME_FPS * Settings.GAME_SCALE;
-		}
-		acceleration = retardation = defaultMaxSpeed;
-
-		velocityX = 0f;
-
-		touchGraceSize = getWidth() / 8;
-		moveLeft = false;
-		moveRight = false;
-
 		shadow = Shadow.shadowPool.obtain();
 		shadow.init(this, false);
 
 		Groups.paddleGroup.addActor(this);
 	}
 
+	public void setTargetX(float targetX) {
+		this.targetX = targetX;
+	}
+
 	@Override
 	public void act(float delta) {
 		super.act(delta);
-		moveLeft = false;
-		moveRight = false;
-		if (Gdx.app.getType() == ApplicationType.Android) {
-			for (int i = 0; i < 10; i++) {
-				if (touchRectangle.contains(Gdx.input.getX(i), Gdx.input.getY(i)) && Gdx.input.isTouched(i)) {
-					touchX = Gdx.graphics.getWidth() - Gdx.input.getX(i);
-					moveLeft = getX() + (getWidth() / 2) < touchX - touchGraceSize;
-					moveRight = getX() + (getWidth() / 2) > touchX + touchGraceSize;
-					if (moveLeft || moveRight) {
-						break;
-					}
-				}
-			}
-		} else {
-			moveLeft = Gdx.input.isKeyPressed(keyLeft);
-			moveRight = Gdx.input.isKeyPressed(keyRight);
-		}
-
-		if (maxSpeed > 0) {
-			if (moveLeft) {
-				velocityX -= acceleration;
-				if (velocityX < -maxSpeed)
-					velocityX = -maxSpeed;
-			}
-			if (moveRight) {
-				velocityX += acceleration;
-				if (velocityX > maxSpeed)
-					velocityX = maxSpeed;
-			}
-			if (!moveLeft && !moveRight) {
-				if (velocityX > 0) {
-					velocityX -= retardation;
-					if (velocityX < 0)
-						velocityX = 0;
-				} else if (velocityX < 0) {
-					velocityX += retardation;
-					if (velocityX > 0)
-						velocityX = 0;
-				}
-			}
-		} else {
-			if (velocityX > 0) {
-				velocityX -= retardation;
-				if (velocityX < 0)
-					velocityX = 0;
-			} else if (velocityX < 0) {
-				velocityX += retardation;
-				if (velocityX > 0)
-					velocityX = 0;
-			}
-		}
-
-		setX(getX() + velocityX * delta);
-
+		setX(MathUtils.lerp(getX(), targetX, delta * 20));
 		Level.getCurrentLevel().checkCollision(this);
 	}
 
@@ -177,5 +105,4 @@ public class Paddle extends GameActor {
 				rightWidth,
 				getHeight() + getDepth());
 	}
-	
 }

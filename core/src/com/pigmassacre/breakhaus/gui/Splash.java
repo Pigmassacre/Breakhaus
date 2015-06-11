@@ -9,6 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Widget;
 import com.badlogic.gdx.utils.Array;
 import com.pigmassacre.breakhaus.Assets;
 import com.pigmassacre.breakhaus.Settings;
+import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
 
 public class Splash extends Widget {
 

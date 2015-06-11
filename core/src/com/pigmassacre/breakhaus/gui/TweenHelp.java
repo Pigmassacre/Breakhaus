@@ -5,6 +5,7 @@ import aurelienribon.tweenengine.TweenEquation;
 import aurelienribon.tweenengine.TweenManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.MathUtils;
+import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
 
 import java.util.ArrayList;
 import java.util.List;

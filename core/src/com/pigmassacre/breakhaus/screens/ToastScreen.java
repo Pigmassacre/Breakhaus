@@ -10,6 +10,7 @@ import com.badlogic.gdx.utils.Align;
 import com.pigmassacre.breakhaus.Breakhaus;
 import com.pigmassacre.breakhaus.MusicHandler;
 import com.pigmassacre.breakhaus.gui.*;
+import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
 import com.pigmassacre.breakhaus.gui.Item.ItemCallback;
 
 public class ToastScreen extends AbstractScreen {

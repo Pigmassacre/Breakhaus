@@ -5,7 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.pigmassacre.breakhaus.Assets;
 import com.pigmassacre.breakhaus.Breakhaus;
 import com.pigmassacre.breakhaus.Settings;
-import com.pigmassacre.breakhaus.gui.ActorAccessor;
+import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
 import com.pigmassacre.breakhaus.gui.Logo;
 import com.pigmassacre.breakhaus.gui.Sunrays;
 import com.pigmassacre.breakhaus.gui.TextItem;

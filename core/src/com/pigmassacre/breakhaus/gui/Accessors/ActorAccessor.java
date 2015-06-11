@@ -1,4 +1,4 @@
-package com.pigmassacre.breakhaus.gui;
+package com.pigmassacre.breakhaus.gui.Accessors;
 
 import aurelienribon.tweenengine.TweenAccessor;
 import com.badlogic.gdx.scenes.scene2d.Actor;

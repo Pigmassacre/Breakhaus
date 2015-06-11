@@ -1,10 +1,10 @@
 package com.pigmassacre.breakhaus.objects;
 
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.utils.Array;
 
 public class Groups {
 
-	public static Group playerGroup = new Group();
 	public static Group ballGroup = new Group();
 	public static Group traceGroup = new Group();
 	public static Group paddleGroup = new Group();

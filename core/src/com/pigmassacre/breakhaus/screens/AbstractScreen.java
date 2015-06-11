@@ -14,8 +14,8 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.pigmassacre.breakhaus.Breakhaus;
-import com.pigmassacre.breakhaus.gui.ActorAccessor;
-import com.pigmassacre.breakhaus.gui.GameActorAccessor;
+import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
+import com.pigmassacre.breakhaus.gui.Accessors.GameActorAccessor;
 import com.pigmassacre.breakhaus.gui.Traversal;
 import com.pigmassacre.breakhaus.objects.GameActor;
 
