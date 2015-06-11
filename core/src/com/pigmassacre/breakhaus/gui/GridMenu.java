@@ -4,12 +4,12 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class GridMenu extends Menu {
 
-	public float offset;
+	private final float offset;
 	
-	int maxColumnCount;
+	private final int maxColumnCount;
 	
-	int currentRowSize;
-	float currentRowPosition;
+	private int currentRowSize;
+	private float currentRowPosition;
 	
 	public GridMenu(int maxColumnCount) {
 		super();
@@ -27,7 +27,7 @@ public class GridMenu extends Menu {
 		populateGrid(item);
 	}
 	
-	public void populateGrid(Item item) {
+	private void populateGrid(Item item) {
 		if (currentRowSize > maxColumnCount) {
 			currentRowSize = 1;
 			currentRowPosition -= item.getHeight() + offset;

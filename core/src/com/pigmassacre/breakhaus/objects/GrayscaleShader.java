@@ -6,9 +6,9 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 
 public class GrayscaleShader {
-    static FileHandle vertexShader = Gdx.files.getFileHandle("shaders/grayscale.vert", FileType.Internal);
+    private static final FileHandle vertexShader = Gdx.files.getFileHandle("shaders/grayscale.vert", FileType.Internal);
 
-    static FileHandle fragmentShader = Gdx.files.getFileHandle("shaders/grayscale.frag", FileType.Internal);
+    private static final FileHandle fragmentShader = Gdx.files.getFileHandle("shaders/grayscale.frag", FileType.Internal);
 
     public static ShaderProgram grayscaleShader;
     

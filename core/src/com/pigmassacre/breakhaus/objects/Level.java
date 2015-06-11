@@ -2,30 +2,20 @@ package com.pigmassacre.breakhaus.objects;
 
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Timer;
-import com.badlogic.gdx.utils.Timer.Task;
-import com.badlogic.gdx.utils.reflect.ClassReflection;
-import com.badlogic.gdx.utils.reflect.Constructor;
-import com.badlogic.gdx.utils.reflect.ReflectionException;
 import com.pigmassacre.breakhaus.Assets;
 import com.pigmassacre.breakhaus.Settings;
-import com.pigmassacre.breakhaus.objects.GameActor.DestroyCallback;
-import com.pigmassacre.breakhaus.objects.powerups.Powerup;
-import com.pigmassacre.breakhaus.objects.powerups.SpeedPowerup;
 
 public class Level extends Actor {
 
 	private static Level currentLevel;
-	private Background background;
-	private Foreground foreground;
+
+	private final Background background;
+	private final Foreground foreground;
 	
-	private TextureRegion backgroundImage, horizontalWallTop;
-	private TextureRegion verticalWallLeft, verticalWallRight, horizontalWallBottom;
-	private TextureRegion topLeftCorner, bottomLeftCorner, topRightCorner, bottomRightCorner;
+	private final TextureRegion backgroundImage, horizontalWallTop;
+	private final TextureRegion verticalWallLeft, verticalWallRight, horizontalWallBottom;
+	private final TextureRegion topLeftCorner, bottomLeftCorner, topRightCorner, bottomRightCorner;
 	
 	public static Level getCurrentLevel() {
 		return currentLevel;
@@ -72,15 +62,12 @@ public class Level extends Actor {
 					Level.getCurrentLevel().getX(),
 					Level.getCurrentLevel().getY() + Level.getCurrentLevel().getHeight() + Settings.getLevelYOffset(),
 					Level.getCurrentLevel().getWidth(),
-					//horizontalWallTop.getRegionWidth() * Settings.GAME_SCALE,
 					horizontalWallTop.getRegionHeight() * Settings.GAME_SCALE);
 			batch.draw(backgroundImage,
 					Level.getCurrentLevel().getX(),
 					Level.getCurrentLevel().getY() + Settings.getLevelYOffset(),
 					Level.getCurrentLevel().getWidth(),
 					Level.getCurrentLevel().getHeight());
-					//backgroundImage.getRegionWidth() * Settings.GAME_SCALE,
-					//backgroundImage.getRegionHeight() * Settings.GAME_SCALE);
 		}
 		
 	}
@@ -104,13 +91,11 @@ public class Level extends Actor {
 					Level.getCurrentLevel().getY() + Settings.getLevelYOffset(),
 					verticalWallLeft.getRegionWidth() * Settings.GAME_SCALE,
 					Level.getCurrentLevel().getHeight());
-					//verticalWallLeft.getRegionHeight() * Settings.GAME_SCALE);
 			batch.draw(verticalWallRight,
 					Level.getCurrentLevel().getX() + Level.getCurrentLevel().getWidth(),
 					Level.getCurrentLevel().getY() + Settings.getLevelYOffset(),
 					verticalWallRight.getRegionWidth() * Settings.GAME_SCALE,
 					Level.getCurrentLevel().getHeight());
-					//verticalWallRight.getRegionHeight() * Settings.GAME_SCALE);
 			batch.draw(bottomLeftCorner,
 					Level.getCurrentLevel().getX() - bottomLeftCorner.getRegionWidth() * Settings.GAME_SCALE,
 					Level.getCurrentLevel().getY() - 1 * Settings.GAME_SCALE + Settings.getLevelYOffset(),
@@ -125,7 +110,6 @@ public class Level extends Actor {
 					Level.getCurrentLevel().getX(),
 					Level.getCurrentLevel().getY() - 1 * Settings.GAME_SCALE + Settings.getLevelYOffset(),
 					Level.getCurrentLevel().getWidth(),
-					//horizontalWallBottom.getRegionWidth() * Settings.GAME_SCALE,
 					horizontalWallBottom.getRegionHeight() * Settings.GAME_SCALE);
 		}
 		

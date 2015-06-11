@@ -15,8 +15,8 @@ public class Splash extends Widget {
 
 	private static final int ROWS = 5, COLS = 5;
 	
-	private TextureRegion image;
-	private TextureRegion[][] imageMatrix;
+	private final TextureRegion image;
+	private final TextureRegion[][] imageMatrix;
 	private Array<SplashPart> splashParts;
 	
 	public Splash() {
@@ -71,7 +71,7 @@ public class Splash extends Widget {
 	
 	public interface SplashCallback {
 		
-		public void execute(Splash splash);
+		void execute(Splash splash);
 		
 	}
 	
@@ -106,7 +106,7 @@ public class Splash extends Widget {
 	
 	private class SplashPart extends Widget {
 		
-		private TextureRegion image;
+		private final TextureRegion image;
 		
 		public SplashPart(TextureRegion image) {
 			this.image = image;

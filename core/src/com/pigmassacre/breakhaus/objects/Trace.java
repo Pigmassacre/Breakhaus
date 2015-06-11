@@ -6,9 +6,9 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class Trace extends GameActor {
 
-	private float alphaStep = 0.06f * Settings.GAME_FPS;
+	private static final float ALPHA_STEP = 0.06f * Settings.GAME_FPS;
 	
-	private Color shadowBlendColor = new Color(0.4f, 0.4f, 0.4f, 1.0f);
+	private static final Color SHADOW_BLEND_COLOR = new Color(0.4f, 0.4f, 0.4f, 1.0f);
 	
 	public Trace(GameActor parentActor) {
 		this.parentActor = parentActor;
@@ -24,29 +24,27 @@ public class Trace extends GameActor {
 		
 		shadow = Shadow.shadowPool.obtain();
 		shadow.init(this, false);
-		shadow.getColor().mul(shadowBlendColor);
+		shadow.getColor().mul(SHADOW_BLEND_COLOR);
 		
 		Groups.traceGroup.addActor(this);
 	}
 	
 	@Override
 	public void act(float delta) {
-		if (alphaStep > 0) {
-			getColor().a -= alphaStep * delta;
-			shadow.getColor().a -= alphaStep / 2 * delta;
-			if (getColor().a - (alphaStep * delta) < 0) {
+		if (ALPHA_STEP > 0) {
+			getColor().a -= ALPHA_STEP * delta;
+			shadow.getColor().a -= ALPHA_STEP / 2 * delta;
+			if (getColor().a - (ALPHA_STEP * delta) < 0) {
 				destroy();
 			}
 			getColor().clamp();
 			shadow.getColor().clamp();
 		}
 	}
-	
-	private Color temp;
-	
+
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		temp = batch.getColor();
+		Color temp = batch.getColor();
 		batch.setColor(getColor());
 		batch.draw(getImage(), getX(), getY() + Settings.getLevelYOffset() + getZ(), getWidth(), getHeight() + getDepth());
 		batch.setColor(temp);

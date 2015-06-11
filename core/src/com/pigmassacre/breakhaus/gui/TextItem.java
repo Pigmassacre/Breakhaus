@@ -12,6 +12,8 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class TextItem extends Item {
 
+	private static final float BLINK_RATE = 0.75f;
+
 	private static GlyphLayout layout;
 	private static BitmapFont font;
 	private CharSequence text;
@@ -19,7 +21,6 @@ public class TextItem extends Item {
 	private Color shadowColor;
 
 	public boolean blink = false;
-	private float blinkRate = 0.75f;
 	private float stateBlinkTime;
 
 	private boolean wrapped;
@@ -40,7 +41,7 @@ public class TextItem extends Item {
 		}
 
 		if (font == null) {
-			font = Assets.getBitmapFont("fonts/ADDLG__.fnt");
+			font = Assets.getStandardFont();
 		}
 		setScale(Settings.GAME_SCALE);
 		shadowColor = new Color(0.196f, 0.196f, 0.196f, 1.0f);
@@ -163,10 +164,10 @@ public class TextItem extends Item {
 
 		if (blink) {
 			stateBlinkTime += delta;
-			if (stateBlinkTime > blinkRate) {
+			if (stateBlinkTime > BLINK_RATE) {
 				if (getColor().a == 1.0f) {
 					setHide(true);
-					stateBlinkTime = blinkRate / 3f;
+					stateBlinkTime = BLINK_RATE / 3f;
 				} else {
 					setHide(false);
 					stateBlinkTime = 0;

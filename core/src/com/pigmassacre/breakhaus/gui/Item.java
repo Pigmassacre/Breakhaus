@@ -11,23 +11,24 @@ import com.pigmassacre.breakhaus.Settings;
 public class Item extends Widget {
 	
 	public interface ItemCallback {
-		public void execute(Item data);
+		void execute(Item data);
 	}
 	
-	protected ItemCallback callback, actCallback;
+	private ItemCallback callback;
+	private ItemCallback actCallback;
 	
-	protected ShapeRenderer shapeRenderer;
+	protected final ShapeRenderer shapeRenderer;
 
-	Color shadowColor = new Color(0.196f, 0.196f, 0.196f, 1.0f);
-	Color selectedColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-	Color chosenColor = new Color(0.784f, 0.784f, 0.784f, 1.0f);
-	Color disabledColor = new Color(0.294f, 0.294f, 0.294f, 0.941f);
+	final Color shadowColor = new Color(0.196f, 0.196f, 0.196f, 1.0f);
+	final Color selectedColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+	final Color chosenColor = new Color(0.784f, 0.784f, 0.784f, 1.0f);
+	final Color disabledColor = new Color(0.294f, 0.294f, 0.294f, 0.941f);
 
 	float shadowOffsetX, shadowOffsetY;
 	
 	float offsetX, offsetY, maxOffsetX, maxOffsetY;
 
-	float offsetXRetreatSpeed, offsetYRetreatSpeed;
+	final float offsetXRetreatSpeed, offsetYRetreatSpeed;
 	
 	private boolean selected = false, chosen = false, disabled = false;
 	
@@ -35,7 +36,7 @@ public class Item extends Widget {
 	
 	Rectangle rectangle;
 	
-	private Sound selectSound;
+	private final Sound selectSound;
 	
 	public Item() {
 		shapeRenderer = new ShapeRenderer();
@@ -157,8 +158,8 @@ public class Item extends Widget {
 	
 	public float getMaxHeight() {
 		return getHeight();
-	};
-	
+	}
+
 	public boolean isPointerOverItem(float x, float y) {
 		return x >= rectangle.getX() && x <= rectangle.getX() + rectangle.getWidth() && y <= rectangle.getY() && y >= rectangle.getY() - rectangle.getHeight();
 	}

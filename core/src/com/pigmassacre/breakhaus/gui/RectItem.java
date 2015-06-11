@@ -7,10 +7,10 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class RectItem extends Item {
 
-	float borderSizeSelected = 2 * Settings.GAME_SCALE;
-	float borderSizeChosen = 2 * Settings.GAME_SCALE;
+	private float borderSizeSelected = 2 * Settings.GAME_SCALE;
+	private float borderSizeChosen = 2 * Settings.GAME_SCALE;
 	
-	Rectangle selectedRectangle, chosenRectangle, shadowRectangle;
+	private Rectangle selectedRectangle, chosenRectangle, shadowRectangle;
 	
 	public RectItem() {
 		super();

@@ -12,21 +12,19 @@ import com.pigmassacre.breakhaus.gui.Splash.SplashCallback;
 
 public class SplashScreen extends AbstractScreen {
 
-	private Splash splash;
-	
 	public SplashScreen(Breakhaus game) {
 		super(game);
-		splash = new Splash();
+		Splash splash = new Splash();
 		splash.setX(Gdx.graphics.getWidth() / 2 - splash.getWidth() / 2);
 		splash.setY(Gdx.graphics.getHeight() / 2 - splash.getHeight() / 2);
 		splash.setup(getTweenManager());
 		splash.setCallback(new SplashCallback() {
-			
+
 			@Override
 			public void execute(Splash splash) {
 				startIntroScreen();
 			}
-			
+
 		});
 		stage.addActor(splash);
 		backgroundColor = new Color(36 / 255f, 36 / 255f, 36 / 255f, 1f);

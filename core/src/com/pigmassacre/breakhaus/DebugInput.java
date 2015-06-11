@@ -23,11 +23,11 @@ import com.pigmassacre.breakhaus.screens.AbstractScreen;
 
 public class DebugInput extends InputAdapter {
 
-	private AbstractScreen screen;
-	private Stage stage;
+	private final AbstractScreen screen;
+	private final Stage stage;
 	
-	private Rectangle rectangle;
-	private Player player;
+	private final Rectangle rectangle;
+	private final Player player;
 	
 	public DebugInput(AbstractScreen screen, Stage stage, Player player) {
 		this.screen = screen;

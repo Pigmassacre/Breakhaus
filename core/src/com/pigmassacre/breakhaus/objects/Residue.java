@@ -8,16 +8,16 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class Residue extends GameActor implements Poolable {
 
+	private static final float FADEOUT_TIME = 1f;
+
 	public static final Pool<Residue> residuePool = new Pool<Residue>(250) {
 
 		protected Residue newObject() {
 			return new Residue();
-		};
+		}
 
 	};
-	
-	private float fadeoutTime = 1f;
-	
+
 	private float lingerTime;
 	
 	public Residue() {
@@ -53,7 +53,7 @@ public class Residue extends GameActor implements Poolable {
 	public void act(float delta) {
 		lingerTime -= delta;
 		if (lingerTime <= 0) {
-			getColor().a -= fadeoutTime * delta;
+			getColor().a -= FADEOUT_TIME * delta;
 			if (getColor().a < 0) {
 				getColor().clamp();
 				residuePool.free(this);
@@ -62,12 +62,10 @@ public class Residue extends GameActor implements Poolable {
 			getColor().clamp();
 		}
 	}
-	
-	private Color temp;
-	
+
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		temp = batch.getColor();
+		Color temp = batch.getColor();
 		batch.setColor(getColor());
 		batch.draw(getImage(), getX(), getY() + Settings.getLevelYOffset(), getWidth(), getHeight() + getDepth());
 		batch.setColor(temp);

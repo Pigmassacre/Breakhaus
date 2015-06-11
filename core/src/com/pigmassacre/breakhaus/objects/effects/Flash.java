@@ -66,18 +66,16 @@ public class Flash extends Effect {
 			}
 		}
 	}
-	
-	private Color temp;
-	
+
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		temp = batch.getColor();
+		Color temp = batch.getColor();
 		batch.setShader(GrayscaleShader.grayscaleShader);
 		batch.setColor(currentColor);
 		if (followParent) {
 			if (parentActor instanceof Paddle) {
 				Paddle paddle = (Paddle) parentActor;
-				paddle.drawImages(batch, parentAlpha, 0, 0, 0);
+				paddle.drawImages(batch, 0, 0, 0);
 			} else {
 				batch.draw(parentActor.getImage(), parentActor.getX(), parentActor.getY() + Settings.getLevelYOffset() + parentActor.getZ(), parentActor.getWidth(), parentActor.getHeight() + parentActor.getDepth());
 			}

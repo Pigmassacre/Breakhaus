@@ -17,8 +17,9 @@ public class ToastScreen extends AbstractScreen {
 	
 	private final AbstractScreen pausedScreen;
 	
-	Backdrop backdrop;
-	TextItem messageTextItem, okTextItem;
+	final Backdrop backdrop;
+	final TextItem messageTextItem;
+	final TextItem okTextItem;
 	
 	public ToastScreen(Breakhaus game, AbstractScreen pausedScreen, String message) {
 		super(game);

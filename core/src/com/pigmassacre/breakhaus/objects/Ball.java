@@ -16,27 +16,28 @@ import com.pigmassacre.breakhaus.objects.effects.Flash;
 import com.pigmassacre.breakhaus.objects.powerups.Powerup;
 
 public class Ball extends GameActor implements Poolable {
-	
+
+	private static final float BASE_DAMAGE = 10;
+	private static final float LEAST_ALLOWED_HORIZONTAL_ANGLE = 0.32f;
+
 	public static final Pool<Ball> ballPool = new Pool<Ball>() {
 
 		protected Ball newObject() {
 			return new Ball();
-		};
+		}
 
 	};
-	
-	private Sound hitSound;
-	
+
+	private final Sound hitSound;
+
 	private boolean collided;
-	
+
 	public Circle circle;
-	
-	private float DAMAGE = 10;
-	
+
 	private float angle;
-	public float speed, baseSpeed, maxSpeed, tickSpeed, speedStep, speedHandled;
-	private float leastAllowedHorizontalAngle = 0.32f;
-	
+	public float speed;
+	private float baseSpeed, maxSpeed, tickSpeed, speedStep, speedHandled;
+
 	private float traceTime, traceRate;
 	
 	public Ball() {
@@ -108,9 +109,6 @@ public class Ball extends GameActor implements Poolable {
 	
 	@Override
 	public void move(float delta) {
-//		stateTime += delta;
-//		setZ(((MathUtils.sin(stateTime * 10) + 1) / 2) * 50); 
-		
 		speedHandled = 0f;
 		while (speedHandled < speed) {
 			if (speed - speedHandled >= speedStep) {
@@ -126,32 +124,32 @@ public class Ball extends GameActor implements Poolable {
 			checkCollisionPaddles();
 			checkCollisionPowerups();
 			
-			if (angle > Math.PI - leastAllowedHorizontalAngle && angle < Math.PI) {
-				angle = (float) (Math.PI - leastAllowedHorizontalAngle);
-			} else if (angle < Math.PI + leastAllowedHorizontalAngle && angle > Math.PI) {
-				angle = (float) (Math.PI + leastAllowedHorizontalAngle);
-			} else if (angle > 0 - leastAllowedHorizontalAngle && angle < 0) {
-				angle = (float) (0 - leastAllowedHorizontalAngle);
-			} else if (angle < 0 + leastAllowedHorizontalAngle && angle > 0) {
-				angle = (float) (0 + leastAllowedHorizontalAngle);
-			} else if (angle == Math.PI) {
-				angle = (float) (Math.PI - leastAllowedHorizontalAngle);
+			if (angle > MathUtils.PI - LEAST_ALLOWED_HORIZONTAL_ANGLE && angle < MathUtils.PI) {
+				angle = MathUtils.PI - LEAST_ALLOWED_HORIZONTAL_ANGLE;
+			} else if (angle < MathUtils.PI + LEAST_ALLOWED_HORIZONTAL_ANGLE && angle > MathUtils.PI) {
+				angle = MathUtils.PI + LEAST_ALLOWED_HORIZONTAL_ANGLE;
+			} else if (angle > 0 - LEAST_ALLOWED_HORIZONTAL_ANGLE && angle < 0) {
+				angle = 0 - LEAST_ALLOWED_HORIZONTAL_ANGLE;
+			} else if (angle < 0 + LEAST_ALLOWED_HORIZONTAL_ANGLE && angle > 0) {
+				angle = 0 + LEAST_ALLOWED_HORIZONTAL_ANGLE;
+			} else if (angle == MathUtils.PI) {
+				angle = MathUtils.PI - LEAST_ALLOWED_HORIZONTAL_ANGLE;
 			} else if (angle == 0) {
-				angle = (float) (0 + leastAllowedHorizontalAngle);
+				angle = 0 + LEAST_ALLOWED_HORIZONTAL_ANGLE;
 			}
 			
-			if (angle > 2 * Math.PI) {
-				angle -= 2 * Math.PI;
+			if (angle > 2 * MathUtils.PI) {
+				angle -= 2 * MathUtils.PI;
 			} else if (angle < 0) {
-				angle += 2 * Math.PI;
+				angle += 2 * MathUtils.PI;
 			}
 			
 			if (speed > maxSpeed) {
 				speed = maxSpeed;
 			}
 
-			setX((float) (circle.x + (Math.cos(angle) * tickSpeed * delta)));
-			setY((float) (circle.y + (Math.sin(angle) * tickSpeed * delta)));
+			setX((float) (circle.x + (MathUtils.cos(angle) * tickSpeed * delta)));
+			setY((float) (circle.y + (MathUtils.sin(angle) * tickSpeed * delta)));
 			
 			Level.getCurrentLevel().checkCollision(this);
 
@@ -309,7 +307,7 @@ public class Ball extends GameActor implements Poolable {
 				if (Intersector.overlaps(this.circle, block.rectangle)) {
 					new Flash(block, 0.2f, true);
 //					block.offsetZ = -1f * Settings.GAME_SCALE;
-					block.damage(DAMAGE);
+					block.damage(BASE_DAMAGE);
 					onHitObject(block);
 					collided = true;
 					bX = block.rectangle.getX();
@@ -428,12 +426,10 @@ public class Ball extends GameActor implements Poolable {
 			particle.init(getX() + getWidth() / 2, getY() + getHeight() / 2 - getDepth() + getZ(), width, width, angle, speed, retardation, 0.05f * Settings.GAME_FPS, tempColor);
 		}
 	}
-	
-	private Color temp;
-	
+
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		temp = batch.getColor();
+		Color temp = batch.getColor();
 		batch.setColor(getColor());
 		batch.draw(getImage(), getX(), getY() + Settings.getLevelYOffset() + getZ(), getWidth(), getHeight() + getDepth());
 		batch.setColor(temp);

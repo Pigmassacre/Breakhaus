@@ -9,7 +9,7 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class Sunrays extends Widget {
 	
-	private TextureRegion image;
+	private final TextureRegion image;
 	
 	private float rotation;
 	
@@ -51,12 +51,10 @@ public class Sunrays extends Widget {
 		
 		rotation += delta * 6;
 	}
-	
-	private Color temp;
-	
+
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		temp = batch.getColor();
+		Color temp = batch.getColor();
 		batch.setColor(getColor());
 		batch.draw(image, getX() + offsetX, getY() + offsetY, getWidth() / 2, getHeight() / 2, getWidth(), getHeight(), 1f, 1f, rotation);
 		batch.setColor(temp);

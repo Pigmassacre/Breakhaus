@@ -23,7 +23,7 @@ public class Blinder extends Widget {
 
 	private int ROWS, COLS;
 	
-	private TextureRegion image;
+	private final TextureRegion image;
 	private Array<BlinderPart> blinderParts;
 	
 	public Blinder() {
@@ -210,7 +210,7 @@ public class Blinder extends Widget {
 	
 	private class BlinderPart extends Widget {
 		
-		private TextureRegion image;
+		private final TextureRegion image;
 		
 		public BlinderPart(TextureRegion image) {
 			this.image = image;

@@ -15,8 +15,8 @@ import com.pigmassacre.breakhaus.gui.Item.ItemCallback;
 
 public class PauseScreen extends AbstractScreen {
 	
-	AbstractScreen pausedScreen;
-	Backdrop backdrop;
+	private final AbstractScreen pausedScreen;
+	private final Backdrop backdrop;
 	
 	public PauseScreen(Breakhaus game, AbstractScreen pausedScreen) {
 		super(game);

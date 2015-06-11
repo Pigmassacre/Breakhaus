@@ -125,7 +125,11 @@ public class Assets {
 		return assetManager.get(name, Music.class);
 	}
 
-	public static BitmapFont getBitmapFont(String name) {
+	public static BitmapFont getStandardFont() {
+		return assetManager.get("fonts/ADDLG__.fnt", BitmapFont.class);
+	}
+
+	public static BitmapFont getFont(String name) {
 		return assetManager.get(name, BitmapFont.class);
 	}
 	

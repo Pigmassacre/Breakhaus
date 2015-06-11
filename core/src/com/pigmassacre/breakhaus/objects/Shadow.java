@@ -13,11 +13,11 @@ public class Shadow extends GameActor implements Poolable {
 
 		protected Shadow newObject() {
 			return new Shadow();
-		};
+		}
 
 	};
 	
-	public boolean linger;
+	private boolean linger;
 	
 	public Shadow() {
 		alive = false;
@@ -38,12 +38,7 @@ public class Shadow extends GameActor implements Poolable {
 		
 		Groups.shadowGroup.addActor(this);
 	}
-	
-	@Override
-	protected void setParent(Group parent) {
-		super.setParent(parent);
-	}
-	
+
 	@Override
 	public void reset() {
 		if (linger) {
@@ -74,14 +69,6 @@ public class Shadow extends GameActor implements Poolable {
 	public float getHeight() {
 		return parentActor.getHeight();
 	}
-	
-//	@Override
-//	public void act(float delta) {
-//		super.act(delta);
-//		stateTime += delta;
-//		offsetX = MathUtils.sin(stateTime) * 0.5f * Settings.GAME_SCALE;
-//		offsetY = MathUtils.sin(stateTime * 2) * -0.5f * Settings.GAME_SCALE;
-//	}
 
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
@@ -89,7 +76,7 @@ public class Shadow extends GameActor implements Poolable {
 		batch.setColor(getColor());
 		if (parentActor instanceof Paddle) {
 			Paddle paddle = (Paddle) parentActor;
-			paddle.drawImages(batch, parentAlpha, 0, -paddle.getZ(), -paddle.getDepth());
+			paddle.drawImages(batch, 0, -paddle.getZ(), -paddle.getDepth());
 		} else {
 			batch.draw(parentActor.getImage(), getX(), getY() + Settings.getLevelYOffset(), getWidth(), getHeight());
 		}

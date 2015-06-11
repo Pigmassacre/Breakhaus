@@ -15,14 +15,14 @@ public class Particle extends GameActor implements Poolable {
 
 		protected Particle newObject() {
 			return new Particle();
-		};
+		}
 
 	};
 	
 	private final Color shadowBlendColor = new Color(0.4f, 0.4f, 0.4f, 1.0f);
 	
-	public float angle, speed, retardation;
-	public float alphaStep;
+	private float angle, speed, retardation;
+	private float alphaStep;
 	
 	public Particle() {
 		alive = false;
@@ -83,8 +83,6 @@ public class Particle extends GameActor implements Poolable {
 			}
 		}
 
-//		setZ(getZ() - retardation * 10 * delta);
-		
 		setX(getX() + MathUtils.cos(angle) * speed * delta);
 		setY(getY() + MathUtils.sin(angle) * speed * delta);
 		
@@ -107,16 +105,13 @@ public class Particle extends GameActor implements Poolable {
 		}
 		if (outside) {
 			particlePool.free(this);
-			return;
 		}
 	}
-	
-	private Color temp;
-	
+
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		if (alive) {
-			temp = batch.getColor();
+			Color temp = batch.getColor();
 			batch.setColor(getColor());
 			batch.draw(getImage(), getX(), getY() + Settings.getLevelYOffset() + getZ(), getWidth(), getHeight());
 			batch.setColor(temp);

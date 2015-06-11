@@ -13,19 +13,18 @@ public class Logo extends Widget {
 	private static final int FRAME_COLS = 1;
 	private static final int FRAME_ROWS = 7;
 	
-	private Animation logoAnimation;
-	private TextureRegion logoSheet;
-	private TextureRegion[] logoFrames;
+	private final Animation logoAnimation;
+	private final TextureRegion[] logoFrames;
 	private TextureRegion currentFrame;
 	
-	float animationStateTime, waitTime, stateTime;
+	private float animationStateTime, waitTime, stateTime;
 	
 	private float scaleX, scaleY, rotation;
 	
 	public Logo() {
 		super();
-		
-		logoSheet = Assets.getTextureRegion("mBreak_title");
+
+		TextureRegion logoSheet = Assets.getTextureRegion("mBreak_title");
 		TextureRegion[][] temp = logoSheet.split(logoSheet.getRegionWidth() / FRAME_COLS, logoSheet.getRegionHeight() / FRAME_ROWS);
 		logoFrames = new TextureRegion[(FRAME_COLS * FRAME_ROWS) + 1];
 		

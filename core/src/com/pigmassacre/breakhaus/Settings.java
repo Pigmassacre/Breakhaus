@@ -10,11 +10,11 @@ public class Settings {
 	private static final String DEBUG_MODE = "debug_mode";
 	
 	public static int GAME_SCALE = 4;
-	public static int GAME_FPS = 60;
+	public static final int GAME_FPS = 60;
 	
 	public static float LEVEL_WIDTH, LEVEL_HEIGHT, LEVEL_X, LEVEL_MAX_X, LEVEL_Y, LEVEL_MAX_Y;
 	
-	protected static Preferences getPreferences() {
+	private static Preferences getPreferences() {
 		return Gdx.app.getPreferences(PREFS_NAME);
 	}
 	

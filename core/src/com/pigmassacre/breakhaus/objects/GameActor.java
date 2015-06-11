@@ -22,7 +22,7 @@ public class GameActor extends Actor {
 
 	protected float stateTime;
 
-	public Group effectGroup;
+	public final Group effectGroup;
 	
 	public boolean alive;
 	private DestroyCallback destroyCallback;
@@ -138,7 +138,7 @@ public class GameActor extends Actor {
 	}
 
 	public enum WallSide {
-		LEFT, RIGHT, UP, DOWN;
+		LEFT, RIGHT, UP, DOWN
 	}
 
 	public void onHitWall(WallSide side) {

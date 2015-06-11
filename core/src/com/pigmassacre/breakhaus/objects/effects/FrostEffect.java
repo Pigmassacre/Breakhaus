@@ -10,7 +10,7 @@ import com.pigmassacre.breakhaus.objects.Particle;
 public class FrostEffect extends Effect {
 
 	private static final float PADDLE_FREEZE_DURATION = 2f;
-	private static final float PADDLE_FREEZE_SPEED_REDUCTION = 2f * Settings.GAME_FPS * Settings.GAME_SCALE;
+	private static final float PADDLE_FREEZE_SPEED_REDUCTION = 5f;
 	
 	public static final float PARTICLE_SPAWN_RATE = 0.6f;
 	public static final int PARTICLE_LEAST_SPAWN_AMOUNT = 2;
@@ -21,7 +21,7 @@ public class FrostEffect extends Effect {
 	public FrostEffect(GameActor parent, float duration) {
 		super(parent, duration);
 		if (parent instanceof Paddle) {
-			((Paddle) parent).maxSpeed -= PADDLE_FREEZE_SPEED_REDUCTION;
+			((Paddle) parent).setSpeed(((Paddle) parent).getSpeed() - PADDLE_FREEZE_SPEED_REDUCTION);
 		}
 	}
 
@@ -46,7 +46,7 @@ public class FrostEffect extends Effect {
 				float retardation = speed / 52f;
 				Color tempColor = new Color(MathUtils.random(0, 0.2f), MathUtils.random(0.5f, 1f), MathUtils.random(0.85f, 1f), 1f);
 				Particle particle = Particle.particlePool.obtain();
-				particle.init(getX() + getWidth() / 2 - width / 2, getY() + getHeight() / 2 - height / 2 - getDepth() + getZ(), width, width, angle, speed, retardation, 0.03f * Settings.GAME_FPS, tempColor);
+				particle.init(getX() + getWidth() / 2 - width / 2, getY() + getHeight() / 2 - height / 2 - getDepth() + getZ(), width, height, angle, speed, retardation, 0.03f * Settings.GAME_FPS, tempColor);
 			}
 		}
 	}
@@ -55,7 +55,7 @@ public class FrostEffect extends Effect {
 	public void destroy() {
 		super.destroy();
 		if (parentActor instanceof Paddle) {
-			((Paddle) parentActor).maxSpeed += PADDLE_FREEZE_SPEED_REDUCTION;
+			((Paddle) parentActor).setSpeed(((Paddle) parentActor).getSpeed() + PADDLE_FREEZE_SPEED_REDUCTION);
 		}
 	}
 	

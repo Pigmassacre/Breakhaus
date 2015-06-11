@@ -13,16 +13,17 @@ import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
 
 public class IntroScreen extends AbstractScreen {
 
-	Logo logo;
-	Sunrays sunrays;
-	TextItem[] introMessage;
-	float stateTime;
+	private final Logo logo;
+	private final Sunrays sunrays;
+	private TextItem[] introMessage;
+	private float stateTime;
 	
-	TextItem versionMessage;
+	private final TextItem versionMessage;
 	
-	float introTime, endTime;
+	private float introTime;
+	private float endTime;
 	
-	private Blinder blinder;
+	private final Blinder blinder;
 	
 	public IntroScreen(Breakhaus game) {
 		super(game);
@@ -64,11 +65,10 @@ public class IntroScreen extends AbstractScreen {
 		endTime = 1.0f;
 	}
 	
-	@SuppressWarnings("incomplete-switch")
 	private void createIntroMessage() {
-		CharSequence string = null;
-		int blinkBegin = 0;
-		int blinkEnd = 0;
+		CharSequence string;
+		int blinkBegin;
+		int blinkEnd;
 		switch(Gdx.app.getType()) {
 		   case Android:
 			   string = "TOUCH to start";
@@ -78,6 +78,11 @@ public class IntroScreen extends AbstractScreen {
 		   case Desktop:
 			   string = "Press ENTER to start";
 			   blinkBegin = 6;
+			   blinkEnd = 11;
+			   break;
+		   default:
+			   string = "PRESS START";
+			   blinkBegin = 0;
 			   blinkEnd = 11;
 			   break;
 		}
@@ -92,8 +97,8 @@ public class IntroScreen extends AbstractScreen {
 		}
 		
 		int sum = 0;
-		for (int i = 0; i < introMessage.length; i++) {
-			sum += introMessage[i].getWidth();
+		for (TextItem anIntroMessage : introMessage) {
+			sum += anIntroMessage.getWidth();
 		}
 		
 		float offset = 0;

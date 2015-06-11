@@ -10,8 +10,8 @@ import java.util.List;
 
 public class Traversal implements InputProcessor {
 	
-	public List<Menu> menus = new ArrayList<Menu>();
-	private Camera camera;
+	public final List<Menu> menus = new ArrayList<Menu>();
+	private final Camera camera;
 	
 	public Traversal(Camera camera) {
 		this.camera = camera;
@@ -142,7 +142,7 @@ public class Traversal implements InputProcessor {
 		possibleItems = temp;
 
 		if (!possibleItems.isEmpty()) {
-			float difference = 0f;
+			float difference;
 			
 			float leastDifferenceY = Float.MAX_VALUE;
 			for (Item item : possibleItems) {
@@ -159,7 +159,6 @@ public class Traversal implements InputProcessor {
 			possibleItems = temp;
 			
 			float leastDifferenceX = Float.MAX_VALUE;
-			difference = 0f;
 			for (Item item : possibleItems) {
 				difference = Math.abs(item.getX() + (item.getWidth() / 2) - (selectedItem.getX() + (selectedItem.getWidth() / 2)));
 				if (difference < leastDifferenceX)
@@ -202,7 +201,7 @@ public class Traversal implements InputProcessor {
 		possibleItems = temp;
 		
 		if (!possibleItems.isEmpty()) {
-			float difference = 0f;
+			float difference;
 			
 			float leastDifferenceX = Float.MAX_VALUE;
 			for (Item item : possibleItems) {
@@ -219,7 +218,6 @@ public class Traversal implements InputProcessor {
 			possibleItems = temp;
 			
 			float leastDifferenceY = Float.MAX_VALUE;
-			difference = 0f;
 			for (Item item : possibleItems) {
 				difference = Math.abs(item.getY() - (item.getHeight() / 2) - (selectedItem.getY() - (selectedItem.getHeight() / 2)));
 				if (difference < leastDifferenceY)

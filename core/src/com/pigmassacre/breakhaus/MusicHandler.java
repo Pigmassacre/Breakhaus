@@ -11,8 +11,8 @@ import java.util.List;
 public class MusicHandler {
 
 	private static Music currentMusic;
-	private static List<Music> musicList = new LinkedList<Music>();
-	private static ObjectMap<Music, String> musicMap = new ObjectMap<Music, String>();
+	private static final List<Music> musicList = new LinkedList<Music>();
+	private static final ObjectMap<Music, String> musicMap = new ObjectMap<Music, String>();
 	private static int currentPosition = 0;
 	private static boolean shuffle = false;
 
@@ -108,10 +108,7 @@ public class MusicHandler {
 	}
 	
 	public static boolean isLooping() {
-		if (currentMusic != null) {
-			return currentMusic.isLooping();
-		}
-		return false;
+		return currentMusic != null && currentMusic.isLooping();
 	}
 	
 	public static void setLooping(boolean looping) {
@@ -121,10 +118,7 @@ public class MusicHandler {
 	}
 	
 	public static boolean isPlaying() {
-		if (currentMusic != null) {
-			return currentMusic.isPlaying();
-		}
-		return false;
+		return currentMusic != null && currentMusic.isPlaying();
 	}
 	
 	public static float getVolume() {

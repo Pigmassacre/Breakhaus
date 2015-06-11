@@ -8,10 +8,11 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class Block extends GameActor {	
 
-	protected float health, maxHealth;
-	private Color originalColor;
+	private float health;
+	private final float maxHealth;
+	private final Color originalColor;
 	
-	private Sound onDestroySound;
+	private final Sound onDestroySound;
 	
 	public Block(float x, float y, Player owner, Color color) {
 		super();
@@ -99,12 +100,10 @@ public class Block extends GameActor {
 			super.destroy();
 		}
 	}
-	
-	private Color temp;
-	
+
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		temp = new Color(batch.getColor());
+		Color temp = new Color(batch.getColor());
 		batch.setColor(getColor());
 		batch.draw(getImage(), getX(), getY() + Settings.getLevelYOffset() + getZ(), getWidth(), getHeight() + getDepth());
 		batch.setColor(temp);

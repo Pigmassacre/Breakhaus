@@ -14,19 +14,18 @@ public class Paddle extends GameActor {
 	private static final float HEIGHT_FROM_GROUND = 2f;
 
 	private float targetX;
+	private float speed;
 
-	private TextureRegion leftImage, middleImage, rightImage;
-	private float leftWidth, middleWidth, rightWidth;
+	private final TextureRegion leftImage, middleImage, rightImage;
+	private final float leftWidth, middleWidth, rightWidth;
 
-	private float smallestWidth, largestWidth;
-	public float actualWidth, actualHeight;
+	private final float smallestWidth, largestWidth;
+	private float actualWidth, actualHeight;
 
 	public Paddle(Player owner) {
 		super();
-		this.owner = owner;
-		owner.paddle = this;
 
-		setColor(new Color(owner.getColor()));
+		this.owner = owner;
 
 		leftImage = Assets.getTextureRegion("paddle_left");
 		middleImage = Assets.getTextureRegion("paddle_middle");
@@ -46,6 +45,8 @@ public class Paddle extends GameActor {
 
 		rectangle = new Rectangle(getX(), getY(), getWidth(), getHeight());
 
+		speed = 20f;
+
 		shadow = Shadow.shadowPool.obtain();
 		shadow.init(this, false);
 
@@ -56,10 +57,18 @@ public class Paddle extends GameActor {
 		this.targetX = targetX;
 	}
 
+	public float getSpeed() {
+		return speed;
+	}
+
+	public void setSpeed(float speed) {
+		this.speed = speed;
+	}
+
 	@Override
 	public void act(float delta) {
 		super.act(delta);
-		setX(MathUtils.lerp(getX(), targetX, delta * 20));
+		setX(MathUtils.lerp(getX(), targetX, delta * speed));
 		Level.getCurrentLevel().checkCollision(this);
 	}
 
@@ -80,15 +89,17 @@ public class Paddle extends GameActor {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		Color temp = new Color(batch.getColor());
-		batch.setColor(getColor());
-		drawImages(batch, parentAlpha, 0, 0, 0);
+		Color color = getColor();
+		color.a *= parentAlpha;
+		batch.setColor(color);
+		drawImages(batch, 0, 0, 0);
 		batch.setColor(temp);
 		batch.end();
 		batch.begin();
 		super.draw(batch, parentAlpha);
 	}
 
-	public void drawImages(Batch batch, float parentAlpha, float offsetX, float offsetY, float offsetHeight) {
+	public void drawImages(Batch batch, float offsetX, float offsetY, float offsetHeight) {
 		batch.draw(leftImage,
 				getX() + offsetX,
 				getY() + Settings.getLevelYOffset() + getZ() + offsetY + offsetHeight,

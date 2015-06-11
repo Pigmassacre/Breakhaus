@@ -7,9 +7,9 @@ import java.util.List;
 
 public class Menu extends Actor {
 
-	public List<Item> items;
+	public final List<Item> items;
 
-	protected List<Menu> otherMenus;
+	protected final List<Menu> otherMenus;
 	
 	protected Item previouslySelectedItem;
 	

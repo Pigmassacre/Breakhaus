@@ -1,18 +1,17 @@
 package com.pigmassacre.breakhaus.objects;
 
 import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.utils.Array;
 
 public class Groups {
 
-	public static Group ballGroup = new Group();
-	public static Group traceGroup = new Group();
-	public static Group paddleGroup = new Group();
-	public static Group shadowGroup = new Group();
-	public static Group blockGroup = new Group();
-	public static Group powerupGroup = new Group();
-	public static Group particleGroup = new Group();
-	public static Group residueGroup = new Group();
-	public static Group textItemGroup = new Group();
+	public static final Group ballGroup = new Group();
+	public static final Group traceGroup = new Group();
+	public static final Group paddleGroup = new Group();
+	public static final Group shadowGroup = new Group();
+	public static final Group blockGroup = new Group();
+	public static final Group powerupGroup = new Group();
+	public static final Group particleGroup = new Group();
+	public static final Group residueGroup = new Group();
+	public static final Group textItemGroup = new Group();
 
 }

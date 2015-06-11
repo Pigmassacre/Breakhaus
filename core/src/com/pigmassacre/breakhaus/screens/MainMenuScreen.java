@@ -15,8 +15,8 @@ import com.pigmassacre.breakhaus.gui.Item.ItemCallback;
 
 public class MainMenuScreen extends AbstractScreen {
 	
-	Logo logo;
-	Sunrays sunrays;
+	private final Logo logo;
+	private final Sunrays sunrays;
 	
 	public MainMenuScreen(Breakhaus game) {
 		this(game, null, null);
@@ -107,13 +107,11 @@ public class MainMenuScreen extends AbstractScreen {
 						}
 					}
 				case Keys.ESCAPE:
-					for (Menu menu : traversal.menus) {
-						for (Item item : menu.items){
-							item.setSelected(false);
-						}
-						menu.items.get(menu.items.size() - 1).setSelected(true);
-						break;
+					Menu menu = traversal.menus.get(0);
+					for (Item item : menu.items){
+						item.setSelected(false);
 					}
+					menu.items.get(menu.items.size() - 1).setSelected(true);
 					break;
 				}
 				return false;
@@ -122,11 +120,11 @@ public class MainMenuScreen extends AbstractScreen {
 		});
 	}
 
-	public void startPrepareMenu() {
+	private void startPrepareMenu() {
 		game.setScreen(new GameLoadingScreen(game, logo, sunrays));
 	}
 	
-	public void quit() {
+	private void quit() {
 		Settings.savePreferences();
 		Gdx.app.exit();
 	}

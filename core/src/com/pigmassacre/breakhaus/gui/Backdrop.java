@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Backdrop extends Item {
 	
-	ShapeRenderer shapeRenderer;
+	private final ShapeRenderer shapeRenderer;
 	
 	public Backdrop() {
 		shapeRenderer = new ShapeRenderer();

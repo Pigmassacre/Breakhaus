@@ -15,6 +15,11 @@ public class Breakhaus extends Game {
 
 	public static final String LOG = "mBreak";
 
+	private static final float FBO_SCALER = 1f;
+	private static final boolean FBO_ENABLED = true;
+	private FrameBuffer fbo = null;
+	protected TextureRegion fboRegion = null;
+
 	public SpriteBatch spriteBatch;
 
 	private FPSLogger fpsLogger;
@@ -55,18 +60,13 @@ public class Breakhaus extends Game {
 		}
 	}
 
-	private float fboScaler = 1f;
-	private boolean fboEnabled = true;
-	private FrameBuffer fbo = null;
-	protected TextureRegion fboRegion = null;
-
-	public void renderToTexture(Batch spriteBatch) {
+	private void renderToTexture(Batch spriteBatch) {
 		int width = Gdx.graphics.getWidth();
 		int height = Gdx.graphics.getHeight();
 
-		if (fboEnabled) {
+		if (FBO_ENABLED) {
 			if(fbo == null) {
-				fbo = new FrameBuffer(Pixmap.Format.RGB565, (int)(width * fboScaler), (int)(height * fboScaler), false);
+				fbo = new FrameBuffer(Pixmap.Format.RGB565, (int)(width * FBO_SCALER), (int)(height * FBO_SCALER), false);
 				fboRegion = new TextureRegion(fbo.getColorBufferTexture());
 				fboRegion.flip(false, true);
 			}

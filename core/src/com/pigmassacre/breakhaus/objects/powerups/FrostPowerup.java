@@ -14,17 +14,17 @@ public class FrostPowerup extends Powerup {
 	private static final int FRAME_COLS = 1;
 	private static final int FRAME_ROWS = 3;
 
-	private TextureRegion[] frames;
+	private static final float MAX_Z_GRACE = 4;
+	private static final float MIN_Z_GRACE = 1;
 
-	private float maxZGrace = 4;
-	private float minZGrace = 1;
-	
-	private static final float FROST_EFFECT_DURATION = 10f;
-	
 	public static final float PARTICLE_SPAWN_RATE = 0.6f;
 	public static final int PARTICLE_LEAST_SPAWN_AMOUNT = 2;
 	public static final int PARTICLE_MAXIMUM_SPAWN_AMOUNT = 2;
-	
+
+	private static final float FROST_EFFECT_DURATION = 10f;
+
+	private TextureRegion[] frames;
+
 	private float particleSpawnTime = 0f;
 
 	public FrostPowerup(float x, float y) {
@@ -63,9 +63,9 @@ public class FrostPowerup extends Powerup {
 	public void act(float delta) {
 		super.act(delta);
 
-		if (getZ() < minZGrace) {
+		if (getZ() < MIN_Z_GRACE) {
 			setImage(frames[0]);
-		} else if (getZ() > maxZGrace) {
+		} else if (getZ() > MAX_Z_GRACE) {
 			setImage(frames[2]);
 		} else {
 			setImage(frames[1]);
@@ -83,7 +83,7 @@ public class FrostPowerup extends Powerup {
 				float retardation = speed / 52f;
 				Color tempColor = new Color(MathUtils.random(0, 0.2f), MathUtils.random(0.5f, 1f), MathUtils.random(0.85f, 1f), 1f);
 				Particle particle = Particle.particlePool.obtain();
-				particle.init(getX() + getWidth() / 2 - width / 2, getY() + getHeight() / 2 - height / 2 + Settings.getLevelYOffset() + getZ(), width, width, angle, speed, retardation, 0.03f * Settings.GAME_FPS, tempColor);
+				particle.init(getX() + getWidth() / 2 - width / 2, getY() + getHeight() / 2 - height / 2 + Settings.getLevelYOffset() + getZ(), width, height, angle, speed, retardation, 0.03f * Settings.GAME_FPS, tempColor);
 			}
 		}
 	}

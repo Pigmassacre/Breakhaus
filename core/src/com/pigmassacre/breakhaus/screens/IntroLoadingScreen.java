@@ -8,7 +8,7 @@ import com.pigmassacre.breakhaus.gui.TextItem;
 
 public class IntroLoadingScreen extends AbstractScreen {
 
-	TextItem loadingTextItem;
+	private final TextItem loadingTextItem;
 	
 	public IntroLoadingScreen(Breakhaus game) {
 		super(game);

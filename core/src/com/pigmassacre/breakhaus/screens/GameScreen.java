@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
@@ -25,15 +24,15 @@ import com.pigmassacre.breakhaus.objects.*;
 
 public class GameScreen extends AbstractScreen {
 
-	Stage gameStage;
-	OrthographicCamera camera;
+	private final Stage gameStage;
+	private final OrthographicCamera camera;
 
-	Player player;
-	Paddle paddle;
+	private final Player player;
+	private final Paddle paddle;
 	
-	Sunrays sunrays;
+	private final Sunrays sunrays;
 	
-	float oldSpeed;
+	private float oldSpeed;
 	
 	public GameScreen(Breakhaus game, Sunrays givenSunrays) {
 		super(game);
@@ -66,15 +65,18 @@ public class GameScreen extends AbstractScreen {
 		player = new Player("H.E.N.");
 		player.setX(2.5f * Settings.GAME_SCALE);
 		player.setY(2.5f * Settings.GAME_SCALE);
-		player.setColor(GameOptions.getLeftColor());
+		player.setColor(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
+
+		Player opposingPlayer = new Player("Just Blocks");
+		opposingPlayer.setColor(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
 
 		float delay = 0.25f;
 		float z;
 		Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK));
 		for (int x = 0; x < (int) Settings.LEVEL_WIDTH / tempBlock.getWidth(); x++) {
 			for (int y = 0; y < 4; y++) {
-				Block block = new Block(Settings.LEVEL_X + x * tempBlock.getWidth(), Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()), player,
-						player.getColor());
+				Block block = new Block(Settings.LEVEL_X + x * tempBlock.getWidth(), Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()), opposingPlayer,
+						opposingPlayer.getColor());
 				z = block.getZ();
 				block.setZ(350 * Settings.GAME_SCALE);
 				Tween.to(block, GameActorAccessor.Z, 2f)
@@ -85,12 +87,12 @@ public class GameScreen extends AbstractScreen {
 				delay += 0.025f;
 			}
 		}
+		tempBlock.destroy(false);
 		
 		paddle = new Paddle(player);
 		paddle.setX(Settings.LEVEL_X + paddle.getWidth() * 4);
 		paddle.setY(Settings.LEVEL_Y + Settings.LEVEL_HEIGHT / 8f + -paddle.getHeight() / 2);
-		paddle.keyLeft = Keys.LEFT;
-		paddle.keyRight = Keys.RIGHT;
+		player.setPaddle(paddle);
 
 		z = paddle.getZ();
 		paddle.setZ(1000);
@@ -98,10 +100,8 @@ public class GameScreen extends AbstractScreen {
 			.target(z)
 			.ease(TweenEquations.easeOutExpo)
 			.delay(delay + 0.025f)
-			.start(getTweenManager());
+				.start(getTweenManager());
 
-		tempBlock.destroy(false);
-		
 		Ball ball = Ball.ballPool.obtain();
 
 		float angle = MathUtils.PI / 2f;
@@ -146,11 +146,9 @@ public class GameScreen extends AbstractScreen {
 		gameStage.addActor(Level.getCurrentLevel().getForeground());
 		gameStage.addActor(Groups.textItemGroup);
 	}
-	
-	private Array<TextItem> countdownTextItems;
-	
-	protected void startGameCountdown(Ball ball) {
-		countdownTextItems = new Array<TextItem>();
+
+	private void startGameCountdown(Ball ball) {
+		Array<TextItem> countdownTextItems = new Array<TextItem>();
 		int countdown = 3;
 		float angle = - MathUtils.PI / 2f;
 		float angleOffset = 16 * Settings.GAME_SCALE;

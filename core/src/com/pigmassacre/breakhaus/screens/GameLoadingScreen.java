@@ -12,10 +12,10 @@ import com.pigmassacre.breakhaus.gui.TextItem;
 
 public class GameLoadingScreen extends AbstractScreen {
 
-	Logo logo;
-	Sunrays sunrays;
+	private final Logo logo;
+	private final Sunrays sunrays;
 	
-	TextItem loadingTextItem;
+	private final TextItem loadingTextItem;
 	
 	public GameLoadingScreen(Breakhaus game, Logo givenLogo, Sunrays givenSunrays) {
 		super(game);

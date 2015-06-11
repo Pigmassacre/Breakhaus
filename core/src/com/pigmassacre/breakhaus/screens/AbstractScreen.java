@@ -25,11 +25,11 @@ public class AbstractScreen implements Screen {
 
 	protected final Breakhaus game;
 	
-	public Stage stage;
+	public final Stage stage;
 	private TweenManager tweenManager;
 	
 	private InputMultiplexer inputMultiplexer;
-	protected Traversal traversal;
+	protected final Traversal traversal;
 	
 	public float timeScale = 1f;
 	

@@ -29,15 +29,15 @@ public class TweenHelp {
 		List<String> choices = setupChoices(left, right, up, down);
 		
 		String choice = choices.get(MathUtils.random(choices.size() - 1));
-		if (choice == "left") {
+		if (choice.equals("left")) {
 			return Tween.from(item, ActorAccessor.POSITION_X, duration).target(-item.getMaxWidth())
 				.ease(ease)
 				.start(tweenManager);
-		} else if (choice == "right") {
+		} else if (choice.equals("right")) {
 			return Tween.from(item, ActorAccessor.POSITION_X, duration).target(Gdx.graphics.getWidth() + item.getMaxWidth())
 				.ease(ease)
 				.start(tweenManager);
-		} else if (choice == "up") {
+		} else if (choice.equals("up")) {
 			return Tween.from(item, ActorAccessor.POSITION_Y, duration).target(-item.getMaxHeight())
 				.ease(ease)
 				.start(tweenManager);
@@ -52,15 +52,15 @@ public class TweenHelp {
 		List<String> choices = setupChoices(left, right, up, down);
 		
 		String choice = choices.get(MathUtils.random(choices.size() - 1));
-		if (choice == "left") {
+		if (choice.equals("left")) {
 			return Tween.to(item, ActorAccessor.POSITION_X, duration).target(-item.getMaxWidth())
 				.ease(ease)
 				.start(tweenManager);
-		} else if (choice == "right") {
+		} else if (choice.equals("right")) {
 			return Tween.to(item, ActorAccessor.POSITION_X, duration).target(Gdx.graphics.getWidth() + item.getMaxWidth())
 				.ease(ease)
 				.start(tweenManager);
-		} else if (choice == "up") {
+		} else if (choice.equals("up")) {
 			return Tween.to(item, ActorAccessor.POSITION_Y, duration).target(-item.getMaxHeight())
 				.ease(ease)
 				.start(tweenManager);

@@ -20,10 +20,10 @@ public class Powerup extends GameActor {
 		if (availablePowerups == null) {
 			availablePowerups = new Array<Class<? extends Powerup>>();
 			availablePowerups.add(ElectricityPowerup.class);
-//			availablePowerups.add(FirePowerup.class);
-//			availablePowerups.add(FrostPowerup.class);
-//			availablePowerups.add(MultiballPowerup.class);
-//			availablePowerups.add(SpeedPowerup.class);
+			availablePowerups.add(FirePowerup.class);
+			availablePowerups.add(FrostPowerup.class);
+			availablePowerups.add(MultiballPowerup.class);
+			availablePowerups.add(SpeedPowerup.class);
 		}
 		return availablePowerups;
 	}
@@ -61,7 +61,7 @@ public class Powerup extends GameActor {
 
 	public interface EffectCommand {
 
-		public void execute(GameActor actor);
+		void execute(GameActor actor);
 		
 	}
 	

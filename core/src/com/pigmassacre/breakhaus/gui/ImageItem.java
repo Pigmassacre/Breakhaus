@@ -7,7 +7,7 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class ImageItem extends RectItem {
 
-	private TextureRegion image;
+	private final TextureRegion image;
 	
 	public ImageItem(String atlasRegion) {
 		super();
