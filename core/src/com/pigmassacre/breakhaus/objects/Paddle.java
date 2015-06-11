@@ -12,7 +12,7 @@ public class Paddle extends GameActor {
 
 	private static final float DEPTH = 2f;
 	private static final float HEIGHT_FROM_GROUND = 2f;
-	private static final int ROW_GENERATION_HIT_AMOUNT = 8;
+	private static final int ROW_GENERATION_HIT_AMOUNT = 1;
 
 	private float targetX;
 	private float speed;
@@ -22,7 +22,7 @@ public class Paddle extends GameActor {
 
 	private final float smallestWidth, largestWidth;
 	private float actualWidth, actualHeight;
-	private int hitCount = 0;
+	private int hitCount = ROW_GENERATION_HIT_AMOUNT;
 
 	public Paddle(Player owner) {
 		super();

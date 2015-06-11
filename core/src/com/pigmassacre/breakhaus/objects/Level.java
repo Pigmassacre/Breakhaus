@@ -1,5 +1,6 @@
 package com.pigmassacre.breakhaus.objects;
 
+import aurelienribon.tweenengine.TweenManager;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -16,11 +17,13 @@ public class Level extends Actor {
 	private final TextureRegion backgroundImage, horizontalWallTop;
 	private final TextureRegion verticalWallLeft, verticalWallRight, horizontalWallBottom;
 	private final TextureRegion topLeftCorner, bottomLeftCorner, topRightCorner, bottomRightCorner;
-	
+
+	private TweenManager tweenManager;
+
 	public static Level getCurrentLevel() {
 		return currentLevel;
 	}
-	
+
 	public static void setCurrentLevel(String id) {
 		currentLevel = new Level(id);
 	}
@@ -53,7 +56,15 @@ public class Level extends Actor {
 	public Foreground getForeground() {
 		return foreground;
 	}
-	
+
+	public TweenManager getTweenManager() {
+		return tweenManager;
+	}
+
+	public void setTweenManager(TweenManager tweenManager) {
+		this.tweenManager = tweenManager;
+	}
+
 	private class Background extends Actor {
 		
 		@Override

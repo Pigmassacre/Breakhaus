@@ -62,6 +62,7 @@ public class GameScreen extends AbstractScreen {
 		Settings.LEVEL_MAX_Y = Settings.LEVEL_Y + Settings.LEVEL_HEIGHT;
 		
 		Level.setCurrentLevel("glass");
+		Level.getCurrentLevel().setTweenManager(getTweenManager());
 
 		camera.translate(-Gdx.graphics.getWidth() / 2f,
 				-Gdx.graphics.getHeight() / 2f);
@@ -79,9 +80,16 @@ public class GameScreen extends AbstractScreen {
 		Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK));
 		for (int x = 0; x < (int) Settings.LEVEL_WIDTH / tempBlock.getWidth(); x++) {
 			for (int y = 0; y < 4; y++) {
-				Block block = new Block(Settings.LEVEL_X + x * tempBlock.getWidth(), Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()), opposingPlayer,
-						opposingPlayer.getColor());
+				Block block = new Block(
+						Settings.LEVEL_X + x * tempBlock.getWidth(),
+						Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()),
+						opposingPlayer,
+						new Color(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f));
+
+				/* Add the block to the block group. */
 				Groups.blockGroup.addActor(block);
+
+				/* Tween the z value of the block, making it "rain down" from the sky. */
 				z = block.getZ();
 				block.setZ(350 * Settings.GAME_SCALE);
 				Tween.to(block, GameActorAccessor.Z, 2f)
@@ -283,10 +291,20 @@ public class GameScreen extends AbstractScreen {
 		if (player.getPaddle().getHitCount() == 0) {
 			player.getPaddle().resetHitCount();
 
+			/* Finish any potential remaining tweens. */
+			getTweenManager().update(1000f);
+
 			/* Move all current blocks down one row. */
 			for (Actor actor : Groups.blockGroup.getChildren()) {
-				actor.setY(actor.getY() - actor.getHeight());
+				Tween.to(actor, GameActorAccessor.POSITION_Y, 0.5f)
+						.target(actor.getY() - actor.getHeight())
+						.ease(TweenEquations.easeOutExpo)
+						.delay(MathUtils.random(0.1f))
+						.start(getTweenManager());
+				//actor.setY(actor.getY() - actor.getHeight());
 			}
+
+			//float delay = 0f;
 
 			/* Create a new row of blocks. */
 			Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK));
@@ -295,10 +313,19 @@ public class GameScreen extends AbstractScreen {
 						Settings.LEVEL_X + x * tempBlock.getWidth(),
 						Settings.LEVEL_MAX_Y - tempBlock.getHeight(),
 						opposingPlayer,
-						opposingPlayer.getColor());
+						new Color(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f));
 
 				/* Add the new block to the start of the group, so it renders correctly. */
 				Groups.blockGroup.addActorBefore(Groups.blockGroup.getChildren().first(), block);
+
+				float z = block.getZ();
+				block.setZ(350 * Settings.GAME_SCALE);
+				Tween.to(block, GameActorAccessor.Z, MathUtils.random(0.5f, 0.75f))
+						.target(z)
+						.ease(TweenEquations.easeOutExpo)
+				//		.delay(delay)
+						.start(getTweenManager());
+				//delay += 0.005f;
 			}
 			tempBlock.destroy(false);
 		}

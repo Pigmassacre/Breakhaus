@@ -8,6 +8,8 @@ import com.pigmassacre.breakhaus.Settings;
 
 public class Block extends GameActor {	
 
+	public static final float STANDARD_Z = 2f * Settings.GAME_SCALE;
+
 	private float health;
 	private final float maxHealth;
 	private final Color originalColor;
@@ -21,7 +23,7 @@ public class Block extends GameActor {
 		onDestroySound = Assets.getSound("sound/blockDestroyed.wav");
 		
 		setDepth(2 * Settings.GAME_SCALE);
-		setZ(2 * Settings.GAME_SCALE);
+		setZ(STANDARD_Z);
 		
 		setX(x);
 		setY(y);

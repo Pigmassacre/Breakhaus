@@ -1,16 +1,21 @@
 package com.pigmassacre.breakhaus.objects;
 
+import aurelienribon.tweenengine.Timeline;
+import aurelienribon.tweenengine.Tween;
+import aurelienribon.tweenengine.TweenEquations;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Pool.Poolable;
 import com.pigmassacre.breakhaus.Assets;
 import com.pigmassacre.breakhaus.Settings;
+import com.pigmassacre.breakhaus.gui.Accessors.GameActorAccessor;
 import com.pigmassacre.breakhaus.objects.effects.Effect;
 import com.pigmassacre.breakhaus.objects.effects.Flash;
 import com.pigmassacre.breakhaus.objects.powerups.Powerup;
@@ -359,7 +364,27 @@ public class Ball extends GameActor implements Poolable {
 		shootParticlesOnHit(3, 5);
 		super.onHitObject(object);
 	}
-	
+
+	@Override
+	public void onHitBlock(Block block) {
+		for (Actor actor : Groups.blockGroup.getChildren()) {
+			GameActor gameActor = ((GameActor) actor);
+			float dst = Vector2.dst(block.getX(), block.getY(), gameActor.getX(), gameActor.getY());
+			//if (dst <= 200) {
+				float delay = dst / 1000;
+				Timeline.createSequence()
+						.push(Tween.to(gameActor, GameActorAccessor.Z, 0.15f)
+								.target(Math.max(Block.STANDARD_Z, 20f - (20 * (dst / 200))))
+								.ease(TweenEquations.easeOutExpo)
+								.delay(delay))
+						.push(Tween.to(gameActor, GameActorAccessor.Z, 0.2f)
+								.target(Block.STANDARD_Z)
+								.ease(TweenEquations.easeOutExpo))
+						.start(Level.getCurrentLevel().getTweenManager());
+			//}
+		}
+	}
+
 	@Override
 	public void onHitPaddle(Paddle paddle) {
 		owner = paddle.owner;
