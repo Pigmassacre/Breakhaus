@@ -16,7 +16,7 @@ public class Block extends GameActor {
 	
 	private final Sound onDestroySound;
 	
-	public Block(float x, float y, Player owner, Color color) {
+	public Block(float x, float y, Player owner, Color color, DestroyCallback callback, Object callbackData) {
 		super();
 		
 		setImage(Assets.getTextureRegion("block"));
@@ -42,6 +42,8 @@ public class Block extends GameActor {
 		
 		shadow = Shadow.shadowPool.obtain();
 		shadow.init(this, false);
+
+		setDestroyCallback(callback, callbackData);
 	}
 	
 	@Override
@@ -76,7 +78,6 @@ public class Block extends GameActor {
 	public void destroy() {
 		super.destroy();
 		onDestroySound.play();
-		Level.getCurrentLevel().getPlayer().addScore(25);
 	}
 	
 	public void destroy(boolean playSound) {

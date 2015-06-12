@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -89,14 +90,12 @@ public class GameScreen extends AbstractScreen {
 
 		float delay = 0.25f;
 		float z;
-		Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK));
+		Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK), null, null);
 		for (int x = 0; x < (int) Settings.LEVEL_WIDTH / tempBlock.getWidth(); x++) {
 			for (int y = 0; y < 4; y++) {
-				Block block = new Block(
+				Block block = createBlock(
 						Settings.LEVEL_X + x * tempBlock.getWidth(),
-						Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()),
-						opposingPlayer,
-						new Color(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f));
+						Settings.LEVEL_MAX_Y - tempBlock.getHeight() - (y * tempBlock.getHeight()));
 
 				/* Add the block to the block group. */
 				Groups.blockGroup.addActor(block);
@@ -170,6 +169,64 @@ public class GameScreen extends AbstractScreen {
 		gameStage.addActor(Groups.particleGroup);
 		gameStage.addActor(Level.getCurrentLevel().getForeground());
 		gameStage.addActor(Groups.textItemGroup);
+	}
+
+	private Block createBlock(float x, float y) {
+		return new Block(
+				x, y,
+				opposingPlayer,
+				new Color(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f),
+				new GameActor.DestroyCallback() {
+					@Override
+					public void execute(GameActor actor, Object data) {
+						addScore(25, actor);
+					}
+				}, null);
+	}
+
+	private void addScore(final int score, GameActor startActor) {
+		/* Create the TextItem to display the gained score. */
+		Vector3 pos = gameStage.getCamera().project(new Vector3(startActor.getX(), startActor.getY(), 0));
+		TextItem scoreItem = new TextItem(String.valueOf(score));
+		scoreItem.setX(pos.x + (startActor.getWidth() - scoreItem.getWidth()) / 2f);
+		scoreItem.setY(pos.y + (startActor.getHeight() - scoreItem.getHeight()) / 2f + scoreItem.getHeight() * 2f);
+		//scoreItem.setX((Gdx.graphics.getWidth() - scoreItem.getWidth()) / 2f);
+		//scoreItem.setY((Gdx.graphics.getHeight() - scoreItem.getHeight()) / 2f);
+		scoreItem.setColor(Color.WHITE);
+		scoreItem.getColor().a = 0f;
+		stage.addActor(scoreItem);
+
+		/* Create a timeline that animates the movement from the destroyed block to the score item. */
+		Timeline.createSequence()
+				.beginParallel()
+				.push(Tween.to(scoreItem, ActorAccessor.ALPHA, 0.15f)
+						.target(1f)
+						.ease(TweenEquations.easeOutExpo))
+				.push(Tween.to(scoreItem, ActorAccessor.POSITION_XY, 1f)
+						.target(scoreTextItem.getX() + (scoreTextItem.getWidth() - scoreItem.getWidth()) / 2f,
+								scoreTextItem.getY() + (scoreTextItem.getHeight() - scoreItem.getHeight()) / 2f)
+						.ease(TweenEquations.easeInOutQuart))
+				.push(Timeline.createSequence()
+						.pushPause(0.65f)
+						.push(Tween.to(scoreItem, ActorAccessor.ALPHA, 0.2f)
+								.target(0f)
+								.ease(TweenEquations.easeInOutExpo))
+						.setCallback(new TweenCallback() {
+							@Override
+							public void onEvent(int i, BaseTween<?> baseTween) {
+								player.addScore(score);
+							}
+						})
+						.setCallbackTriggers(TweenCallback.COMPLETE))
+				.end()
+				/*.setCallback(new TweenCallback() {
+					@Override
+					public void onEvent(int i, BaseTween<?> baseTween) {
+						player.addScore(score);
+					}
+				})
+				.setCallbackTriggers(TweenCallback.COMPLETE)*/
+				.start(getTweenManager());
 	}
 
 	private void startGameCountdown(Ball ball) {
@@ -325,13 +382,11 @@ public class GameScreen extends AbstractScreen {
 			}
 
 			/* Create a new row of blocks. */
-			Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK));
+			Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK), null, null);
 			for (int x = 0; x < (int) Settings.LEVEL_WIDTH / tempBlock.getWidth(); x++) {
-				Block block = new Block(
+				Block block = createBlock(
 						Settings.LEVEL_X + x * tempBlock.getWidth(),
-						Settings.LEVEL_MAX_Y - tempBlock.getHeight(),
-						opposingPlayer,
-						new Color(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f));
+						Settings.LEVEL_MAX_Y - tempBlock.getHeight());
 
 				/* Add the new block to the start of the group, so it renders correctly. */
 				Groups.blockGroup.addActorBefore(Groups.blockGroup.getChildren().first(), block);
