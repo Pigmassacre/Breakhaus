@@ -11,6 +11,8 @@ public class Level extends Actor {
 
 	private static Level currentLevel;
 
+	private final Player player;
+
 	private final Background background;
 	private final Foreground foreground;
 	
@@ -24,11 +26,13 @@ public class Level extends Actor {
 		return currentLevel;
 	}
 
-	public static void setCurrentLevel(String id) {
-		currentLevel = new Level(id);
+	public static void setCurrentLevel(String id, Player player) {
+		currentLevel = new Level(id, player);
 	}
 	
-	private Level(String id) {
+	private Level(String id, Player player) {
+		this.player = player;
+
 		backgroundImage = Assets.getTextureRegion(id + "/floor");
 		
 		verticalWallLeft = Assets.getTextureRegion(id + "/wall_vertical_left");
@@ -47,6 +51,10 @@ public class Level extends Actor {
 		
 		background = new Background();
 		foreground = new Foreground();
+	}
+
+	public Player getPlayer() {
+		return player;
 	}
 
 	public Background getBackground() {

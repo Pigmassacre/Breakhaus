@@ -62,25 +62,10 @@ public class Block extends GameActor {
 		getColor().g = originalColor.g * (health / maxHealth);
 		getColor().b = originalColor.b * (health / maxHealth);
 	}
-	
-	public void onHit(float damage) {
-		damage(damage);
-	}
 
-//	public float startTime = MathUtils.random() * 100000f;
-	
 	@Override
 	public void act(float delta) {
 		super.act(delta);
-		
-//		stateTime += delta;
-//		setZ(((MathUtils.sin(startTime + stateTime * 10) + 1) / 2) * 5); 
-		
-//		if (offsetZ > 0) {
-//			offsetZ -= 0.02 * Settings.GAME_SCALE; 
-//		} else if (offsetZ < 0) {
-//			offsetZ += 0.02 * Settings.GAME_SCALE;
-//		}
 		
 		if (health <= 0) {
 			destroy();
@@ -91,6 +76,7 @@ public class Block extends GameActor {
 	public void destroy() {
 		super.destroy();
 		onDestroySound.play();
+		Level.getCurrentLevel().getPlayer().addScore(25);
 	}
 	
 	public void destroy(boolean playSound) {

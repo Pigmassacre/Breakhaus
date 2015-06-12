@@ -7,10 +7,13 @@ public class Player extends Actor {
 	private final String name;
 
 	private Paddle paddle;
+
+	private int score;
 	
 	public Player(String name) {
 		super();
 		this.name = name;
+		score = 0;
 	}
 
 	@Override
@@ -25,6 +28,18 @@ public class Player extends Actor {
 	public void setPaddle(Paddle paddle) {
 		this.paddle = paddle;
 		paddle.setColor(getColor());
+	}
+
+	public int getScore() {
+		return score;
+	}
+
+	public void setScore(int score) {
+		this.score = score;
+	}
+
+	public void addScore(int score) {
+		this.score += score;
 	}
 
 	@Override

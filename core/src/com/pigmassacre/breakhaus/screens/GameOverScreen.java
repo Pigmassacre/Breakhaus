@@ -13,13 +13,14 @@ import com.pigmassacre.breakhaus.MusicHandler;
 import com.pigmassacre.breakhaus.gui.Accessors.ActorAccessor;
 import com.pigmassacre.breakhaus.gui.*;
 import com.pigmassacre.breakhaus.gui.Item.ItemCallback;
+import com.pigmassacre.breakhaus.objects.Player;
 
 public class GameOverScreen extends AbstractScreen {
 
 	private final AbstractScreen pausedScreen;
 	private final Backdrop backdrop;
 
-	public GameOverScreen(Breakhaus game, AbstractScreen pausedScreen) {
+	public GameOverScreen(Breakhaus game, AbstractScreen pausedScreen, Player player) {
 		super(game);
 		Gdx.input.setCursorCatched(false);
 		this.pausedScreen = pausedScreen;
@@ -30,7 +31,7 @@ public class GameOverScreen extends AbstractScreen {
 		gameOverTextItem.setY(Gdx.graphics.getHeight() - Gdx.graphics.getHeight() / 6f);
 		stage.addActor(gameOverTextItem);
 
-		TextItem scoreTextItem = new TextItem("Score: 10000");
+		TextItem scoreTextItem = new TextItem("Score: " + player.getScore());
 		scoreTextItem.setColor(Color.WHITE);
 		scoreTextItem.setX((Gdx.graphics.getWidth() - scoreTextItem.getWidth()) / 2f);
 		scoreTextItem.setY(gameOverTextItem.getY() - scoreTextItem.getHeight() * 1.5f);
@@ -67,7 +68,7 @@ public class GameOverScreen extends AbstractScreen {
 			public void execute(Item data) {
 				quit();
 			}
-			
+
 		});
 		menu.add(textItem);
 		Tween.from(textItem, ActorAccessor.POSITION_X, 0.75f)

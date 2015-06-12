@@ -28,6 +28,7 @@ import com.pigmassacre.breakhaus.objects.*;
 
 public class GameScreen extends AbstractScreen {
 
+	private final TextItem scoreTextItem;
 	private final TextItem hitCounterTextItem;
 
 	private final Stage gameStage;
@@ -44,6 +45,10 @@ public class GameScreen extends AbstractScreen {
 
 	public GameScreen(Breakhaus game, Sunrays givenSunrays) {
 		super(game);
+
+		scoreTextItem = new TextItem();
+		scoreTextItem.setColor(Color.WHITE);
+		stage.addActor(scoreTextItem);
 
 		hitCounterTextItem = new TextItem();
 		hitCounterTextItem.setColor(Color.WHITE);
@@ -68,19 +73,19 @@ public class GameScreen extends AbstractScreen {
 		Settings.LEVEL_Y = -Settings.LEVEL_HEIGHT / 2f;
 		Settings.LEVEL_MAX_X = Settings.LEVEL_X + Settings.LEVEL_WIDTH;
 		Settings.LEVEL_MAX_Y = Settings.LEVEL_Y + Settings.LEVEL_HEIGHT;
-		
-		Level.setCurrentLevel("glass");
+
+		player = new Player("H.E.N.");
+		player.setX(2.5f * Settings.GAME_SCALE);
+		player.setY(2.5f * Settings.GAME_SCALE);
+		player.setColor(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
+
+		Level.setCurrentLevel("glass", player);
 		Level.getCurrentLevel().setTweenManager(getTweenManager());
 
 		deathLineY = Settings.LEVEL_Y + Settings.LEVEL_HEIGHT / 3f;
 
 		camera.translate(-Gdx.graphics.getWidth() / 2f,
 				-Gdx.graphics.getHeight() / 2f);
-		
-		player = new Player("H.E.N.");
-		player.setX(2.5f * Settings.GAME_SCALE);
-		player.setY(2.5f * Settings.GAME_SCALE);
-		player.setColor(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
 
 		opposingPlayer = new Player("Just Blocks");
 		opposingPlayer.setColor(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
@@ -300,8 +305,12 @@ public class GameScreen extends AbstractScreen {
 		gameStage.act(delta);
 
 		hitCounterTextItem.setText(String.valueOf(player.getPaddle().getHitCount()));
-		hitCounterTextItem.setX((Gdx.graphics.getWidth() - hitCounterTextItem.getWidth()) / 2f);
-		hitCounterTextItem.setY(Gdx.graphics.getHeight() - hitCounterTextItem.getHeight());
+		hitCounterTextItem.setX(hitCounterTextItem.getHeight());
+		hitCounterTextItem.setY(Gdx.graphics.getHeight());
+
+		scoreTextItem.setText(String.valueOf(player.getScore()));
+		scoreTextItem.setX(Gdx.graphics.getWidth() - scoreTextItem.getWidth() - scoreTextItem.getHeight());
+		scoreTextItem.setY(Gdx.graphics.getHeight());
 
 		if (player.getPaddle().getHitCount() < 1) {
 			player.getPaddle().resetHitCount();
@@ -342,7 +351,7 @@ public class GameScreen extends AbstractScreen {
 
 		for (Actor actor : Groups.blockGroup.getChildren()) {
 			if (actor.getY() < deathLineY) {
-				game.setScreen(new GameOverScreen(game, this));
+				game.setScreen(new GameOverScreen(game, this, player));
 			}
 		}
 
