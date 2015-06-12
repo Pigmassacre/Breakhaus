@@ -370,7 +370,7 @@ public class Ball extends GameActor implements Poolable {
 		for (Actor actor : Groups.blockGroup.getChildren()) {
 			GameActor gameActor = ((GameActor) actor);
 			float dst = Vector2.dst(block.getX(), block.getY(), gameActor.getX(), gameActor.getY());
-			//if (dst <= 200) {
+			if (dst < 200) {
 				float delay = dst / 1000;
 				Timeline.createSequence()
 						.push(Tween.to(gameActor, GameActorAccessor.Z, 0.15f)
@@ -381,7 +381,7 @@ public class Ball extends GameActor implements Poolable {
 								.target(Block.STANDARD_Z)
 								.ease(TweenEquations.easeOutExpo))
 						.start(Level.getCurrentLevel().getTweenManager());
-			//}
+			}
 		}
 	}
 

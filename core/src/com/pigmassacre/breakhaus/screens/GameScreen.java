@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.Value;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.Timer;
@@ -27,6 +28,8 @@ import com.pigmassacre.breakhaus.objects.*;
 
 public class GameScreen extends AbstractScreen {
 
+	private final TextItem hitCounterTextItem;
+
 	private final Stage gameStage;
 	private final OrthographicCamera camera;
 
@@ -37,9 +40,14 @@ public class GameScreen extends AbstractScreen {
 	private final Sunrays sunrays;
 	
 	private float oldSpeed;
-	
+	private float deathLineY;
+
 	public GameScreen(Breakhaus game, Sunrays givenSunrays) {
 		super(game);
+
+		hitCounterTextItem = new TextItem();
+		hitCounterTextItem.setColor(Color.WHITE);
+		stage.addActor(hitCounterTextItem);
 
 		camera = new OrthographicCamera();
 		gameStage = new Stage(new ScalingViewport(Scaling.fillX, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), camera), game.spriteBatch);
@@ -63,6 +71,8 @@ public class GameScreen extends AbstractScreen {
 		
 		Level.setCurrentLevel("glass");
 		Level.getCurrentLevel().setTweenManager(getTweenManager());
+
+		deathLineY = Settings.LEVEL_Y + Settings.LEVEL_HEIGHT / 3f;
 
 		camera.translate(-Gdx.graphics.getWidth() / 2f,
 				-Gdx.graphics.getHeight() / 2f);
@@ -288,7 +298,12 @@ public class GameScreen extends AbstractScreen {
 	@Override
 	public void act(float delta) {
 		gameStage.act(delta);
-		if (player.getPaddle().getHitCount() == 0) {
+
+		hitCounterTextItem.setText(String.valueOf(player.getPaddle().getHitCount()));
+		hitCounterTextItem.setX((Gdx.graphics.getWidth() - hitCounterTextItem.getWidth()) / 2f);
+		hitCounterTextItem.setY(Gdx.graphics.getHeight() - hitCounterTextItem.getHeight());
+
+		if (player.getPaddle().getHitCount() < 1) {
 			player.getPaddle().resetHitCount();
 
 			/* Finish any potential remaining tweens. */
@@ -301,10 +316,7 @@ public class GameScreen extends AbstractScreen {
 						.ease(TweenEquations.easeOutExpo)
 						.delay(MathUtils.random(0.1f))
 						.start(getTweenManager());
-				//actor.setY(actor.getY() - actor.getHeight());
 			}
-
-			//float delay = 0f;
 
 			/* Create a new row of blocks. */
 			Block tempBlock = new Block(0, 0, new Player("temp"), new Color(Color.BLACK));
@@ -323,12 +335,17 @@ public class GameScreen extends AbstractScreen {
 				Tween.to(block, GameActorAccessor.Z, MathUtils.random(0.5f, 0.75f))
 						.target(z)
 						.ease(TweenEquations.easeOutExpo)
-				//		.delay(delay)
 						.start(getTweenManager());
-				//delay += 0.005f;
 			}
 			tempBlock.destroy(false);
 		}
+
+		for (Actor actor : Groups.blockGroup.getChildren()) {
+			if (actor.getY() < deathLineY) {
+				game.setScreen(new GameOverScreen(game, this));
+			}
+		}
+
 		super.act(delta);
 		Level.getCurrentLevel().act(delta);
 	}
@@ -352,7 +369,7 @@ public class GameScreen extends AbstractScreen {
 
 		});
 		getInputMultiplexer().addProcessor(new PlayerInputAdapter(player, camera));
-		getInputMultiplexer().addProcessor(new DebugInput(this, gameStage, player));
+		getInputMultiplexer().addProcessor(new DebugInput(this, stage, player));
 		super.show();
 	}
 
