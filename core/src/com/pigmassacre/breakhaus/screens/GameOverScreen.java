@@ -25,6 +25,18 @@ public class GameOverScreen extends AbstractScreen {
 		Gdx.input.setCursorCatched(false);
 		this.pausedScreen = pausedScreen;
 
+		backdrop = new Backdrop();
+		backdrop.setWidth(Gdx.graphics.getWidth());
+		backdrop.setHeight(Gdx.graphics.getHeight());
+		backdrop.setX(0);
+		backdrop.setY(0);
+		backdrop.getColor().a = 0f;
+		Tween.to(backdrop, ActorAccessor.ALPHA, 0.5f)
+				.target(0.5f)
+				.ease(TweenEquations.easeOutExpo)
+				.start(getTweenManager());
+		stage.addActor(backdrop);
+
 		TextItem gameOverTextItem = new TextItem("Game Over");
 		gameOverTextItem.setColor(Color.WHITE);
 		gameOverTextItem.setX((Gdx.graphics.getWidth() - gameOverTextItem.getWidth()) / 2f);
@@ -37,28 +49,8 @@ public class GameOverScreen extends AbstractScreen {
 		scoreTextItem.setY(gameOverTextItem.getY() - scoreTextItem.getHeight() * 1.5f);
 		stage.addActor(scoreTextItem);
 
-		backdrop = new Backdrop();
-		backdrop.setWidth(Gdx.graphics.getWidth());
-		backdrop.setHeight(TextItem.getHeight("Quit") * 4f);
-		backdrop.setX(0);
-		backdrop.setY(Gdx.graphics.getHeight() / 2f - backdrop.getHeight() / 2f);
-		Tween.from(backdrop,  ActorAccessor.SIZE_H, 0.5f)
-				.target(0f)
-				.ease(Expo.OUT)
-				.start(getTweenManager());
-		backdrop.setActCallback(new ItemCallback() {
-
-			@Override
-			public void execute(Item data) {
-				data.setY(Gdx.graphics.getHeight() / 2f - data.getHeight() / 2f);
-			}
-
-		});
-		stage.addActor(backdrop);
-		
 		Menu menu = new ListMenu();
 		menu.setX(Gdx.graphics.getWidth() / 2);
-		menu.setY(Gdx.graphics.getHeight() / 2);
 		traversal.menus.add(menu);
 
 		TextItem textItem = new TextItem("Quit");
@@ -77,7 +69,7 @@ public class GameOverScreen extends AbstractScreen {
 				.start(getTweenManager());
 		stage.addActor(textItem);
 		
-		menu.setY((Gdx.graphics.getHeight() - textItem.getHeight()) / 2);
+		menu.setY(textItem.getHeight() * 3f);
 		menu.cleanup();
 		
 		stage.addActor(menu);
@@ -86,23 +78,19 @@ public class GameOverScreen extends AbstractScreen {
 	@Override
 	protected void registerInputProcessors() {
 		getInputMultiplexer().addProcessor(new InputAdapter() {
-			
+
 			@Override
 			public boolean keyDown(int keycode) {
-				switch(keycode) {
-				case Keys.ESCAPE:
-				case Keys.BACK:
-					game.setScreen(pausedScreen);
-					break;
+				switch (keycode) {
+					case Keys.ESCAPE:
+					case Keys.BACK:
+						game.setScreen(pausedScreen);
+						break;
 				}
 				return false;
 			}
-			
+
 		});
-	}
-	
-	private void back() {
-		game.setScreen(pausedScreen);
 	}
 
 	private void quit() {
@@ -118,7 +106,7 @@ public class GameOverScreen extends AbstractScreen {
 	
 	@Override
 	public void renderClearScreen(float delta) {
-		// So we don't clear the screen each frame, we let the pausdScreens .draw() method do that.
+		// So we don't clear the screen each frame, we let the pausedScreens .draw() method do that.
 	}
 	
 	private float oldVolume;

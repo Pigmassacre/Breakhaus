@@ -41,7 +41,6 @@ public class GameScreen extends AbstractScreen {
 	private final Sunrays sunrays;
 	
 	private float oldSpeed;
-	private float deathLineY;
 
 	public GameScreen(Breakhaus game, Sunrays givenSunrays) {
 		super(game);
@@ -81,8 +80,6 @@ public class GameScreen extends AbstractScreen {
 
 		Level.setCurrentLevel("glass", player);
 		Level.getCurrentLevel().setTweenManager(getTweenManager());
-
-		deathLineY = Settings.LEVEL_Y + Settings.LEVEL_HEIGHT / 3f;
 
 		camera.translate(-Gdx.graphics.getWidth() / 2f,
 				-Gdx.graphics.getHeight() / 2f);
@@ -305,12 +302,12 @@ public class GameScreen extends AbstractScreen {
 		gameStage.act(delta);
 
 		hitCounterTextItem.setText(String.valueOf(player.getPaddle().getHitCount()));
-		hitCounterTextItem.setX(hitCounterTextItem.getHeight());
-		hitCounterTextItem.setY(Gdx.graphics.getHeight());
+		hitCounterTextItem.setX(4 * Settings.GAME_SCALE);
+		hitCounterTextItem.setY(Gdx.graphics.getHeight() - 4 * Settings.GAME_SCALE);
 
 		scoreTextItem.setText(String.valueOf(player.getScore()));
-		scoreTextItem.setX(Gdx.graphics.getWidth() - scoreTextItem.getWidth() - scoreTextItem.getHeight());
-		scoreTextItem.setY(Gdx.graphics.getHeight());
+		scoreTextItem.setX(Gdx.graphics.getWidth() - scoreTextItem.getWidth() - 4 * Settings.GAME_SCALE);
+		scoreTextItem.setY(Gdx.graphics.getHeight() - 4 * Settings.GAME_SCALE);
 
 		if (player.getPaddle().getHitCount() < 1) {
 			player.getPaddle().resetHitCount();
@@ -350,7 +347,7 @@ public class GameScreen extends AbstractScreen {
 		}
 
 		for (Actor actor : Groups.blockGroup.getChildren()) {
-			if (actor.getY() < deathLineY) {
+			if (actor.getY() < Level.getCurrentLevel().getDeathLineY()) {
 				game.setScreen(new GameOverScreen(game, this, player));
 			}
 		}

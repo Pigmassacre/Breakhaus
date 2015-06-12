@@ -1,6 +1,7 @@
 package com.pigmassacre.breakhaus.objects;
 
 import aurelienribon.tweenengine.TweenManager;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -19,6 +20,11 @@ public class Level extends Actor {
 	private final TextureRegion backgroundImage, horizontalWallTop;
 	private final TextureRegion verticalWallLeft, verticalWallRight, horizontalWallBottom;
 	private final TextureRegion topLeftCorner, bottomLeftCorner, topRightCorner, bottomRightCorner;
+
+	private float deathLineY;
+	private final TextureRegion deathLine;
+
+	private static final float DEATH_LINE_HEIGHT = 1f * Settings.GAME_SCALE;
 
 	private TweenManager tweenManager;
 
@@ -48,13 +54,20 @@ public class Level extends Actor {
 		setY(Settings.LEVEL_Y);
 		setWidth(Settings.LEVEL_WIDTH);
 		setHeight(Settings.LEVEL_HEIGHT);
-		
+
+		deathLine = Assets.getTextureRegion("particle");
+		deathLineY = Settings.LEVEL_Y + Settings.LEVEL_HEIGHT / 3f;
+
 		background = new Background();
 		foreground = new Foreground();
 	}
 
 	public Player getPlayer() {
 		return player;
+	}
+
+	public float getDeathLineY() {
+		return deathLineY;
 	}
 
 	public Background getBackground() {
@@ -87,6 +100,16 @@ public class Level extends Actor {
 					Level.getCurrentLevel().getY() + Settings.getLevelYOffset(),
 					Level.getCurrentLevel().getWidth(),
 					Level.getCurrentLevel().getHeight());
+			Color temp = batch.getColor().cpy();
+			Color color = batch.getColor();
+			color.a = 0.25f;
+			batch.setColor(color);
+			batch.draw(deathLine,
+					Level.getCurrentLevel().getX(),
+					Level.getCurrentLevel().getDeathLineY() - DEATH_LINE_HEIGHT / 2f,
+					Level.getCurrentLevel().getWidth(),
+					DEATH_LINE_HEIGHT);
+			batch.setColor(temp);
 		}
 		
 	}
