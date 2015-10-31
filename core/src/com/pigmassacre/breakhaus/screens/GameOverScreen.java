@@ -54,6 +54,7 @@ public class GameOverScreen extends AbstractScreen {
 		traversal.menus.add(menu);
 
 		TextItem textItem = new TextItem("Quit");
+		textItem.setSelected(true);
 		textItem.setCallback(new ItemCallback() {
 
 			@Override

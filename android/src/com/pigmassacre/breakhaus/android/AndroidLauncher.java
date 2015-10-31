@@ -20,7 +20,7 @@ public class AndroidLauncher extends AndroidApplication {
 		} else {
 			newScale = display.getWidth() / 285;
 		}
-		Settings.GAME_SCALE += newScale - 1;
+		Settings.GAME_SCALE = 4 + newScale - 1;
 
 		AndroidApplicationConfiguration cfg = new AndroidApplicationConfiguration();
 		cfg.hideStatusBar = true;

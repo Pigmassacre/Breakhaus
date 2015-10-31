@@ -101,9 +101,6 @@ public class AbstractScreen implements Screen {
 			batch.setProjectionMatrix(camera.combined);
 			batch.begin();
 			stage.getRoot().draw(batch, 1);
-			for (Actor actor : stage.getRoot().getChildren()) {
-				System.out.println(actor + ": " + actor.getX() + ", " + actor.getY());
-			}
 			batch.end();
 		}
 	}

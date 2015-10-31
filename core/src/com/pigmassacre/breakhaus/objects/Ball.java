@@ -23,7 +23,7 @@ import com.pigmassacre.breakhaus.objects.powerups.Powerup;
 public class Ball extends GameActor implements Poolable {
 
 	private static final float BASE_DAMAGE = 10;
-	private static final float LEAST_ALLOWED_HORIZONTAL_ANGLE = 0.32f;
+	private static final float LEAST_ALLOWED_HORIZONTAL_ANGLE = 1f;
 
 	public static final Pool<Ball> ballPool = new Pool<Ball>() {
 
@@ -66,8 +66,8 @@ public class Ball extends GameActor implements Poolable {
 		
 		this.angle = angle;
 		
-		baseSpeed = speed = 1.5f * Settings.GAME_FPS * Settings.GAME_SCALE;
-		maxSpeed = 10f * Settings.GAME_FPS * Settings.GAME_SCALE;
+		baseSpeed = speed = 2f * Settings.GAME_FPS * Settings.GAME_SCALE;
+		maxSpeed = 5f * Settings.GAME_FPS * Settings.GAME_SCALE;
 		speedStep = 0.5f * Settings.GAME_FPS * Settings.GAME_SCALE;
 		
 		this.owner = owner;
@@ -153,8 +153,8 @@ public class Ball extends GameActor implements Poolable {
 				speed = maxSpeed;
 			}
 
-			setX((float) (circle.x + (MathUtils.cos(angle) * tickSpeed * delta)));
-			setY((float) (circle.y + (MathUtils.sin(angle) * tickSpeed * delta)));
+			setX(circle.x + (MathUtils.cos(angle) * tickSpeed * delta));
+			setY(circle.y + (MathUtils.sin(angle) * tickSpeed * delta));
 			
 			Level.getCurrentLevel().checkCollision(this);
 
@@ -174,7 +174,14 @@ public class Ball extends GameActor implements Poolable {
 	}
 
 	private void hitTopSideOfPaddle(Paddle paddle) {
-		angle = MathUtils.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), circle.x - (paddle.getX() + paddle.getWidth() / 2));
+		float paddleDivider = 2.33f;
+		float xAnglePos = 0f;
+		if (circle.x < paddle.getX() + (paddle.getWidth() / paddleDivider)) {
+			xAnglePos = circle.x - (paddle.getX() + (paddle.getWidth() / paddleDivider));
+		} else if (circle.x > paddle.getX() + (paddle.getWidth() - (paddle.getWidth() / paddleDivider))) {
+			xAnglePos = circle.x - (paddle.getX() + (paddle.getWidth() - (paddle.getWidth() / paddleDivider)));
+		}
+		angle = MathUtils.atan2(circle.y - (paddle.getY() + paddle.getHeight() / 2), xAnglePos);
 		setY(paddle.rectangle.getY() + paddle.getHeight() + circle.radius + 1);
 	}
 
@@ -313,7 +320,7 @@ public class Ball extends GameActor implements Poolable {
 			}
 		}
 		if (collided) {
-			speed = baseSpeed;
+//			speed = baseSpeed;
 			if (rY - rRadius <= bY + bHeight && rY + rRadius > bY + bHeight) {
 				if (bX - (rX - rRadius) > (rY + rRadius) - (bY + bHeight)) {
 					setX(bX - rRadius - 1);
@@ -408,6 +415,7 @@ public class Ball extends GameActor implements Poolable {
 		case DOWN:
 			angle = -angle;
 			setY(Settings.LEVEL_Y + circle.radius);
+			speed = baseSpeed;
 			collided = true;
 			break;
 		case UP:

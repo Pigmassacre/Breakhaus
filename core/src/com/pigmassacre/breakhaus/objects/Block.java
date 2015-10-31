@@ -34,7 +34,7 @@ public class Block extends GameActor {
 				
 		this.owner = owner;
 		
-		maxHealth = 20;
+		maxHealth = 10;
 		health = maxHealth;
 		
 		setColor(color);

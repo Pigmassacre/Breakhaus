@@ -38,10 +38,17 @@ public class GameScreen extends AbstractScreen {
 	private final Player player;
 	private final Paddle paddle;
 	private final Player opposingPlayer;
+
+	private static final float WAVE_LENGTH = 8f;
+	private float waveCounter;
+
+	private boolean gameActive;
 	
 	private final Sunrays sunrays;
 	
 	private float oldSpeed;
+
+	private final TweenManager scoreTweenManager = new TweenManager();
 
 	public GameScreen(Breakhaus game, Sunrays givenSunrays) {
 		super(game);
@@ -79,6 +86,9 @@ public class GameScreen extends AbstractScreen {
 		player.setY(2.5f * Settings.GAME_SCALE);
 		player.setColor(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
 
+		waveCounter = WAVE_LENGTH;
+		gameActive = false;
+
 		Level.setCurrentLevel("glass", player);
 		Level.getCurrentLevel().setTweenManager(getTweenManager());
 
@@ -114,7 +124,7 @@ public class GameScreen extends AbstractScreen {
 		tempBlock.destroy(false);
 		
 		paddle = new Paddle(player);
-		paddle.setX(Settings.LEVEL_X + paddle.getWidth() * 4);
+		paddle.setX(Settings.LEVEL_X + (Settings.LEVEL_WIDTH - paddle.getWidth()) / 2f);
 		paddle.setY(Settings.LEVEL_Y + Settings.LEVEL_HEIGHT / 8f + -paddle.getHeight() / 2);
 		player.setPaddle(paddle);
 
@@ -187,7 +197,7 @@ public class GameScreen extends AbstractScreen {
 	private void addScore(final int score, GameActor startActor) {
 		/* Create the TextItem to display the gained score. */
 		Vector3 pos = gameStage.getCamera().project(new Vector3(startActor.getX(), startActor.getY(), 0));
-		TextItem scoreItem = new TextItem(String.valueOf(score));
+		final TextItem scoreItem = new TextItem(String.valueOf(score));
 		scoreItem.setX(pos.x + (startActor.getWidth() - scoreItem.getWidth()) / 2f);
 		scoreItem.setY(pos.y + (startActor.getHeight() - scoreItem.getHeight()) / 2f + scoreItem.getHeight() * 2f);
 		//scoreItem.setX((Gdx.graphics.getWidth() - scoreItem.getWidth()) / 2f);
@@ -199,16 +209,16 @@ public class GameScreen extends AbstractScreen {
 		/* Create a timeline that animates the movement from the destroyed block to the score item. */
 		Timeline.createSequence()
 				.beginParallel()
-				.push(Tween.to(scoreItem, ActorAccessor.ALPHA, 0.15f)
-						.target(1f)
+				.push(Tween.to(scoreItem, ActorAccessor.ALPHA, 0.25f)
+						.target(0.8f)
 						.ease(TweenEquations.easeOutExpo))
 				.push(Tween.to(scoreItem, ActorAccessor.POSITION_XY, 1f)
 						.target(scoreTextItem.getX() + (scoreTextItem.getWidth() - scoreItem.getWidth()) / 2f,
 								scoreTextItem.getY() + (scoreTextItem.getHeight() - scoreItem.getHeight()) / 2f)
 						.ease(TweenEquations.easeInOutQuart))
 				.push(Timeline.createSequence()
-						.pushPause(0.65f)
-						.push(Tween.to(scoreItem, ActorAccessor.ALPHA, 0.2f)
+						.pushPause(0.5f)
+						.push(Tween.to(scoreItem, ActorAccessor.ALPHA, 0.25f)
 								.target(0f)
 								.ease(TweenEquations.easeInOutExpo))
 						.setCallback(new TweenCallback() {
@@ -219,14 +229,15 @@ public class GameScreen extends AbstractScreen {
 						})
 						.setCallbackTriggers(TweenCallback.COMPLETE))
 				.end()
-				/*.setCallback(new TweenCallback() {
+				.setCallback(new TweenCallback() {
 					@Override
 					public void onEvent(int i, BaseTween<?> baseTween) {
-						player.addScore(score);
+						scoreItem.clear();
+						scoreItem.remove();
 					}
 				})
-				.setCallbackTriggers(TweenCallback.COMPLETE)*/
-				.start(getTweenManager());
+				.setCallbackTriggers(TweenCallback.COMPLETE)
+				.start(scoreTweenManager);
 	}
 
 	private void startGameCountdown(Ball ball) {
@@ -326,6 +337,7 @@ public class GameScreen extends AbstractScreen {
 			
 			@Override
 			public void onEvent(int type, BaseTween<?> source) {
+				gameActive = true;
 				((Ball) source.getUserData()).speed = oldSpeed;
 			}
 			
@@ -358,7 +370,11 @@ public class GameScreen extends AbstractScreen {
 	public void act(float delta) {
 		gameStage.act(delta);
 
-		hitCounterTextItem.setText(String.valueOf(player.getPaddle().getHitCount()));
+		if (gameActive) {
+			waveCounter -= delta;
+		}
+
+		hitCounterTextItem.setText(String.valueOf((int) (waveCounter + 0.5f)));
 		hitCounterTextItem.setX(4 * Settings.GAME_SCALE);
 		hitCounterTextItem.setY(Gdx.graphics.getHeight() - 4 * Settings.GAME_SCALE);
 
@@ -366,8 +382,8 @@ public class GameScreen extends AbstractScreen {
 		scoreTextItem.setX(Gdx.graphics.getWidth() - scoreTextItem.getWidth() - 4 * Settings.GAME_SCALE);
 		scoreTextItem.setY(Gdx.graphics.getHeight() - 4 * Settings.GAME_SCALE);
 
-		if (player.getPaddle().getHitCount() < 1) {
-			player.getPaddle().resetHitCount();
+		if (waveCounter <= 0) {
+			waveCounter = WAVE_LENGTH;
 
 			/* Finish any potential remaining tweens. */
 			getTweenManager().update(1000f);
@@ -407,6 +423,7 @@ public class GameScreen extends AbstractScreen {
 			}
 		}
 
+		scoreTweenManager.update(delta);
 		super.act(delta);
 		Level.getCurrentLevel().act(delta);
 	}
