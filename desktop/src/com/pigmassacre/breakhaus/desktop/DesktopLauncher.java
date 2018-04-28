@@ -9,8 +9,8 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 
-		TexturePacker.processIfModified("../../texturepackerassets/menu", "images", "menutextures");
-		TexturePacker.processIfModified("../../texturepackerassets/game", "images", "gametextures");
+//		TexturePacker.processIfModified("../../texturepackerassets/menu", "images", "menutextures");
+//		TexturePacker.processIfModified("../../texturepackerassets/game", "images", "gametextures");
 
 		config.width = LwjglApplicationConfiguration.getDesktopDisplayMode().width;
 		config.height = LwjglApplicationConfiguration.getDesktopDisplayMode().height;

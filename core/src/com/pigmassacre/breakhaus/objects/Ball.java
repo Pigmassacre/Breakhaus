@@ -174,7 +174,7 @@ public class Ball extends GameActor implements Poolable {
 	}
 
 	private void hitTopSideOfPaddle(Paddle paddle) {
-		float paddleDivider = 2.33f;
+		float paddleDivider = 2f;
 		float xAnglePos = 0f;
 		if (circle.x < paddle.getX() + (paddle.getWidth() / paddleDivider)) {
 			xAnglePos = circle.x - (paddle.getX() + (paddle.getWidth() / paddleDivider));
