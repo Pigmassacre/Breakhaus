@@ -3,6 +3,7 @@ package com.pigmassacre.breakhaus.objects;
 import aurelienribon.tweenengine.Timeline;
 import aurelienribon.tweenengine.Tween;
 import aurelienribon.tweenengine.TweenEquations;
+import aurelienribon.tweenengine.TweenManager;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -374,17 +375,21 @@ public class Ball extends GameActor implements Poolable {
 
 	@Override
 	public void onHitBlock(Block block) {
+		float strengthMultiplier = MathUtils.clamp(speed - baseSpeed / maxSpeed - baseSpeed, 0f, 1f);
+		float maxDst = 200f + strengthMultiplier * 300f;
+		float maxHeight = 20f + strengthMultiplier * 4f;
+		float tweenOutLength = 0.2f + strengthMultiplier * 0.2f;
 		for (Actor actor : Groups.blockGroup.getChildren()) {
 			GameActor gameActor = ((GameActor) actor);
 			float dst = Vector2.dst(block.getX(), block.getY(), gameActor.getX(), gameActor.getY());
-			if (dst < 200) {
-				float delay = dst / 1000;
+			if (dst <= maxDst) {
+				float delay = dst / 1000f;
 				Timeline.createSequence()
 						.push(Tween.to(gameActor, GameActorAccessor.Z, 0.15f)
-								.target(Math.max(Block.STANDARD_Z, 20f - (20 * (dst / 200))))
+								.target(Math.max(Block.STANDARD_Z, maxHeight - (maxHeight * (dst / maxDst))))
 								.ease(TweenEquations.easeOutExpo)
 								.delay(delay))
-						.push(Tween.to(gameActor, GameActorAccessor.Z, 0.2f)
+						.push(Tween.to(gameActor, GameActorAccessor.Z, tweenOutLength)
 								.target(Block.STANDARD_Z)
 								.ease(TweenEquations.easeOutExpo))
 						.start(Level.getCurrentLevel().getTweenManager());
