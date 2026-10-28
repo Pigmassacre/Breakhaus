@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://dano74nli1831"
-path="res://.godot/imported/Ubuntu.ttf-bd49fb08d8a93e8eda136a2487f2ce7a.fontdata"
+uid="uid://c4qyybikm6sa6"
+path="res://.godot/imported/Rubik-Bold.ttf-31239d0256e55b21264aaa3a99dbf6c1.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/Ubuntu.ttf"
-dest_files=["res://.godot/imported/Ubuntu.ttf-bd49fb08d8a93e8eda136a2487f2ce7a.fontdata"]
+source_file="res://assets/fonts/Rubik-Bold.ttf"
+dest_files=["res://.godot/imported/Rubik-Bold.ttf-31239d0256e55b21264aaa3a99dbf6c1.fontdata"]
 
 [params]
 

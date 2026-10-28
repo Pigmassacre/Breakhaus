@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://c82c8b1rd6sec"
-path="res://.godot/imported/Bangers-Regular.ttf-1096e4d6e36d932f856599d7c9cc030f.fontdata"
+uid="uid://crbquh8tryh5n"
+path="res://.godot/imported/Bungee-Regular.ttf-58cdcdfae0aef1a05fd8c473aa98fdbe.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/Bangers-Regular.ttf"
-dest_files=["res://.godot/imported/Bangers-Regular.ttf-1096e4d6e36d932f856599d7c9cc030f.fontdata"]
+source_file="res://assets/fonts/Bungee-Regular.ttf"
+dest_files=["res://.godot/imported/Bungee-Regular.ttf-58cdcdfae0aef1a05fd8c473aa98fdbe.fontdata"]
 
 [params]
 

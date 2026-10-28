@@ -31,15 +31,11 @@ func _ready() -> void:
 	nav.alignment = BoxContainer.ALIGNMENT_CENTER
 	nav.add_theme_constant_override("separation", 20)
 	column.add_child(nav)
-	var prev := UI.button("←", func() -> void: _turn(-1), 90)
+	var prev := UI.button("◀", func() -> void: _turn(-1), 90)
 	_page_label = UI.label("", 2, UI.DIM)
 	_page_label.custom_minimum_size = Vector2(90, 0)
-	var next := UI.button("→", func() -> void: _turn(1), 90)
+	var next := UI.button("▶", func() -> void: _turn(1), 90)
 	var back := UI.button("BACK", go_back, 200)
-	# Bangers has no arrows; Ubuntu does.
-	for b: Button in [prev, next]:
-		b.add_theme_font_override("font", UI.body_font())
-		b.add_theme_font_size_override("font_size", UI.font_size(4))
 	for c: Control in [prev, _page_label, next, back]:
 		nav.add_child(c)
 	for b: Button in [prev, next, back]:

@@ -1,15 +1,14 @@
 class_name UI
 ## The look of every menu and of the HUD: flat and HD over the pixel-art
-## game. Big words in Bangers, small ones in Ubuntu Bold, both as MSDF fonts
-## so they stay sharp however they are scaled; rounded flat buttons with a
+## game. Big words in Bungee (a face made for signs on buildings, for a
+## haus), small ones in Rubik Bold (rounded at the corners, like the
+## buttons), both as MSDF fonts so they stay sharp however they are scaled; rounded flat buttons with a
 ## darker lip under them that they press down into; and a Spring on every
 ## button, slider and switch so they grow, lean and boing as the cursor,
 ## the keys or a finger get to them.
 
-const DISPLAY_PATH := "res://assets/fonts/Bangers-Regular.ttf"
-## The variable Ubuntu, set to bold.
-const BODY_PATH := "res://assets/fonts/Ubuntu.ttf"
-const BODY_WEIGHT := 700
+const DISPLAY_PATH := "res://assets/fonts/Bungee-Regular.ttf"
+const BODY_PATH := "res://assets/fonts/Rubik-Bold.ttf"
 
 const INK := Color("fff4fb")
 const DIM := Color("c9a3c4")
@@ -24,7 +23,7 @@ const RADIUS := 18
 const LIP := 8
 
 static var _display: FontFile
-static var _body: FontVariation
+static var _body: FontFile
 static var _theme: Theme
 static var _round_box: StyleBoxFlat
 
@@ -37,20 +36,18 @@ static func display_font() -> FontFile:
 
 static func body_font() -> Font:
 	if _body == null:
-		_body = FontVariation.new()
-		_body.base_font = load(BODY_PATH) as FontFile
-		_body.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): BODY_WEIGHT}
+		_body = load(BODY_PATH) as FontFile
 	return _body
 
 
-## Big text (scale 3 and up) is Bangers, small text Ubuntu.
+## Big text (scale 3 and up) is Bungee, small text Rubik.
 static func font_for(scale: int) -> Font:
 	return display_font() if scale >= 3 else body_font()
 
 
 ## The size in pixels of text at `scale` (the steps the old bitmap font came in).
 static func font_size(scale: int) -> int:
-	return scale * 13 if scale >= 3 else 8 + scale * 7
+	return scale * 11 if scale >= 3 else 8 + scale * 7
 
 
 ## A label at `scale`: 1 and 2 for small print, 3 for buttons, up to 8 for the biggest words.

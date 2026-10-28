@@ -157,13 +157,14 @@ func layout(rect: Rect2, zoom: float) -> void:
 		_mode_label.horizontal_alignment = align_left
 		_place(_clock, Rect2(x1 + 40, top + 190, column, 80))
 		_clock.horizontal_alignment = align_left
+		_clock.add_theme_font_size_override("font_size", UI.font_size(6))
 	else:
-		_place(_floor_label, Rect2(x0, top - 150, width * 0.4, 60))
+		_place(_floor_label, Rect2(x0, top - 160, width * 0.4, 60))
 		_place(_floor_name, Rect2(x0, top - 88, width * 0.6, 24))
 		_place(_rows_label, Rect2(x0, top - 62, width * 0.6, 24))
 		_place(_score_label, Rect2(x0 + width * 0.35, top - 146, width * 0.65, 50))
 		_place(_best_label, Rect2(x0 + width * 0.4, top - 80, width * 0.6, 24))
-		_effects_at = Vector2(rect.position.x, top - 100.0)
+		_effects_at = Vector2(rect.position.x, top - 88.0)
 		for l: Label in [_floor_label, _floor_name, _rows_label]:
 			l.horizontal_alignment = align_left
 		for l: Label in [_score_label, _best_label]:
@@ -171,8 +172,10 @@ func layout(rect: Rect2, zoom: float) -> void:
 		_tower.visible = false
 		_place(_mode_label, Rect2(x0, view.y - 44, width, 30))
 		_mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_place(_clock, Rect2(x0 + width * 0.3, top - 160, width * 0.4, 80))
+		# Over the board the top line is full: the clock goes on the second, between the floor's name and the best.
+		_place(_clock, Rect2(x0 + width * 0.3, top - 112, width * 0.4, 50))
 		_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_clock.add_theme_font_size_override("font_size", UI.font_size(4))
 	var at := func(board_y: float) -> float: return rect.position.y + board_y * zoom
 	_place(_combo_label, Rect2(rect.get_center().x - 120, at.call(30.0), 240, 40))
 	_place(_combo_mult, Rect2(rect.get_center().x - 120, at.call(72.0), 240, 24))
@@ -433,7 +436,7 @@ func _on_combo(combo: int, mult: int) -> void:
 
 
 ## The big words over the board, punched in and faded out.
-func show_message(text: String, color := UI.INK, hold := 0.6, scale := 7) -> void:
+func show_message(text: String, color := UI.INK, hold := 0.6, scale := 6) -> void:
 	if _message_tween:
 		_message_tween.kill()
 	_message.text = text
@@ -452,4 +455,4 @@ func show_message(text: String, color := UI.INK, hold := 0.6, scale := 7) -> voi
 func floor_card(level: int) -> void:
 	var title := Floors.label(level)
 	var sub: String = Floors.theme(level)["name"] if level < Balance.FLOORS else "Deeper..."
-	show_message("%s\n%s" % [title, sub.to_upper()], UI.INK, 1.4, 6)
+	show_message("%s\n%s" % [title, sub.to_upper()], UI.INK, 1.4, 5)

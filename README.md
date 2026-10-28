@@ -246,7 +246,8 @@ thousand particles kept in packed arrays (`Particles`).
 
 **Pixels for the game, HD for the UI.** Everything on the board is pixel
 art; the menus and the HUD around it are flat and smooth: big words in
-Bangers and small print in Ubuntu (both MSDF fonts, so they stay sharp at
+Bungee (a face made for signs on buildings) and small print in Rubik
+(rounded at the corners, like the buttons; both MSDF fonts, so they stay sharp at
 any size and any scale a tween gives them), rounded buttons with a darker
 lip they press down into, round pill bars and timer rings, and a flat
 drawing of the haus. Every button, slider and switch has a `Spring` in it
@@ -317,8 +318,8 @@ start. Needs ffmpeg.
 
 - Sprites (the ball, block, paddle and pickup icons) and the Pigmassacre
   splash: the original Breakhaus.
-- Fonts: Bangers by Vernon Adams (SIL Open Font License 1.1) and Ubuntu
-  (Ubuntu Font Licence 1.0), their licences beside them in `assets/fonts/`.
+- Fonts: Bungee by David Jonathan Ross and Rubik, both under the SIL Open
+  Font License 1.1, their licences beside them in `assets/fonts/`.
 - Music: Ovani Sound's Electronic Music Pack Vol. 5 and 80s Music Pack.
 - Sounds: Ovani Sound's Casual & Mobile and Retro Gaming sound packs, and
   the original's ball, block, select and activate sounds.
