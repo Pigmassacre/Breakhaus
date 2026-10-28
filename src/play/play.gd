@@ -100,13 +100,26 @@ func _start_floor(n: int) -> void:
 
 func _layout() -> void:
 	var view := get_viewport().get_visible_rect().size
-	var above := 200.0
-	var below := 180.0
-	var spare := maxf(view.y - above - below - Balance.BOARD_H, 0.0)
-	var at := Vector2(roundf((view.x - Balance.BOARD_W) * 0.5), roundf(above + spare * 0.5))
+	var frame := Vector2(Balance.BOARD_W + Balance.WALL * 2.0, Balance.BOARD_H + Balance.WALL + Balance.BLOCK_DEPTH)
+	var zoom: float
+	var at: Vector2
+	if view.x > view.y * 1.05:
+		# Wide: the board as tall as the screen allows, the HUD beside it.
+		var above := 50.0
+		var below := 110.0
+		zoom = clampf((view.y - above - below) / frame.y, 0.8, 2.0)
+		at = Vector2(roundf((view.x - Balance.BOARD_W * zoom) * 0.5), roundf(above + (Balance.WALL + Balance.BLOCK_DEPTH) * zoom))
+	else:
+		# Tall: the HUD over the board; the board as big as the width allows, if there is height to spare.
+		var above := 200.0
+		var below := 180.0
+		zoom = clampf(minf((view.x - 24.0) / frame.x, (view.y - above - below) / Balance.BOARD_H), 0.6, 1.4)
+		var spare := maxf(view.y - above - below - Balance.BOARD_H * zoom, 0.0)
+		at = Vector2(roundf((view.x - Balance.BOARD_W * zoom) * 0.5), roundf(above + spare * 0.5))
 	board.position = at
-	backdrop.center = at + Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.4)
-	hud.layout(Rect2(at, Vector2(Balance.BOARD_W, Balance.BOARD_H)))
+	board.scale = Vector2(zoom, zoom)
+	backdrop.center = at + Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.4) * zoom
+	hud.layout(Rect2(at, Vector2(Balance.BOARD_W, Balance.BOARD_H) * zoom), zoom)
 
 
 # --- controls -----------------------------------------------------------------------------------
@@ -125,7 +138,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		board.smash()
 	elif event is InputEventScreenDrag:
 		var gain: float = Balance.TOUCH_GAIN * float(Game.settings["touch_gain"])
-		board.paddle_target = clampf(board.paddle_target + event.relative.x * gain, 0.0, Balance.BOARD_W)
+		board.paddle_target = clampf(board.paddle_target + event.relative.x * gain / board.scale.x, 0.0, Balance.BOARD_W)
 		_mouse_active = false
 	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION and event.pressed:
 		_mouse_active = true
@@ -222,7 +235,7 @@ func flash(color: Color, amount: float) -> void:
 ## A shock wave rippling out over the screen from `at` (on the board).
 func shock(at: Vector2, strength: float) -> void:
 	var view := get_viewport().get_visible_rect().size
-	var screen_at := (board.position + world.position + at) / view
+	var screen_at := (board.position + world.position + at * board.scale.x) / view
 	post.set_shader_parameter("shock_center", screen_at)
 	if _shock_tween:
 		_shock_tween.kill()

@@ -11,8 +11,13 @@ signal pause_pressed
 signal quake_pressed
 
 var board: Board
-## The board's rect on screen, set by the game as the screen changes shape.
+## The board's rect on screen, set by the game as the screen changes shape, and how much it is zoomed.
 var board_rect := Rect2()
+var zoom := 1.0
+## Laid out for a wide screen: the HUD beside the board, not over it.
+var wide := false
+## Where the icons of the pickups running go.
+var _effects_at := Vector2.ZERO
 
 var _floor_label: Label
 var _floor_name: Label
@@ -97,33 +102,57 @@ func set_board(b: Board) -> void:
 	_shown_score = board.score
 
 
-## Puts everything in its place round the board's rect on screen.
-func layout(rect: Rect2) -> void:
+## Puts everything in its place round the board's rect on screen (the board drawn `zoom` times its size).
+## On a wide screen the floor and the haus go to the left of the board and the score to its right;
+## on a tall one they go over it.
+func layout(rect: Rect2, zoom: float) -> void:
 	board_rect = rect
-	var top := rect.position.y - Balance.WALL - Balance.BLOCK_DEPTH
-	var x0 := rect.position.x - Balance.WALL
-	var x1 := rect.end.x + Balance.WALL
-	var width := x1 - x0
-	_place(_floor_label, Rect2(x0, top - 150, width * 0.4, 60))
-	_place(_floor_name, Rect2(x0, top - 88, width * 0.6, 24))
-	_place(_rows_label, Rect2(x0, top - 62, width * 0.6, 24))
-	_place(_score_label, Rect2(x0 + width * 0.35, top - 146, width * 0.65, 50))
-	_place(_best_label, Rect2(x0 + width * 0.4, top - 88, width * 0.6, 24))
-	_place(_combo_label, Rect2(rect.get_center().x - 120, rect.position.y + 30, 240, 40))
-	_place(_combo_mult, Rect2(rect.get_center().x - 120, rect.position.y + 72, 240, 24))
-	_place(_message, Rect2(rect.position.x - 60, rect.position.y + rect.size.y * 0.36, rect.size.x + 120, 70))
-	_place(_prompt, Rect2(rect.position.x - 60, rect.position.y + Balance.PADDLE_Y - 130, rect.size.x + 120, 40))
-	_place(_help, Rect2(rect.position.x - 60, rect.position.y + Balance.PADDLE_Y - 330, rect.size.x + 120, 130))
-	_place(_quake_label, Rect2(x0, rect.end.y + 52, width, 24))
-	var bottom := rect.end.y + Balance.BLOCK_DEPTH + 16
-	_place(_pause_button, Rect2(x1 - 84, top - 210 if top > 260 else 12, 84, 64))
-	_place(_quake_button, Rect2(x1 - 210, bottom + 74, 210, 72))
+	self.zoom = zoom
 	var view := get_viewport().get_visible_rect().size
+	var top := rect.position.y - (Balance.WALL + Balance.BLOCK_DEPTH) * zoom
+	var x0 := rect.position.x - Balance.WALL * zoom
+	var x1 := rect.end.x + Balance.WALL * zoom
+	var width := x1 - x0
+	wide = view.x > view.y * 1.05
+	var align_left := HORIZONTAL_ALIGNMENT_LEFT
+	var align_right := HORIZONTAL_ALIGNMENT_RIGHT
+	if wide:
+		var column := minf(x0 - 60.0, 520.0)
+		_place(_floor_label, Rect2(x0 - 40 - column, top + 10, column, 60))
+		_place(_floor_name, Rect2(x0 - 40 - column, top + 76, column, 24))
+		_place(_rows_label, Rect2(x0 - 40 - column, top + 104, column, 24))
+		_place(_score_label, Rect2(x1 + 40, top + 14, column, 50))
+		_place(_best_label, Rect2(x1 + 40, top + 76, column, 24))
+		_effects_at = Vector2(x1 + 40, top + 120)
+		for l: Label in [_floor_label, _floor_name, _rows_label]:
+			l.horizontal_alignment = align_right
+		for l: Label in [_score_label, _best_label]:
+			l.horizontal_alignment = align_left
+		_tower.visible = column >= Tower.WIDTH + 140.0
+		_place(_tower, Rect2(x0 - 40 - column, top + 150, column, rect.end.y - top - 150))
+	else:
+		_place(_floor_label, Rect2(x0, top - 150, width * 0.4, 60))
+		_place(_floor_name, Rect2(x0, top - 88, width * 0.6, 24))
+		_place(_rows_label, Rect2(x0, top - 62, width * 0.6, 24))
+		_place(_score_label, Rect2(x0 + width * 0.35, top - 146, width * 0.65, 50))
+		_place(_best_label, Rect2(x0 + width * 0.4, top - 88, width * 0.6, 24))
+		_effects_at = Vector2(rect.position.x, top - Balance.PX * 18.0)
+		for l: Label in [_floor_label, _floor_name, _rows_label]:
+			l.horizontal_alignment = align_left
+		for l: Label in [_score_label, _best_label]:
+			l.horizontal_alignment = align_right
+		_tower.visible = false
+	var at := func(board_y: float) -> float: return rect.position.y + board_y * zoom
+	_place(_combo_label, Rect2(rect.get_center().x - 120, at.call(30.0), 240, 40))
+	_place(_combo_mult, Rect2(rect.get_center().x - 120, at.call(72.0), 240, 24))
+	_place(_message, Rect2(rect.position.x - 60, at.call(Balance.BOARD_H * 0.36), rect.size.x + 120, 70))
+	_place(_prompt, Rect2(rect.position.x - 60, at.call(Balance.PADDLE_Y - 130), rect.size.x + 120, 40))
+	_place(_help, Rect2(rect.position.x - 60, at.call(Balance.PADDLE_Y - 330), rect.size.x + 120, 130))
+	var quake_y := rect.end.y + (Balance.BLOCK_DEPTH + Balance.PX * 6.0) * zoom
+	_place(_quake_label, Rect2(x0, quake_y + Balance.PX * 6.0 * zoom, width, 24))
+	_place(_pause_button, Rect2(view.x - 100, 16, 84, 64) if wide or top < 260 else Rect2(x1 - 84, top - 210, 84, 64))
+	_place(_quake_button, Rect2(x1 - 210, quake_y + 70, 210, 72))
 	_popups.size = view
-	# The haus beside the board, when there is room for it.
-	var side := rect.position.x - Balance.WALL
-	_tower.visible = side >= Tower.WIDTH + 200.0
-	_place(_tower, Rect2(side * 0.5 - Tower.WIDTH * 0.5 - 30, rect.position.y - 40, Tower.WIDTH + 120, rect.size.y + 80))
 	_bars.queue_redraw()
 
 
@@ -197,7 +226,7 @@ func _draw_bars() -> void:
 	var px := Balance.PX
 	var r := board_rect
 	# The wave bar, along the top: fills as the wall gets ready to come down.
-	var bar := Rect2(r.position.x, r.position.y - Balance.WALL - Balance.BLOCK_DEPTH - px * 5.0, r.size.x, px * 3.0)
+	var bar := Rect2(r.position.x, r.position.y - (Balance.WALL + Balance.BLOCK_DEPTH + px * 5.0) * zoom, r.size.x, px * 3.0 * zoom)
 	_bars.draw_rect(bar.grow(px), UI.SHADOW)
 	var fill := clampf(board.wave_timer / board.wave_time, 0.0, 1.0)
 	var c := Color("ff4fa3").lerp(Color("ff2a2a"), fill)
@@ -211,7 +240,7 @@ func _draw_bars() -> void:
 	for i in range(1, seconds):
 		_bars.draw_rect(Rect2(bar.position.x + bar.size.x * i / board.wave_time, bar.position.y, px * 0.5, bar.size.y), Color(0, 0, 0, 0.4))
 	# The quake meter, under the board.
-	var q := Rect2(r.position.x, r.end.y + Balance.BLOCK_DEPTH + px * 6.0, r.size.x, px * 4.0)
+	var q := Rect2(r.position.x, r.end.y + (Balance.BLOCK_DEPTH + px * 6.0) * zoom, r.size.x, px * 4.0 * zoom)
 	_bars.draw_rect(q.grow(px), UI.SHADOW)
 	var charge := board.quake / Balance.QUAKE_CHARGE
 	var qc := Color("ffb03b")
@@ -219,8 +248,8 @@ func _draw_bars() -> void:
 		qc = qc.lerp(Color.WHITE, 0.5 + 0.5 * sin(board.clock * 10.0))
 	_bars.draw_rect(Rect2(q.position, Vector2(q.size.x * charge, q.size.y)), qc)
 	# The pickups running: their icons along the top of the board, each with a bar for the time left.
-	var x := r.position.x
-	var y := r.position.y - Balance.WALL - Balance.BLOCK_DEPTH - px * 18.0
+	var x := _effects_at.x
+	var y := _effects_at.y
 	for kind: Pickups.Kind in board.effects:
 		var left: float = board.effects[kind]
 		var full := _duration(kind)
@@ -230,12 +259,9 @@ func _draw_bars() -> void:
 		_bars.draw_rect(Rect2(x + px, y + px * 11.0, px * 8.0, px), UI.SHADOW)
 		_bars.draw_rect(Rect2(x + px, y + px * 11.0, px * 8.0 * clampf(left / full, 0.0, 1.0), px), Pickups.info(kind)["color"])
 		x += px * 11.0
-	if not board.effects.is_empty():
-		_rows_label.visible = false
-		_floor_name.visible = false
-	else:
-		_rows_label.visible = true
-		_floor_name.visible = true
+	# Over the board, the icons take the place of the floor's name and rows.
+	_rows_label.visible = wide or board.effects.is_empty()
+	_floor_name.visible = wide or board.effects.is_empty()
 
 
 static func _duration(kind: Pickups.Kind) -> float:
@@ -262,7 +288,7 @@ static func _duration(kind: Pickups.Kind) -> float:
 # --- popups and messages ------------------------------------------------------------------------
 
 func _on_scored(points: int, at: Vector2) -> void:
-	var start := board_rect.position + at - Vector2(0, Balance.BLOCK_DEPTH)
+	var start := board_rect.position + (at - Vector2(0, Balance.BLOCK_DEPTH)) * zoom
 	var big := points >= 200
 	var l := UI.label(str(points), 3 if big else 2, UI.GOLD if big else UI.INK)
 	l.size = Vector2(160, 30)

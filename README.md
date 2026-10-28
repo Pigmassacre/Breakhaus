@@ -132,8 +132,9 @@ pink glass), the Offices (a glowing grid), the Disco (lit tiles), the
 Library (planks), the Kitchen (tiles), the Greenhouse (green glass), the
 Arcade (a neon grid) and the Lobby (marble); breaking through the Lobby
 demolishes the haus, and the basements go on down for as long as you
-last. On a wide screen the haus stands beside the board with the floor
-you are on lit up. A wall that is swept clean while the floor still has
+last. On a wide screen the board is as tall as the screen, the floor and
+the haus (the floor you are on lit up) to its left and the score and the
+pickups running to its right; on a tall one (a phone) they are over it. A wall that is swept clean while the floor still has
 rows to send is a Clean Sweep: a bonus, and the next row right away.
 
 **Blocks.** Plain ones take one hit; studded ones a hit per stud and one
