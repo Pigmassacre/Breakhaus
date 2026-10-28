@@ -66,6 +66,10 @@ func _ready() -> void:
 	board.combo_ended.connect(func(c: int) -> void: hud.show_message("%d COMBO!" % c, UI.GOLD, 0.5))
 	board.quake_ready.connect(func() -> void: hud.show_message("QUAKE READY!", Color("ffb03b"), 0.5))
 	board.floor_cleared.connect(_on_floor_cleared)
+	board.missed.connect(Game.buzz.bind(60))
+	board.hitstop.connect(func(seconds: float) -> void:
+		if seconds >= Balance.HITSTOP_BIG:
+			Game.buzz(35))
 	board.overrun.connect(_on_overrun)
 	board.launched.connect(func() -> void:
 		Audio.play("go", -4.0)
@@ -75,6 +79,12 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 	_start_floor(level)
+	# `--clear-at=5`: the floor is cleared after that many seconds, for testing what comes after.
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--clear-at="):
+			await get_tree().create_timer(float(arg.trim_prefix("--clear-at="))).timeout
+			board.state = Board.State.CLEARED
+			board.floor_cleared.emit()
 
 
 func _start_floor(n: int) -> void:
@@ -128,7 +138,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _quake() -> void:
-	board.use_quake()
+	if board.use_quake():
+		Game.buzz(150)
 
 
 func _process(delta: float) -> void:
@@ -233,19 +244,30 @@ func _on_floor_cleared() -> void:
 	await get_tree().create_timer(2.6 if demolished else 1.8).timeout
 	if _over:
 		return
-	# Down through the floor: everything shakes, then the next one drops in.
+	# Down through the floor: the glass cracks from the middle out and falls away, then the next one drops in.
 	Audio.play("collapse", 0.0)
-	add_shake(20.0)
-	shock(Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.5), 1.0)
-	flash(Color.BLACK, 0.8)
-	await get_tree().create_timer(0.35).timeout
+	add_shake(12.0)
+	board.balls.clear()
+	var crack := create_tween()
+	crack.tween_property(board, "shatter", 0.5, 0.45).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	crack.tween_callback(func() -> void:
+		for i in 40:
+			var at := Vector2(randf() * Balance.BOARD_W, randf() * Balance.BOARD_H)
+			board.particles.shards(at, board.theme["light"], 1, 1.4)
+		add_shake(20.0)
+		shock(Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.5), 1.0)
+		Audio.play("boom", 0.0, 0.6))
+	crack.tween_property(board, "shatter", 1.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await crack.finished
 	if _over:
 		return
+	flash(Color.BLACK, 0.6)
 	_start_floor(level + 1)
 
 
 func _on_overrun(_block: Block) -> void:
 	_over = true
+	Game.buzz(250)
 	Audio.play("game_over", 0.0)
 	Audio.muffle(1.0, 1.5)
 	Audio.heat = 0.0

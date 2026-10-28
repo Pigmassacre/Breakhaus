@@ -109,7 +109,7 @@ func _input(event: InputEvent) -> void:
 func prompt(action: String) -> String:
 	match device:
 		Device.TOUCH:
-			return {"smash": "Tap", "quake": "Quake", "pause": "Pause", "move": "Drag"}.get(action, "Tap")
+			return {"smash": "Tap", "quake": "Quake button", "pause": "Pause", "move": "Drag anywhere"}.get(action, "Tap")
 		Device.PAD:
 			if playstation:
 				return {"smash": "Cross", "quake": "Triangle", "pause": "Options", "move": "Stick"}.get(action, "Cross")

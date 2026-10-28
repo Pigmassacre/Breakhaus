@@ -23,6 +23,8 @@ uniform vec4 ripples[8];
 uniform int ripple_count = 0;
 uniform vec2 lights[8];
 uniform int light_count = 0;
+// A floor cleared: cracks run out from the middle (0 to 0.5), then the pieces drop away into the dark (to 1).
+uniform float shatter = 0.0;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -44,6 +46,29 @@ float fbm(vec2 p) {
 		a *= 0.5;
 	}
 	return v;
+}
+
+// The nearest two points of a jittered grid: their distances, and the nearest one's cell.
+vec3 voronoi(vec2 p, float cell_size) {
+	vec2 g = floor(p / cell_size);
+	float d1 = 1e9;
+	float d2 = 1e9;
+	float id = 0.0;
+	for (int y = -1; y <= 1; y++) {
+		for (int x = -1; x <= 1; x++) {
+			vec2 c = g + vec2(float(x), float(y));
+			vec2 point = (c + 0.15 + 0.7 * vec2(hash(c), hash(c + 17.0))) * cell_size;
+			float d = length(p - point);
+			if (d < d1) {
+				d2 = d1;
+				d1 = d;
+				id = hash(c + 3.0);
+			} else if (d < d2) {
+				d2 = d;
+			}
+		}
+	}
+	return vec3(d1, d2, id);
 }
 
 // Steps a 0-1 light into a few flat bands, the way pixel art shades.
@@ -191,6 +216,17 @@ void fragment() {
 	if (fire > 0.0) {
 		float heat = bands(fbm(vec2(p.x * 0.02, p.y * 0.02 + clock * 2.0)), 3.0) * UV.y;
 		col += vec3(0.35, 0.12, 0.0) * heat * fire;
+	}
+
+	if (shatter > 0.0) {
+		vec3 v = voronoi(p, 72.0);
+		float reach = length(p - size * 0.5) / length(size * 0.5);
+		float cracked = step(reach, shatter * 2.2);
+		float crack = step(v.y - v.x, px * 0.9) * cracked;
+		col = mix(col, vec3(1.0), crack * 0.85);
+		// Each piece goes at its own moment, the middle first.
+		float drop = clamp((shatter - 0.5) * 2.0 * 1.6 - v.z * 0.4 - reach * 0.3, 0.0, 1.0);
+		col *= 1.0 - bands(drop, 4.0);
 	}
 
 	COLOR = vec4(col, 1.0);

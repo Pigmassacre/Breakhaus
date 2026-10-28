@@ -27,6 +27,8 @@ var demolished := 0
 
 ## The game plays itself (`--autoplay`, for testing).
 var autoplay := false
+## Every floor a single row (`--short-floors`, for testing what happens between them).
+var short_floors := false
 ## The screen being shown (main.gd swaps them).
 var main: Node
 
@@ -106,6 +108,20 @@ func add_score(score: int, level: int, combo: int) -> int:
 		high_scores.resize(HIGH_SCORES)
 	save()
 	return place if place < HIGH_SCORES and score > 0 else -1
+
+
+## A buzz of the phone, `ms` long (on a phone).
+func buzz(ms: int) -> void:
+	if OS.has_feature("mobile") and float(settings["shake"]) > 0.0:
+		Input.vibrate_handheld(ms)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	# F11, or Alt and Enter: full screen and back.
+	if event is InputEventKey and event.pressed and not event.echo and can_fullscreen():
+		if event.keycode == KEY_F11 or (event.keycode == KEY_ENTER and event.alt_pressed):
+			set_setting("fullscreen", not settings["fullscreen"])
+			get_viewport().set_input_as_handled()
 
 
 func shake_amount() -> float:

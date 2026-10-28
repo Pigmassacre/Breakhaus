@@ -29,6 +29,7 @@ var _bars: Control
 var _popups: Control
 var _pause_button: Button
 var _quake_button: Button
+var _tower: Tower
 var _shown_score := 0.0
 var _combo_shown := 0
 var _message_tween: Tween
@@ -58,6 +59,8 @@ func _ready() -> void:
 	_quake_label = UI.label("", 2, UI.DIM)
 	for l: Label in [_floor_label, _floor_name, _rows_label, _score_label, _best_label, _combo_label, _combo_mult, _quake_label]:
 		root.add_child(l)
+	_tower = Tower.new()
+	root.add_child(_tower)
 	_popups = Control.new()
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_popups)
@@ -115,7 +118,12 @@ func layout(rect: Rect2) -> void:
 	var bottom := rect.end.y + Balance.BLOCK_DEPTH + 16
 	_place(_pause_button, Rect2(x1 - 84, top - 210 if top > 260 else 12, 84, 64))
 	_place(_quake_button, Rect2(x1 - 210, bottom + 74, 210, 72))
-	_popups.size = get_viewport().get_visible_rect().size
+	var view := get_viewport().get_visible_rect().size
+	_popups.size = view
+	# The haus beside the board, when there is room for it.
+	var side := rect.position.x - Balance.WALL
+	_tower.visible = side >= Tower.WIDTH + 200.0
+	_place(_tower, Rect2(side * 0.5 - Tower.WIDTH * 0.5 - 30, rect.position.y - 40, Tower.WIDTH + 120, rect.size.y + 80))
 	_bars.queue_redraw()
 
 
@@ -134,6 +142,7 @@ func _process(delta: float) -> void:
 	var best := maxi(Game.best_score(), board.score)
 	_best_label.text = ("BEST " + _format(best)) if best > 0 else ""
 	_floor_label.text = Floors.label(board.level)
+	_tower.level = board.level
 	_floor_name.text = String(board.theme.get("name", "")).to_upper()
 	var rows := board.rows_queued
 	_rows_label.text = ("%d ROWS TO GO" % rows) if rows > 0 else "LAST ROWS!"

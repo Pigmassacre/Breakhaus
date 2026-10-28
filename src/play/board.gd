@@ -93,6 +93,8 @@ var shield_flash := 0.0
 var clock := 0.0
 ## A demo board plays itself and never ends (the title's).
 var demo := false
+## The floor breaking up under it all after it is cleared, 0 to 1 (the floor shader's).
+var shatter := 0.0
 
 var _view: Node2D
 
@@ -174,9 +176,13 @@ func start_floor(n: int) -> void:
 	_quake_blocks.clear()
 	effects.clear()
 	paddle_target_w = Balance.PADDLE_W
+	shatter = 0.0
 	rows_made = 0
 	var start := Floors.start_rows(n)
 	rows_queued = Floors.queue_rows(n)
+	if Game.short_floors:
+		start = 1
+		rows_queued = 0
 	# The top rows left empty to start with, so the first waves have room.
 	var top := 2
 	var delay := 0.15
@@ -223,6 +229,20 @@ func launch() -> void:
 
 func paddle_rect() -> Rect2:
 	return Rect2(paddle_x - paddle_w * 0.5, Balance.PADDLE_Y, paddle_w, Balance.PADDLE_H)
+
+
+## How soon a ball lands on the paddle: 1 if it is about to (now is the time to smash), down to 0.
+func smash_window() -> float:
+	var best := 0.0
+	for ball in balls:
+		if ball.held or ball.vel.y <= 0.0 or ball.pos.y > Balance.PADDLE_Y:
+			continue
+		if absf(ball.pos.x - paddle_x) > paddle_w * 0.5 + Balance.BALL_R * 2.0:
+			continue
+		var speed := ball.vel.y * (Balance.OVERDRIVE_SPEED if effect(Pickups.Kind.OVERDRIVE) > 0.0 else 1.0)
+		var eta := (Balance.PADDLE_Y - Balance.BALL_R - ball.pos.y) / speed
+		best = maxf(best, 1.0 - clampf(eta / (Balance.SMASH_TIME * 1.6), 0.0, 1.0))
+	return best
 
 
 func smash() -> void:

@@ -40,6 +40,7 @@ func _process(_delta: float) -> void:
 	_material.set_shader_parameter("danger", board.danger() if board.state != Board.State.CLEARED else 0.0)
 	_material.set_shader_parameter("frost", clampf(board.effect(Pickups.Kind.FROST), 0.0, 1.0))
 	_material.set_shader_parameter("fire", clampf(board.effect(Pickups.Kind.FIRE), 0.0, 1.0))
+	_material.set_shader_parameter("shatter", board.shatter)
 	var ripples := PackedVector4Array()
 	for r: Dictionary in board.ripples.slice(-MAX_RIPPLES):
 		ripples.append(Vector4(r["pos"].x, r["pos"].y, r["t"], r["strength"]))
@@ -210,6 +211,12 @@ func _draw_paddle() -> void:
 	draw_rect(Rect2(x, y + h, PX * 3.0, depth), accent.darkened(0.4))
 	draw_rect(Rect2(x + w - PX * 3.0, y + h, PX * 3.0, depth), accent.darkened(0.4))
 	draw_rect(Rect2(x + PX * 3.0, y + PX, w - PX * 6.0, PX), Color(1, 1, 1, 0.8))
+	# A ball about to land: the top lights up, the cue to smash.
+	var window := board.smash_window()
+	if window > 0.0 and board.smash_cooldown <= 0.0:
+		var cue := Color("fff23d")
+		cue.a = window * 0.9
+		draw_rect(Rect2(x - PX, y - PX * 2.0, w + PX * 2.0, PX), cue)
 	if board.quake_charged():
 		# Charged with a quake: it hums.
 		var hum := Color("ffb03b")
