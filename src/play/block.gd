@@ -11,6 +11,11 @@ enum Kind {
 	PRIZE,  ## Always lets a pickup go.
 	GOLD,  ## A pile of points.
 	MOSS,  ## Grows into an empty cell beside it every time the wall comes down.
+	BUMPER,  ## Kicks the ball off it faster, pinball style; three hits.
+	PORTAL,  ## One of a pair: a ball going into it comes out of the other. Two goes.
+	ICE,  ## The ball goes straight through, and the crack runs into every ice block touching it.
+	FUSE,  ## A hit lights it; a moment later it blasts its whole row. A second hit sets it off at once.
+	COIN,  ## Worth a lot when it lands, less every second after.
 }
 
 var kind := Kind.NORMAL
@@ -39,6 +44,14 @@ var burn_tick := 0.0
 var frozen := false
 var carries_pickup := false
 var dead := false
+## A portal's pair: the other portal with the same number.
+var link := 0
+## A lit fuse: seconds to go (below 0: not lit).
+var fuse := -1.0
+## A coin block: seconds since it landed.
+var age := 0.0
+## A bumper's kick, 1 to 0, for its flash and swell.
+var bump := 0.0
 
 
 static func kind_color(kind: Kind, base: Color) -> Color:
@@ -53,6 +66,16 @@ static func kind_color(kind: Kind, base: Color) -> Color:
 			return Color("4fae3a")
 		Kind.PRIZE:
 			return Color("ffffff")
+		Kind.BUMPER:
+			return Color("6a2c8f")
+		Kind.PORTAL:
+			return Color("2a1a4a")
+		Kind.ICE:
+			return Color("a8e4ff")
+		Kind.FUSE:
+			return Color("4a4a5a")
+		Kind.COIN:
+			return Color("3a2a1a")
 	return base
 
 
@@ -64,7 +87,18 @@ func setup(data: Dictionary, c: int, r: int) -> Block:
 	col = c
 	row = r
 	carries_pickup = kind == Kind.PRIZE
+	link = data.get("link", 0)
 	return self
+
+
+## A portal pair's own colour, so that you can see which goes with which.
+func portal_color() -> Color:
+	return Color.from_hsv(fmod(link * 0.37 + 0.55, 1.0), 0.65, 1.0)
+
+
+## What a coin block is worth now: a lot at first, draining away.
+func coin_value() -> int:
+	return int(lerpf(Balance.COIN_MAX, Balance.COIN_MIN, clampf(age / Balance.COIN_DRAIN, 0.0, 1.0)))
 
 
 ## Where it is on the board (its footprint's top left).

@@ -62,6 +62,8 @@ var rockets: Array = []
 var bolts: Array = []
 ## Blasts waiting to go off (TNT in a chain): {"col", "row", "t"}.
 var blasts: Array = []
+## A fuse's blast along its row, for a moment: {"row", "t"}.
+var beams: Array = []
 ## Rings on the glass: {"pos", "t", "strength"} (the floor shader draws them).
 var ripples: Array = []
 ## The quake's blocks, waiting their turn to go: {"block", "t"}.
@@ -199,6 +201,7 @@ func start_floor(n: int) -> void:
 	pickups.clear()
 	rockets.clear()
 	blasts.clear()
+	beams.clear()
 	bolts.clear()
 	_quake_blocks.clear()
 	effects.clear()
@@ -357,6 +360,10 @@ func _process(delta: float) -> void:
 		bolt["t"] += delta
 		if bolt["t"] > 0.25:
 			bolts.erase(bolt)
+	for beam: Dictionary in beams.duplicate():
+		beam["t"] += delta
+		if beam["t"] > 0.35:
+			beams.erase(beam)
 	for ripple: Dictionary in ripples.duplicate():
 		ripple["t"] += delta
 		if ripple["t"] > 1.6:
@@ -393,6 +400,11 @@ func _update_blocks(delta: float) -> void:
 				b.z = maxf(b.z, 0.0)
 		b.slide = move_toward(b.slide, 0.0, delta * Balance.ROW_H * 5.0)
 		b.flash = maxf(b.flash - delta * 5.0, 0.0)
+		b.bump = maxf(b.bump - delta * 5.0, 0.0)
+		if b.kind == Block.Kind.COIN and not b.raining and state == State.PLAY:
+			b.age += delta
+		if b.fuse >= 0.0 and state == State.PLAY:
+			_tick_fuse(b, delta)
 		b.shake = (rng.randf_range(-1.0, 1.0) * Balance.PX * 0.5) if rumble else move_toward(b.shake, 0.0, delta * 40.0)
 		if b.burning > 0.0:
 			_burn(b, delta)
@@ -582,6 +594,7 @@ func _move_ball(ball: Ball, delta: float) -> void:
 	var steps := maxi(1, ceili(distance / Balance.BALL_STEP))
 	var step := distance / steps
 	ball.idle += delta
+	ball.portal_cd = maxf(ball.portal_cd - delta, 0.0)
 	if ball.spin != 0.0:
 		ball.vel = ball.vel.rotated(ball.spin * delta)
 		ball.spin *= exp(-Balance.SPIN_DECAY * delta)
@@ -788,13 +801,31 @@ func _collide_blocks(ball: Ball) -> void:
 	if best == null:
 		return
 	ball.idle = 0.0
+	if best.kind == Block.Kind.PORTAL:
+		if ball.portal_cd > 0.0:
+			return
+		var partner := _partner(best)
+		if partner:
+			_warp(ball, best, partner)
+			return
 	var fire := effect(Pickups.Kind.FIRE) > 0.0
-	# Fire and Fever both go straight through all but steel.
-	var hot := (fire or fever > 0.0) and best.kind != Block.Kind.STEEL
+	# Fire and Fever both go straight through all but steel (and bumpers, which always kick back).
+	var hot := (fire or fever > 0.0) and best.kind != Block.Kind.STEEL and best.kind != Block.Kind.BUMPER
 	var damage := 2 if (fire or fever > 0.0 or ball.smashed) else 1
 	var breaks := best.frozen or best.hp <= damage or hot
-	var through := breaks and (ball.pierce > 0 or hot)
-	if not through:
+	var through := (breaks and (ball.pierce > 0 or hot)) or best.kind == Block.Kind.ICE
+	if best.kind == Block.Kind.BUMPER:
+		through = false
+		# Off its middle, like a round pinball bumper, and faster.
+		var away := (ball.pos - best.center()).normalized()
+		best_normal = Vector2(away.x, away.y * 2.0).normalized()
+		ball.speed = minf(ball.speed + Balance.BUMPER_KICK, Balance.BALL_SPEED_MAX)
+		var out := ball.vel.bounce(best_normal) if ball.vel.dot(best_normal) < 0.0 else ball.vel
+		ball.vel = out.normalized().lerp(best_normal, 0.5).normalized() * ball.speed
+		ball.spin *= -0.7
+		ball.pos += best_normal * (best_depth + 0.5)
+		ball.fix_angle()
+	elif not through:
 		if ball.vel.dot(best_normal) < 0.0:
 			ball.vel = ball.vel.bounce(best_normal)
 			ball.spin *= -0.7
@@ -852,6 +883,20 @@ func _hit_block(b: Block, damage: int, ball: Ball = null) -> void:
 		return
 	b.flash = 1.0
 	b.shake = Balance.PX * 1.5
+	if b.kind == Block.Kind.FUSE and not b.frozen:
+		# The first hit lights it (a blast's, with a short fuse); a ball meeting it lit sets it off.
+		if b.fuse < 0.0:
+			b.fuse = Balance.FUSE_TIME if ball else Balance.FUSE_CHAIN
+			Audio.play("burn", -4.0, 1.4)
+			return
+		if ball == null:
+			b.fuse = minf(b.fuse, Balance.FUSE_CHAIN)
+			return
+		b.hp = 0
+	if b.kind == Block.Kind.BUMPER:
+		b.bump = 1.0
+		Audio.play("shield_hit", -4.0, rng.randf_range(1.5, 1.8))
+		_add_score(Balance.SCORE_BUMP, b.center())
 	if b.frozen:
 		b.hp = 0
 	else:
@@ -912,6 +957,20 @@ func _break(b: Block, scores := true) -> void:
 		points = Balance.SCORE_GOLD
 		Audio.play("coin", -2.0)
 		particles.spray(center, Vector2.UP, Color("ffe066"), 16, 10.0)
+	elif b.kind == Block.Kind.COIN:
+		points = b.coin_value()
+		Audio.play("coin", -2.0, 0.8 + float(points) / Balance.COIN_MAX * 0.6)
+		particles.spray(center, Vector2.UP, Color("ffd23d"), 6 + points / 50, 10.0)
+	elif b.kind == Block.Kind.ICE:
+		# The crack runs on into the ice touching it.
+		Audio.play("freeze", -8.0, rng.randf_range(1.2, 1.5))
+		particles.shards(center, Color("dff6ff"), 6)
+		for d: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var n := at(b.col + d.x, b.row + d.y)
+			if n and n.kind == Block.Kind.ICE and not n.dead:
+				_quake_blocks.append({"block": n, "t": 0.06})
+	elif b.kind == Block.Kind.FUSE:
+		_row_blast(b.row)
 	_add_score(points, center)
 	var was_charged := quake_charged()
 	quake = minf(quake + 1.0 + combo * 0.04, Balance.QUAKE_CHARGE)
@@ -1017,6 +1076,66 @@ func _update_blasts(delta: float) -> void:
 			continue
 		blasts.erase(blast)
 		_explode(blast["col"], blast["row"])
+
+
+## A fuse going off: a blast the length of its row, everything in it taking a beating.
+func _row_blast(row: int) -> void:
+	for c in COLS:
+		var b := at(c, row)
+		if b:
+			_hit_block(b, 3)
+	var y := (row + 0.5) * Balance.ROW_H
+	beams.append({"row": row, "t": 0.0})
+	for i in 8:
+		particles.burst(Vector2((i + 0.5) * W / 8.0, y), Color("ff6a3d"), 4, 1.0, 10.0)
+	particles.smoke(Vector2(W * 0.5, y), 6, 10.0)
+	Audio.play("boom", 0.0, 0.8)
+	Audio.play("zap", -4.0, 0.6)
+	shake.emit(9.0)
+	hitstop.emit(Balance.HITSTOP_BIG)
+	flashed.emit(Color("ffb08a"), 0.2)
+
+
+func _tick_fuse(b: Block, delta: float) -> void:
+	var before := b.fuse
+	b.fuse -= delta
+	# A tick every quarter second, the sparks flying.
+	if floori(before * 4.0) != floori(b.fuse * 4.0):
+		Audio.play("tick", -8.0, 1.6)
+		b.flash = 0.6
+	if rng.randf() < 0.5:
+		particles.embers(b.center() + Vector2(Balance.BLOCK_W * 0.35, -Balance.BLOCK_DEPTH - Balance.PX), 1, 6.0)
+	if b.fuse <= 0.0:
+		b.fuse = -1.0
+		_break(b)
+
+
+## The other portal of `b`'s pair, if it's there to come out of.
+func _partner(b: Block) -> Block:
+	for o: Block in grid:
+		if o and o != b and o.kind == Block.Kind.PORTAL and o.link == b.link and not o.raining and not o.dead:
+			return o
+	return null
+
+
+## Through the portal: out of its pair, going the same way, both portals worn a little.
+func _warp(ball: Ball, into: Block, out: Block) -> void:
+	var dir := ball.direction()
+	var half := Vector2(Balance.BLOCK_W, Balance.ROW_H) * 0.5 + Vector2.ONE * (Balance.BALL_R + 1.0)
+	var t := minf(half.x / maxf(absf(dir.x), 0.001), half.y / maxf(absf(dir.y), 0.001))
+	var from := ball.pos
+	ball.pos = out.center() + dir * t
+	ball.portal_cd = 0.3
+	ball.trail.clear()
+	ball.flash = 1.0
+	var c := into.portal_color()
+	bolts.append({"points": PackedVector2Array([into.center(), out.center()]), "t": 0.0, "color": c})
+	particles.burst(from, c, 8, 0.8)
+	particles.burst(ball.pos, c, 8, 0.8)
+	ripples.append({"pos": out.center(), "t": 0.0, "strength": 0.5})
+	Audio.play("zap", -6.0, 0.7)
+	_hit_block(into, 1, ball)
+	_hit_block(out, 1, ball)
 
 
 ## TNT going off: everything around it takes a beating (and other TNT goes off in its turn).

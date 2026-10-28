@@ -73,6 +73,7 @@ func _draw() -> void:
 	_draw_rockets()
 	board.particles.draw(self)
 	_draw_bolts()
+	_draw_beams()
 
 
 # --- the frame round the board ------------------------------------------------------------------
@@ -365,9 +366,9 @@ func _draw_rockets() -> void:
 func _draw_bolts() -> void:
 	for bolt: Dictionary in board.bolts:
 		var a: float = 1.0 - bolt["t"] / 0.25
-		var glow := Color("fff23d")
+		var glow: Color = bolt.get("color", Color("fff23d"))
 		glow.a = a * 0.4
-		var core := Color(1, 1, 0.85, a)
+		var core := Color(1, 1, 0.85, a).lerp(Color(glow, a), 0.3)
 		var points: PackedVector2Array = bolt["points"]
 		var lifted := PackedVector2Array()
 		for p in points:
@@ -378,3 +379,14 @@ func _draw_bolts() -> void:
 			Pixels.line(self, lifted[i], lifted[i + 1], glow, 3, glow_drawn)
 		for i in lifted.size() - 1:
 			Pixels.line(self, lifted[i], lifted[i + 1], core, 1, core_drawn)
+
+
+## A fuse's blast: a band of light the length of its row, white hot in the middle, fading out.
+func _draw_beams() -> void:
+	for beam: Dictionary in board.beams:
+		var a: float = 1.0 - beam["t"] / 0.35
+		var y: float = beam["row"] * Balance.ROW_H - Balance.BLOCK_DEPTH
+		var spread := roundf((1.0 - a) * 2.0 + 1.0) * PX
+		draw_rect(Rect2(0, y - spread, Balance.BOARD_W, Balance.ROW_H + spread * 2.0), Color(Color("ff6a3d"), a * 0.5))
+		draw_rect(Rect2(0, y + PX, Balance.BOARD_W, Balance.ROW_H - PX * 2.0), Color(Color("ffd08a"), a * 0.8))
+		draw_rect(Rect2(0, y + Balance.ROW_H * 0.5 - PX * 0.5, Balance.BOARD_W, PX), Color(1, 1, 1, a))

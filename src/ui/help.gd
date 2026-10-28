@@ -1,11 +1,11 @@
 extends Control
-## How to play, in four pages: the rules and the controls, the blocks and
-## the tricks, the pickups, and the rare ones on a showcase of their own
-## (each with its real block or icon beside it, the pickups framed in the
-## colours of their rarity).
+## How to play, page by page: the rules and the controls, the blocks, the
+## tricks, the pickups, and the rare ones on a showcase of their own (each
+## with its real block or icon beside it, the pickups framed in the colours
+## of their rarity).
 ## Left and right (or the arrows on screen) turn the pages.
 
-const PAGES := 4
+const PAGES := 5
 
 var _page := 0
 var _pages: Array[Control] = []
@@ -25,7 +25,7 @@ func _ready() -> void:
 	holder.custom_minimum_size = Vector2(680, 960)
 	holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(holder)
-	for page: Control in [_rules(), _blocks(), _pickups(), _rares()]:
+	for page: Control in [_rules(), _blocks(), _tricks(), _pickups(), _rares()]:
 		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		holder.add_child(page)
 		_pages.append(page)
@@ -119,8 +119,6 @@ func _rules() -> Control:
 			var color := UI.ACCENT if r == 0 or c == 0 else UI.INK
 			grid.add_child(UI.label(rows[r][c], 2, color, HORIZONTAL_ALIGNMENT_LEFT if c == 0 else HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(grid)
-	box.add_child(_gap(16))
-	box.add_child(_text("Smash right as the ball hits your paddle to send it flying through three blocks.", 2, UI.GOLD))
 	return box
 
 
@@ -134,12 +132,18 @@ func _blocks() -> Control:
 		[Block.Kind.PRIZE, 1, "Prize: always drops a pickup."],
 		[Block.Kind.GOLD, 1, "Gold: lots of points."],
 		[Block.Kind.MOSS, 1, "Moss: spreads every time the wall drops."],
+		[Block.Kind.BUMPER, Balance.BUMPER_HP, "Bumper: kicks the ball back faster."],
+		[Block.Kind.PORTAL, 2, "Portal: in one, out the other."],
+		[Block.Kind.ICE, 1, "Ice: shatters, and so does all the ice touching it."],
+		[Block.Kind.FUSE, 1, "Fuse: hit to light it. Then it blows up its whole row."],
+		[Block.Kind.COIN, 1, "Coin: worth more the sooner you break it."],
 	]
+	box.add_theme_constant_override("separation", 8)
 	for k: Array in kinds:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 20)
 		var sample := _Sample.new()
-		sample.block = Block.new().setup({"kind": k[0], "hp": k[1], "color": Block.kind_color(k[0], Color("ff4fa3"))}, 0, 0)
+		sample.block = Block.new().setup({"kind": k[0], "hp": k[1], "color": Block.kind_color(k[0], Color("ff4fa3")), "link": 3}, 0, 0)
 		sample.help = self
 		row.add_child(sample)
 		var l := UI.label(k[2], 2, UI.INK, HORIZONTAL_ALIGNMENT_LEFT)
@@ -147,8 +151,16 @@ func _blocks() -> Control:
 		l.custom_minimum_size = Vector2(560, 0)
 		row.add_child(l)
 		box.add_child(row)
-	box.add_child(_gap(10))
-	box.add_child(_text("Break blocks in quick succession to build a combo. Reach x8 to trigger Fever and smash through everything. Clear the whole board for a big bonus (and six new rows).", 2, UI.GOLD))
+	return box
+
+
+func _tricks() -> Control:
+	var box := _page_box("TRICKS")
+	box.add_theme_constant_override("separation", 22)
+	box.add_child(_text("Smash right as the ball hits your paddle to send it flying through three blocks.", 2, Color("fff23d")))
+	box.add_child(_text("Move the paddle as the ball hits it to put spin on the ball. The faster you move, the more it curves.", 2, UI.INK))
+	box.add_child(_text("Break blocks in quick succession to build a combo. Reach x8 to trigger Fever and smash through everything.", 2, UI.GOLD))
+	box.add_child(_text("Clear the whole board for a big bonus (and six new rows).", 2, Color("3dffb1")))
 	box.add_child(_text("Breaking blocks charges your Quake; every miss drains it. Use it to wipe out the bottom three rows.", 2, Color("ffb03b")))
 	return box
 

@@ -26,6 +26,8 @@ var squash_angle := 0.0
 ## Where it has been, for the trail.
 var trail: PackedVector2Array = []
 var dead := false
+## Just out of a portal: it can't go back in until this runs out.
+var portal_cd := 0.0
 ## Seconds since it last touched the paddle or a block (to nudge a ball stuck between walls).
 var idle := 0.0
 

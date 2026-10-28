@@ -108,6 +108,22 @@ static func make_row(rng: RandomNumberGenerator, level: int, n: int, twist := {}
 		if not shape[x]:
 			continue
 		row[x] = _block(rng, level, color, twist)
+	var filled: Array[int] = []
+	for x in Balance.COLS:
+		if row[x] != null:
+			filled.append(x)
+	# Now and then a stretch of ice (from the second floor down).
+	if level >= 1 and filled.size() >= 3 and rng.randf() < 0.12:
+		var length := rng.randi_range(3, mini(6, filled.size()))
+		var start := rng.randi_range(0, filled.size() - length)
+		for i in length:
+			row[filled[start + i]] = {"kind": Block.Kind.ICE, "hp": 1, "color": Block.kind_color(Block.Kind.ICE, color)}
+	# Now and then a pair of portals, well apart (from the fourth floor down).
+	if level >= 3 and filled.size() >= 6 and rng.randf() < 0.08:
+		var a := filled[rng.randi_range(0, filled.size() / 2 - 1)]
+		var b := filled[rng.randi_range(filled.size() / 2 + 1, filled.size() - 1)]
+		for x in [a, b]:
+			row[x] = {"kind": Block.Kind.PORTAL, "hp": 2, "color": Block.kind_color(Block.Kind.PORTAL, color), "link": n + 1}
 	return row
 
 
@@ -158,14 +174,19 @@ static func _block(rng: RandomNumberGenerator, level: int, color: Color, twist :
 	var moss := maxf(0.0 if level < 4 else minf(0.025 + (level - 4) * 0.01, 0.07), 0.025 if twist.has("moss") else 0.0) * float(twist.get("moss", 1.0))
 	var prize := 0.02
 	var gold := 0.02 * float(twist.get("gold", 1.0))
+	var bumper := 0.0 if level < 1 else 0.022
+	var fuse := 0.0 if level < 2 else 0.016
+	var coin := 0.014 * float(twist.get("gold", 1.0))
 	var tough := minf((0.06 + level * 0.045) * float(twist.get("tough", 1.0)), 0.6)
 	var acc := 0.0
 	for pick: Array in [[Block.Kind.STEEL, steel], [Block.Kind.TNT, tnt], [Block.Kind.MOSS, moss],
-			[Block.Kind.PRIZE, prize], [Block.Kind.GOLD, gold]]:
+			[Block.Kind.PRIZE, prize], [Block.Kind.GOLD, gold], [Block.Kind.BUMPER, bumper], [Block.Kind.FUSE, fuse],
+			[Block.Kind.COIN, coin]]:
 		acc += pick[1]
 		if r < acc:
 			var kind: int = pick[0]
-			return {"kind": kind, "hp": Balance.STEEL_HP if kind == Block.Kind.STEEL else 1, "color": Block.kind_color(kind, color)}
+			var hp := {Block.Kind.STEEL: Balance.STEEL_HP, Block.Kind.BUMPER: Balance.BUMPER_HP}.get(kind, 1) as int
+			return {"kind": kind, "hp": hp, "color": Block.kind_color(kind, color)}
 	acc += tough
 	if r < acc:
 		var hp := 2

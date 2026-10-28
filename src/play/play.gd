@@ -134,6 +134,17 @@ func _ready() -> void:
 			for kind: Pickups.Kind in Pickups.INFO:
 				if kind not in [Pickups.Kind.MULTI, Pickups.Kind.NARROW, Pickups.Kind.BARRAGE]:
 					board.effects[kind] = 30.0
+		# `--test-blocks`: the floor's first rows swapped for one of each newer kind of block.
+		elif arg == "--test-blocks":
+			var kinds := [Block.Kind.BUMPER, Block.Kind.PORTAL, Block.Kind.ICE, Block.Kind.FUSE, Block.Kind.COIN]
+			for i in kinds.size():
+				for c in Balance.COLS:
+					var kind: int = kinds[i]
+					if kind == Block.Kind.PORTAL and c != 1 and c != 10:
+						kind = Block.Kind.NORMAL
+					var hp: int = {Block.Kind.BUMPER: Balance.BUMPER_HP, Block.Kind.PORTAL: 2}.get(kind, 1)
+					board.put(c, 4 + i, Block.new().setup({"kind": kind, "hp": hp, "color": Block.kind_color(kind, Color("46d9ff")), "link": 1}, c, 4 + i))
+			board._find_lowest()
 		# `--sweep-at=5`: every block is broken after that many seconds, for a clean sweep.
 		elif arg.begins_with("--sweep-at="):
 			await get_tree().create_timer(float(arg.trim_prefix("--sweep-at="))).timeout

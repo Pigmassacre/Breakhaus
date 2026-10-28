@@ -92,6 +92,17 @@ const BURN_TICK := 0.9
 const BURN_SPREAD := 0.35
 ## How far a TNT block's blast reaches, in blocks.
 const TNT_RADIUS := 1
+## A bumper's kick: the ball's speed goes up this much (up to BALL_SPEED_MAX), and it scores this.
+const BUMPER_HP := 3
+const BUMPER_KICK := 220.0
+const SCORE_BUMP := 25
+## A fuse, once lit by a ball: seconds until it goes (lit by a blast, much sooner).
+const FUSE_TIME := 2.2
+const FUSE_CHAIN := 0.25
+## A coin block is worth COIN_MAX as it lands, down to COIN_MIN after COIN_DRAIN seconds.
+const COIN_MAX := 800
+const COIN_MIN := 40
+const COIN_DRAIN := 20.0
 
 # --- scoring ------------------------------------------------------------------------------------
 const SCORE_BLOCK := 10

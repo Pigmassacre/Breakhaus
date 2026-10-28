@@ -13,6 +13,7 @@ extends Node
 ## and quits after the last (`--size=720x1280` sizes the window first).
 ## `--mode=rush` (or daily, or classic) picks the mode,
 ## `--drop=laser,shield` hangs those pickups over the board and `--give=` catches them,
+## `--test-blocks` swaps the first rows for one of each newer kind of block,
 ## `--all-effects` sets every timed pickup going at once, `--sweep-at=5` breaks every block after five seconds (a clean sweep), and
 ## `--mouse=1.5:800:400,2:800:460` moves the pointer to those window
 ## coordinates at those seconds (`:click` on the end presses there), and
