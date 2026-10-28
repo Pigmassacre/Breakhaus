@@ -27,7 +27,10 @@ game-trailer skills).
 Played in the browser, **960 x 640** (the wide layout: the board as tall
 as the frame, the haus and the score beside it). The README's portrait
 720x1280 is taller than most laptop screens. Mobile friendly, with a
-fullscreen button, suits it.
+fullscreen button, suits it, with the mobile **Orientation** left on
+**Default** (or Portrait): set to Landscape, itch turns a phone's full
+screen sideways, and the game, which lays itself out for whatever shape
+it is given, never gets to be tall.
 
 ## The theme (Edit theme, on the game's page)
 

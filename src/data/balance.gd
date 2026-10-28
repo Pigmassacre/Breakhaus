@@ -29,12 +29,13 @@ const PADDLE_FOLLOW := 22.0
 ## Keys and sticks: top speed and how fast it gets there.
 const PADDLE_SPEED := 1250.0
 const PADDLE_ACCEL := 9000.0
-## Dragging a finger moves the paddle this many times as far (times the touch setting).
-const TOUCH_GAIN := 1.35
 ## The angle off straight up at the paddle's very edge.
 const PADDLE_MAX_ANGLE := deg_to_rad(64.0)
 ## How much of the paddle's own speed goes into the ball's angle.
 const PADDLE_ENGLISH := 0.00022
+## A ball that comes up under the paddle is knocked down and out at this angle below the flat:
+## shallow, so it gets out from under in a bounce or two.
+const PADDLE_UNDER_ANGLE := deg_to_rad(20.0)
 
 # --- smashing -----------------------------------------------------------------------------------
 ## The paddle hops up this far for SMASH_TIME after a smash press; a ball met in that time is smashed.

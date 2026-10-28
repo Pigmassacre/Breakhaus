@@ -223,16 +223,20 @@ as it gets the focus:
 | Pause | Esc, P | | Start, Back | II button, back |
 
 The mouse puts the paddle where it is (and is hidden while you play);
-keys and sticks drive it; a finger drags it from anywhere on the screen,
-so it never covers the ball, and a touch anywhere smashes. The prompts
+keys and sticks drive it; a finger puts it right under itself, from
+anywhere up or down the screen (so it needn't cover the ball): touch
+somewhere and it shoots there, drag and it follows. A touch smashes too,
+and a second finger only smashes, leaving the paddle where the first
+one has it. The quake's button is there from the start on a touch screen,
+greyed out until the quake is charged. The prompts
 follow whatever you last touched. The menus work with all of them. F11 or
 Alt+Enter is full screen. The game pauses when it loses the focus (a call
 on the phone, alt-tab). On a phone the smash, the misses, the quake and
 the end buzz it.
 
 **Options**: music and sound volumes, screen shake (which also turns the
-phone's buzzing off at zero), flashes (dimmed to a quarter when off), full
-screen, and on a touch screen how far a drag moves the paddle.
+phone's buzzing off at zero), flashes (dimmed to a quarter when off) and
+full screen.
 
 ## How it is made
 
@@ -332,7 +336,9 @@ muffled under the pause menu and the end. Each floor has its track.
   `--give=laser` catches them at once.
 - `--mouse=1.5:800:400,2:800:460:click` moves the pointer to those window
   coordinates at those seconds (and clicks, with `:click`): for catching
-  the menus' hover and press in screenshots.
+  the menus' hover and press in screenshots. `--touch=2:80:1240,2.5:600:1240,3:0:0:up`
+  does the same with a finger (down, dragged, lifted; `:second` taps a
+  second finger instead).
 - `--shots=1.5,4,9` saves a screenshot to `shots/` at each of those seconds
   and quits after the last; `--size=720x1280` sizes the window first.
 - `--scene=keyart` (and `logo`, `haus`, `words`) draws pictures for the

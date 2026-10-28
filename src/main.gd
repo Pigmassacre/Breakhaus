@@ -15,7 +15,9 @@ extends Node
 ## `--drop=laser,shield` hangs those pickups over the board and `--give=` catches them,
 ## `--all-effects` sets every timed pickup going at once, `--sweep-at=5` breaks every block after five seconds (a clean sweep), and
 ## `--mouse=1.5:800:400,2:800:460` moves the pointer to those window
-## coordinates at those seconds (`:click` on the end presses there).
+## coordinates at those seconds (`:click` on the end presses there), and
+## `--touch=1.5:360:1100,2:200:1100,2.5:0:0:up` does the same with a finger: down at the first,
+## dragged to the next, lifted at `:up` (`:second` taps a second finger there instead).
 
 const SCREENS := {
 	"splash": "res://src/ui/splash.gd",
@@ -75,6 +77,8 @@ func _ready() -> void:
 		elif arg.begins_with("--mouse="):
 			for step in arg.trim_prefix("--mouse=").split(","):
 				_mouse_at(step.split(":"))
+		elif arg.begins_with("--touch="):
+			_touch_steps(arg.trim_prefix("--touch=").split(","))
 		elif arg.begins_with("--shots="):
 			_take_shots(Array(arg.trim_prefix("--shots=").split(",")).map(func(t: String) -> float: return float(t)))
 	show_screen(first, args)
@@ -112,6 +116,41 @@ func _mouse_at(step: PackedStringArray) -> void:
 			click.global_position = at
 			Input.parse_input_event(click)
 			await get_tree().create_timer(0.08).timeout
+
+
+## `--touch=`: each step [seconds, x, y] puts the finger down there or drags it there; [.., "up"]
+## lifts it, and [.., "second"] taps a second finger.
+func _touch_steps(steps: PackedStringArray) -> void:
+	var start := Time.get_ticks_msec()
+	var down := false
+	var last := Vector2.ZERO
+	for step in steps:
+		var part := step.split(":")
+		while (Time.get_ticks_msec() - start) / 1000.0 < float(part[0]):
+			await get_tree().process_frame
+		var at := Vector2(float(part[1]), float(part[2]))
+		var what := part[3] if part.size() > 3 else ""
+		if what == "second":
+			for pressed: bool in [true, false]:
+				var tap := InputEventScreenTouch.new()
+				tap.index = 1
+				tap.pressed = pressed
+				tap.position = at
+				Input.parse_input_event(tap)
+				await get_tree().create_timer(0.08).timeout
+		elif what == "up" or not down:
+			var touch := InputEventScreenTouch.new()
+			touch.pressed = what != "up"
+			touch.position = last if what == "up" else at
+			Input.parse_input_event(touch)
+			down = touch.pressed
+			last = touch.position
+		else:
+			var drag := InputEventScreenDrag.new()
+			drag.position = at
+			drag.relative = at - last
+			Input.parse_input_event(drag)
+			last = at
 
 
 func _set_curtain(progress: float) -> void:

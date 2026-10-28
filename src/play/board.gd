@@ -653,12 +653,17 @@ func _bottom(ball: Ball) -> void:
 
 
 func _collide_paddle(ball: Ball) -> void:
-	if ball.vel.y <= 0.0 or paddle_z > 0.0:
+	if paddle_z > 0.0:
 		return
 	var rect := paddle_rect()
 	var r := Balance.BALL_R
 	var closest := Vector2(clampf(ball.pos.x, rect.position.x, rect.end.x), clampf(ball.pos.y, rect.position.y, rect.end.y))
-	if ball.pos.distance_squared_to(closest) > r * r or ball.pos.y > rect.end.y:
+	if ball.pos.distance_squared_to(closest) > r * r:
+		return
+	if ball.pos.y > rect.get_center().y:
+		_paddle_underside(ball, rect)
+		return
+	if ball.vel.y <= 0.0:
 		return
 	# Where on the paddle it landed decides the angle, and the paddle's own speed bends it.
 	var offset := clampf((ball.pos.x - paddle_x) / (paddle_w * 0.5), -1.0, 1.0)
@@ -694,6 +699,27 @@ func _collide_paddle(ball: Ball) -> void:
 		ball.held_offset = clampf(ball.pos.x - paddle_x, -paddle_w * 0.5, paddle_w * 0.5)
 		ball.hold_time = Balance.MAGNET_HOLD
 		Audio.play("shield_hit", -8.0, 1.4)
+
+
+## A ball meeting the paddle from below (back up off the bottom under it, or the paddle run over it):
+## knocked back down and out towards the nearer end, so a ball let under the paddle costs another
+## miss instead of coming up through it for free. One met side on is knocked out sideways.
+func _paddle_underside(ball: Ball, rect: Rect2) -> void:
+	var r := Balance.BALL_R
+	var side := signf(ball.pos.x - paddle_x)
+	if side == 0.0:
+		side = -1.0 if rng.randf() < 0.5 else 1.0
+	if ball.pos.x < rect.position.x or ball.pos.x > rect.end.x:
+		ball.pos.x = rect.end.x + r + 0.5 if side > 0.0 else rect.position.x - r - 0.5
+		ball.vel.x = absf(ball.vel.x) * side
+	else:
+		ball.pos.y = rect.end.y + r + 0.5
+		ball.set_direction(Vector2(side * cos(Balance.PADDLE_UNDER_ANGLE), sin(Balance.PADDLE_UNDER_ANGLE)))
+	ball.fix_angle()
+	paddle_flash = 0.5
+	paddle_squash = 0.4
+	_ball_hit(ball, ball.direction(), 0.6)
+	Audio.play("paddle", -6.0, 0.7)
 
 
 func _collide_blocks(ball: Ball) -> void:

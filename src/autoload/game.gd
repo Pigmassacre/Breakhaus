@@ -13,7 +13,6 @@ const DEFAULTS := {
 	"shake": 1.0,
 	"flashes": true,
 	"fullscreen": false,
-	"touch_gain": 1.0,
 }
 
 var settings := DEFAULTS.duplicate()

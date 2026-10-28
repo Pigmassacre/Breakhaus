@@ -6,8 +6,9 @@ extends Node
 ## its collapse, and the game from the top floor to the end.
 ##
 ## Controls: the mouse moves the paddle to where it is; keys and sticks
-## drive it; a finger drags it (from anywhere, so it doesn't cover the
-## ball). A click, a press of smash or a touch smashes (or launches).
+## drive it; a finger puts it under itself, wherever it is up or down the
+## screen (so it needn't cover the ball). A click, a press of smash or a
+## touch smashes (or launches); a second finger only smashes.
 
 const POST_SHADER := preload("res://src/fx/post.gdshader")
 
@@ -24,6 +25,9 @@ var _punch := 0.0
 var _hitstop := 0.0
 var _kb_speed := 0.0
 var _mouse_active := false
+## The fingers on the screen, and the one steering the paddle (the first down), or -1.
+var _fingers: Array[int] = []
+var _steer := -1
 var _overlay: CanvasLayer
 var _flash_tween: Tween
 var _shock_tween: Tween
@@ -235,11 +239,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		board.smash()
 	if event.is_action_pressed("quake"):
 		_quake()
-	if event is InputEventScreenTouch and event.pressed:
-		board.smash()
+	if event is InputEventScreenTouch:
+		_mouse_active = false
+		if event.pressed and not event.canceled:
+			_fingers.append(event.index)
+			# The first finger down takes the paddle to it; any finger smashes.
+			if _steer < 0:
+				_steer = event.index
+				_steer_to(event.position)
+			board.smash()
+		else:
+			_fingers.erase(event.index)
+			if event.index == _steer:
+				_steer = _fingers[0] if not _fingers.is_empty() else -1
 	elif event is InputEventScreenDrag:
-		var gain: float = Balance.TOUCH_GAIN * float(Game.settings["touch_gain"])
-		board.paddle_target = clampf(board.paddle_target + event.relative.x * gain / board.scale.x, 0.0, Balance.BOARD_W)
+		if _steer < 0:
+			_steer = event.index
+		if event.index == _steer:
+			_steer_to(event.position)
 		_mouse_active = false
 	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION and event.pressed:
 		_mouse_active = true
@@ -249,6 +266,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_quake()
 	elif event is InputEventMouseMotion and event.device != InputEvent.DEVICE_ID_EMULATION:
 		_mouse_active = true
+
+
+## The paddle under the finger at `at` (on the screen); only across matters.
+func _steer_to(at: Vector2) -> void:
+	board.paddle_target = clampf((at.x - board.position.x) / board.scale.x, 0.0, Balance.BOARD_W)
 
 
 func _quake() -> void:

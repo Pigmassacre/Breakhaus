@@ -1,8 +1,8 @@
 class_name OptionsPanel
 extends VBoxContainer
 ## The settings, as a column of rows: the volumes, the shake, the flashes,
-## full screen (not on a phone), how far a finger drags the paddle, and a
-## Back button. On the title's Options screen and in the pause menu alike.
+## full screen (not on a phone), and a Back button. On the title's Options
+## screen and in the pause menu alike.
 
 signal closed
 
@@ -20,8 +20,6 @@ func _ready() -> void:
 	_toggle("FLASHES", "flashes")
 	if Game.can_fullscreen():
 		_toggle("FULL SCREEN", "fullscreen")
-	if DisplayServer.is_touchscreen_available():
-		_slider("TOUCH SPEED", "touch_gain", 0.5, 2.0)
 	var back := UI.button("BACK", func() -> void: closed.emit())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	add_child(back)

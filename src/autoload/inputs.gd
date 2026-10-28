@@ -65,7 +65,7 @@ func _ready() -> void:
 	_pad_ui("ui_down", [JOY_BUTTON_DPAD_DOWN], JOY_AXIS_LEFT_Y, 1.0)
 	_pad_ui("ui_left", [JOY_BUTTON_DPAD_LEFT], JOY_AXIS_LEFT_X, -1.0)
 	_pad_ui("ui_right", [JOY_BUTTON_DPAD_RIGHT], JOY_AXIS_LEFT_X, 1.0)
-	if DisplayServer.is_touchscreen_available() and OS.has_feature("mobile"):
+	if DisplayServer.is_touchscreen_available() and (OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios")):
 		device = Device.TOUCH
 
 

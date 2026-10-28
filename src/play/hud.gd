@@ -5,7 +5,9 @@ extends CanvasLayer
 ## bar along the top of the board, the pickups running and the quake meter
 ## under it. Points fly off broken blocks to the score (the original
 ## game's), and the big words (SMASH!, MULTIBALL!) punch in over the board.
-## On a touch screen there are pause and quake buttons too.
+## On a touch screen there are pause and quake buttons too; the quake's is
+## there all along, greyed out while it charges, so it can be found before
+## it is needed.
 
 signal pause_pressed
 signal quake_pressed
@@ -38,6 +40,10 @@ var _icons: Control
 var _popups: Control
 var _pause_button: Button
 var _quake_button: Button
+var _quake_spring: Spring
+## Whether the quake was charged last frame, and the time to its button's next wobble.
+var _quake_was_ready := false
+var _quake_nudge := 0.0
 var _tower: Tower
 ## Rush: the clock, big, and the time left on it (set by the game). Other modes: their name.
 var _clock: Label
@@ -103,9 +109,13 @@ func _ready() -> void:
 	root.add_child(_help)
 	_pause_button = _touch_button("II", func() -> void: pause_pressed.emit())
 	_quake_button = _touch_button("QUAKE", func() -> void: quake_pressed.emit())
+	_quake_spring = UI.springy(_quake_button)
 	root.add_child(_pause_button)
 	root.add_child(_quake_button)
-	Inputs.device_changed.connect(func(_d: Inputs.Device) -> void: _update_prompt())
+	Inputs.device_changed.connect(func(_d: Inputs.Device) -> void:
+		_update_prompt()
+		if board_rect.size != Vector2.ZERO:
+			layout(board_rect, zoom))
 	_update_prompt()
 
 
@@ -167,8 +177,10 @@ func layout(rect: Rect2, zoom: float) -> void:
 		_place(_floor_label, Rect2(x0, top - 176, width * 0.4, 60))
 		_place(_floor_name, Rect2(x0, top - 88, width * 0.6, 24))
 		_place(_rows_label, Rect2(x0, top - 62, width * 0.6, 24))
-		_place(_score_label, Rect2(x0 + width * 0.35, top - 164, width * 0.65, 50))
-		_place(_best_label, Rect2(x0 + width * 0.4, top - 100, width * 0.6, 24))
+		# Clear of the pause button, on a touch screen.
+		var pause_room := 100.0 if Inputs.device == Inputs.Device.TOUCH else 0.0
+		_place(_score_label, Rect2(x0 + width * 0.35, top - 164, width * 0.65 - pause_room, 50))
+		_place(_best_label, Rect2(x0 + width * 0.4, top - 100, width * 0.6 - pause_room, 24))
 		_effects_at = Vector2(rect.position.x, top - 92.0)
 		# Up to the clock in Rush, or most of the way across.
 		_effects_width = width * (0.5 if Game.mode == Modes.RUSH else 0.6) - 70.0
@@ -192,7 +204,13 @@ func layout(rect: Rect2, zoom: float) -> void:
 	var quake_y := rect.end.y + (Balance.BLOCK_DEPTH + Balance.PX * 6.0) * zoom
 	_place(_quake_label, Rect2(x0, quake_y + Balance.PX * 6.0 * zoom, width, 24))
 	_place(_pause_button, Rect2(view.x - 100, 16, 84, 64) if wide or top < 260 else Rect2(x1 - 84, top - 210, 84, 64))
-	_place(_quake_button, Rect2(x1 - 210, quake_y + 70, 210, 72))
+	# The quake's button, big enough for a thumb: on a wide screen at the foot of the score's column (under
+	# the board it would be off the bottom), on a tall one under the meter, at the right.
+	if wide:
+		_place(_quake_button, Rect2(x1 + 40, rect.end.y - 200, 300, 130))
+	else:
+		_place(_quake_button, Rect2(x1 - 250, minf(quake_y + Balance.PX * 5.0 * zoom, view.y - 112), 250, 100))
+	_quake_button.add_theme_font_size_override("font_size", UI.font_size(5 if wide else 4))
 	_popups.size = view
 	_bars.queue_redraw()
 
@@ -224,7 +242,9 @@ func _process(delta: float) -> void:
 	_rows_label.add_theme_color_override("font_color", UI.DIM if rows > 0 else UI.GOLD)
 	var touch := Inputs.device == Inputs.Device.TOUCH
 	_pause_button.visible = touch
-	_quake_button.visible = touch and board.quake_charged()
+	_update_quake_button(delta, touch)
+	# The button names the meter on a touch screen; the words would only run under it.
+	_quake_label.visible = not touch
 	if board.quake_charged():
 		var pulse := 0.6 + 0.4 * sin(board.clock * 8.0)
 		_quake_label.text = "QUAKE READY - " + Inputs.prompt("quake").to_upper()
@@ -242,6 +262,23 @@ func _process(delta: float) -> void:
 		_prompt.modulate.a = 0.6 + 0.4 * sin(board.clock * 5.0)
 	_bars.queue_redraw()
 	_icons.queue_redraw()
+
+
+## Greyed out while the quake charges; hot pink and wobbling now and then once it is ready.
+func _update_quake_button(delta: float, touch: bool) -> void:
+	var ready := board.quake_charged()
+	_quake_button.visible = touch
+	_quake_button.disabled = not ready
+	# Greyed out, a finger on it steers the paddle like one anywhere else.
+	_quake_button.mouse_filter = Control.MOUSE_FILTER_STOP if ready else Control.MOUSE_FILTER_IGNORE
+	_quake_button.theme_type_variation = &"HotButton" if ready else &""
+	_quake_button.text = "QUAKE!" if ready else "QUAKE"
+	if ready:
+		_quake_nudge -= delta
+		if not _quake_was_ready or _quake_nudge <= 0.0:
+			_quake_spring.kick(2.0 if not _quake_was_ready else 1.0)
+			_quake_nudge = 0.9
+	_quake_was_ready = ready
 
 
 func _update_prompt() -> void:
@@ -431,16 +468,31 @@ func _on_scored(points: int, at: Vector2) -> void:
 	l.pivot_offset = l.size * 0.5
 	_popups.add_child(l)
 	# Up a little, a beat, then off to the score (the original game's).
-	var target := _score_label.position + Vector2(_score_label.size.x - 80, 10)
+	var target := _score_figures() - l.size * 0.5
 	var t := l.create_tween()
 	t.tween_property(l, "position:y", l.position.y - 36, 0.25).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 	t.tween_interval(0.15)
 	t.tween_property(l, "position", target, 0.45).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
 	t.parallel().tween_property(l, "scale", Vector2(0.6, 0.6), 0.45)
 	t.tween_callback(func() -> void:
+		_score_label.pivot_offset = _score_figures() - _score_label.position
 		_score_label.scale = Vector2(1.12, 1.12)
 		_score_label.create_tween().tween_property(_score_label, "scale", Vector2.ONE, 0.15)
 		l.queue_free())
+
+
+## The middle of the score's figures on the screen (the label is wider than they are, and they keep
+## to its left or its right).
+func _score_figures() -> Vector2:
+	var font := _score_label.get_theme_font("font")
+	var width := font.get_string_size(_score_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, _score_label.get_theme_font_size("font_size")).x
+	var r := Rect2(_score_label.position, _score_label.size)
+	match _score_label.horizontal_alignment:
+		HORIZONTAL_ALIGNMENT_LEFT:
+			return Vector2(r.position.x + width * 0.5, r.get_center().y)
+		HORIZONTAL_ALIGNMENT_RIGHT:
+			return Vector2(r.end.x - width * 0.5, r.get_center().y)
+	return r.get_center()
 
 
 func _on_combo(combo: int, mult: int) -> void:
