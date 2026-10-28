@@ -61,6 +61,20 @@ static func pick(rng: RandomNumberGenerator) -> Kind:
 	return Kind.MULTI
 
 
+## The icon's shadow: its own outline filled with `color` (one flat layer, so it doesn't darken where
+## the icon's parts overlap).
+static func draw_shadow(canvas: CanvasItem, kind: Kind, at: Vector2, scale: float, color: Color) -> void:
+	var tex := texture(kind)
+	var size := Vector2(8, 9) * scale
+	if tex:
+		canvas.draw_texture_rect(tex, Rect2(at - size * 0.5, size), false, Color(0, 0, 0, color.a))
+		return
+	var o := at - size * 0.5
+	canvas.draw_rect(Rect2(o, Vector2(8, 7) * scale), color)
+	canvas.draw_rect(Rect2(o + Vector2(1, 7) * scale, Vector2(6, 1) * scale), color)
+	canvas.draw_rect(Rect2(o + Vector2(2, 8) * scale, Vector2(4, 1) * scale), color)
+
+
 ## Draws the pickup's icon into `canvas`, its footprint's centre at `at`, `scale` art pixels to one of its own.
 static func draw_icon(canvas: CanvasItem, kind: Kind, at: Vector2, scale: float, modulate := Color.WHITE) -> void:
 	var tex := texture(kind)

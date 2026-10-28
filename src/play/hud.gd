@@ -18,6 +18,8 @@ var zoom := 1.0
 var wide := false
 ## Where the icons of the pickups running go.
 var _effects_at := Vector2.ZERO
+## How wide a row they have before they would run under other words.
+var _effects_width := 0.0
 
 var _floor_label: Label
 var _floor_name: Label
@@ -147,6 +149,7 @@ func layout(rect: Rect2, zoom: float) -> void:
 		_place(_score_label, Rect2(x1 + 40, top + 14, column, 50))
 		_place(_best_label, Rect2(x1 + 40, top + 76, column, 24))
 		_effects_at = Vector2(x1 + 40, top + 120)
+		_effects_width = column
 		for l: Label in [_floor_label, _floor_name, _rows_label]:
 			l.horizontal_alignment = align_right
 		for l: Label in [_score_label, _best_label]:
@@ -159,12 +162,16 @@ func layout(rect: Rect2, zoom: float) -> void:
 		_clock.horizontal_alignment = align_left
 		_clock.add_theme_font_size_override("font_size", UI.font_size(6))
 	else:
-		_place(_floor_label, Rect2(x0, top - 160, width * 0.4, 60))
+		# Top to bottom: the floor and the score; the pickups' badges (or the floor's name and rows) on
+		# the left and the best on the right, with Rush's clock between; the wave bar.
+		_place(_floor_label, Rect2(x0, top - 176, width * 0.4, 60))
 		_place(_floor_name, Rect2(x0, top - 88, width * 0.6, 24))
 		_place(_rows_label, Rect2(x0, top - 62, width * 0.6, 24))
-		_place(_score_label, Rect2(x0 + width * 0.35, top - 146, width * 0.65, 50))
-		_place(_best_label, Rect2(x0 + width * 0.4, top - 80, width * 0.6, 24))
-		_effects_at = Vector2(rect.position.x, top - 88.0)
+		_place(_score_label, Rect2(x0 + width * 0.35, top - 164, width * 0.65, 50))
+		_place(_best_label, Rect2(x0 + width * 0.4, top - 100, width * 0.6, 24))
+		_effects_at = Vector2(rect.position.x, top - 92.0)
+		# Up to the clock in Rush, or most of the way across.
+		_effects_width = width * (0.5 if Game.mode == Modes.RUSH else 0.6) - 70.0
 		for l: Label in [_floor_label, _floor_name, _rows_label]:
 			l.horizontal_alignment = align_left
 		for l: Label in [_score_label, _best_label]:
@@ -173,7 +180,7 @@ func layout(rect: Rect2, zoom: float) -> void:
 		_place(_mode_label, Rect2(x0, view.y - 44, width, 30))
 		_mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		# Over the board the top line is full: the clock goes on the second, between the floor's name and the best.
-		_place(_clock, Rect2(x0 + width * 0.3, top - 112, width * 0.4, 50))
+		_place(_clock, Rect2(x0 + width * 0.3, top - 124, width * 0.4, 50))
 		_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_clock.add_theme_font_size_override("font_size", UI.font_size(4))
 	var at := func(board_y: float) -> float: return rect.position.y + board_y * zoom
@@ -337,17 +344,20 @@ func _draw_bars() -> void:
 	if charge > 0.0:
 		UI.draw_round(_bars, Rect2(q.position, Vector2(maxf(q.size.x * charge, qh), qh)), qc)
 	# The pickups running: a round badge each, a ring round it for the time left (the icons go on top).
-	var at := _effects_at + Vector2(BADGE, BADGE)
+	var fit := _badge_fit()
+	var radius := fit.x
+	var at := _effects_at + Vector2(radius, BADGE)
 	for kind: Pickups.Kind in board.effects:
 		var left: float = board.effects[kind]
 		var color: Color = Pickups.info(kind)["color"]
 		var part := clampf(left / _duration(kind), 0.0, 1.0)
 		var blink := left < 2.0 and fmod(left, 0.3) > 0.18
-		_bars.draw_circle(at, BADGE, Color(UI.SHADOW, 0.8), true, -1.0, true)
-		_bars.draw_circle(at, BADGE - 5.0, Color(color.darkened(0.6), 0.9), true, -1.0, true)
+		var ring := radius / BADGE * 5.0
+		_bars.draw_circle(at, radius, Color(UI.SHADOW, 0.8), true, -1.0, true)
+		_bars.draw_circle(at, radius - ring, Color(color.darkened(0.6), 0.9), true, -1.0, true)
 		if not blink:
-			_bars.draw_arc(at, BADGE - 2.5, -PI * 0.5, -PI * 0.5 + TAU * part, 48, color, 5.0, true)
-		at.x += BADGE * 2.0 + 10.0
+			_bars.draw_arc(at, radius - ring * 0.5, -PI * 0.5, -PI * 0.5 + TAU * part, 48, color, ring, true)
+		at.x += fit.y
 	# Over the board, the icons take the place of the floor's name and rows.
 	_rows_label.visible = wide or board.effects.is_empty()
 	_floor_name.visible = wide or board.effects.is_empty()
@@ -356,15 +366,24 @@ func _draw_bars() -> void:
 const BADGE := 26.0
 
 
+## The badges' radius and the step from one to the next: BADGE, or smaller to fit them all in `_effects_width`.
+func _badge_fit() -> Vector2:
+	var step := minf(BADGE * 2.0 + 10.0, _effects_width / maxi(board.effects.size(), 1))
+	return Vector2(clampf((step - 6.0) * 0.5, 12.0, BADGE), step)
+
+
 func _draw_icons() -> void:
 	if board == null:
 		return
-	var at := _effects_at + Vector2(BADGE, BADGE)
+	var fit := _badge_fit()
+	var at := _effects_at + Vector2(fit.x, BADGE)
+	# Whole art pixels, so the icons stay crisp: three screen pixels each, or two in a small badge.
+	var scale := 3.0 if fit.x >= 20.0 else 2.0
 	for kind: Pickups.Kind in board.effects:
 		var left: float = board.effects[kind]
 		if left > 2.0 or fmod(left, 0.3) < 0.18:
-			Pickups.draw_icon(_icons, kind, at, Balance.PX * 0.75)
-		at.x += BADGE * 2.0 + 10.0
+			Pickups.draw_icon(_icons, kind, at, scale)
+		at.x += fit.y
 
 
 static func _duration(kind: Pickups.Kind) -> float:

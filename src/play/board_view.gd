@@ -141,8 +141,7 @@ func _draw_shadows() -> void:
 		draw_rect(Rect2(at + Vector2(PX, 0), Vector2(s - PX * 2.0, s)), SHADOW)
 		draw_rect(Rect2(at + Vector2(0, PX), Vector2(s, s - PX * 2.0)), SHADOW)
 	for p: Dictionary in board.pickups:
-		var size := Vector2(8, 7) * PX
-		draw_rect(Rect2(p["pos"] + _shadow_offset(_pickup_z(p)) - size * 0.5, size), SHADOW)
+		Pickups.draw_shadow(self, p["kind"], p["pos"] + _shadow_offset(_pickup_z(p)), _pickup_scale(p), SHADOW)
 	board.particles.draw_shadows(self, SHADOW)
 
 
@@ -160,6 +159,12 @@ func _pickup_z(p: Dictionary) -> float:
 	return PX * 3.0 + (sin(p["t"] * 5.0) * 0.5 + 0.5) * PX * 3.0
 
 
+## The pickup's size: popping up as it comes out, then breathing.
+func _pickup_scale(p: Dictionary) -> float:
+	var pop := clampf(p["t"] * 5.0, 0.0, 1.0)
+	return PX * (0.4 + 0.6 * pop) * (1.0 + 0.08 * sin(p["t"] * 10.0))
+
+
 func _draw_pickups() -> void:
 	for p: Dictionary in board.pickups:
 		var kind: Pickups.Kind = p["kind"]
@@ -171,8 +176,7 @@ func _draw_pickups() -> void:
 		var ring := c if not info.get("bad", false) else Color("ff2020")
 		ring.a = (1.0 - pulse) * 0.8
 		draw_arc(at, PX * (5.0 + pulse * 5.0), 0.0, TAU, 16, ring, PX * 0.75)
-		var pop := clampf(p["t"] * 5.0, 0.0, 1.0)
-		Pickups.draw_icon(self, kind, at, PX * (0.4 + 0.6 * pop) * (1.0 + 0.08 * sin(p["t"] * 10.0)))
+		Pickups.draw_icon(self, kind, at, _pickup_scale(p))
 
 
 # --- the paddle ---------------------------------------------------------------------------------

@@ -100,6 +100,12 @@ func _ready() -> void:
 			await get_tree().create_timer(float(arg.trim_prefix("--clear-at="))).timeout
 			board.state = Board.State.CLEARED
 			board.floor_cleared.emit()
+		# `--all-effects`: every pickup with a timer running at once (for the HUD's badges).
+		elif arg == "--all-effects":
+			await get_tree().create_timer(1.0).timeout
+			for kind: Pickups.Kind in Pickups.INFO:
+				if kind != Pickups.Kind.MULTI and kind != Pickups.Kind.NARROW:
+					board.effects[kind] = 30.0
 		# `--sweep-at=5`: every block is broken after that many seconds, for a clean sweep.
 		elif arg.begins_with("--sweep-at="):
 			await get_tree().create_timer(float(arg.trim_prefix("--sweep-at="))).timeout

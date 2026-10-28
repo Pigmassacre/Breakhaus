@@ -300,7 +300,8 @@ muffled under the pause menu and the end. Each floor has its track.
   `--autoplay=lazy` only launches the ball, and the wall wins.
 - `--short-floors` makes every floor a single row, and `--clear-at=5`
   clears the floor after five seconds: for what comes between floors.
-  `--sweep-at=5` breaks every block after five seconds, for a Clean Sweep.
+  `--sweep-at=5` breaks every block after five seconds, for a Clean Sweep,
+  and `--all-effects` sets every timed pickup going at once (the badges).
 - `--mouse=1.5:800:400,2:800:460:click` moves the pointer to those window
   coordinates at those seconds (and clicks, with `:click`): for catching
   the menus' hover and press in screenshots.
