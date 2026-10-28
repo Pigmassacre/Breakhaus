@@ -58,65 +58,65 @@ const BASEMENT := {
 }
 
 
-static func theme(floor: int) -> Dictionary:
-	if floor < THEMES.size() and floor < Balance.FLOORS:
-		return THEMES[floor]
+static func theme(level: int) -> Dictionary:
+	if level < THEMES.size() and level < Balance.FLOORS:
+		return THEMES[level]
 	var t: Dictionary = BASEMENT.duplicate()
-	var depth := floor - Balance.FLOORS
+	var depth := level - Balance.FLOORS
 	t["floor"] = (t["floor"] as Color).darkened(minf(depth * 0.06, 0.4))
 	t["music"] = ["synth_rock", "pump", "zinger"][depth % 3]
 	return t
 
 
 ## "8F" on the top floor, down to "1F", then "B1", "B2" ...
-static func label(floor: int) -> String:
-	if floor < Balance.FLOORS:
-		return "%dF" % (Balance.FLOORS - floor)
-	return "B%d" % (floor - Balance.FLOORS + 1)
+static func label(level: int) -> String:
+	if level < Balance.FLOORS:
+		return "%dF" % (Balance.FLOORS - level)
+	return "B%d" % (level - Balance.FLOORS + 1)
 
 
-static func long_label(floor: int) -> String:
-	if floor < Balance.FLOORS:
-		return "%s - %s" % [label(floor), theme(floor)["name"]]
-	return "Basement %d" % (floor - Balance.FLOORS + 1)
+static func long_label(level: int) -> String:
+	if level < Balance.FLOORS:
+		return "%s - %s" % [label(level), theme(level)["name"]]
+	return "Basement %d" % (level - Balance.FLOORS + 1)
 
 
-static func wave_time(floor: int) -> float:
-	return maxf(Balance.WAVE_TIME - floor * Balance.WAVE_TIME_STEP, Balance.WAVE_TIME_MIN)
+static func wave_time(level: int) -> float:
+	return maxf(Balance.WAVE_TIME - level * Balance.WAVE_TIME_STEP, Balance.WAVE_TIME_MIN)
 
 
-static func start_rows(floor: int) -> int:
-	return mini(Balance.START_ROWS + floor / 2, Balance.START_ROWS_MAX)
+static func start_rows(level: int) -> int:
+	return mini(Balance.START_ROWS + level / 2, Balance.START_ROWS_MAX)
 
 
-static func queue_rows(floor: int) -> int:
-	return mini(Balance.QUEUE_ROWS + floor, Balance.QUEUE_ROWS_MAX)
+static func queue_rows(level: int) -> int:
+	return mini(Balance.QUEUE_ROWS + level, Balance.QUEUE_ROWS_MAX)
 
 
 ## A row of blocks for `floor`: COLS entries, each null (a gap) or
 ## {"kind": Block.Kind, "hp": int, "color": Color}. `n` is the row's number
 ## on the floor, for its stripe of colour.
-static func make_row(rng: RandomNumberGenerator, floor: int, n: int) -> Array:
-	var t := theme(floor)
+static func make_row(rng: RandomNumberGenerator, level: int, n: int) -> Array:
+	var t := theme(level)
 	var palette: Array = t["blocks"]
 	var color: Color = palette[(n / 2) % palette.size()]
 	var row := []
 	row.resize(Balance.COLS)
-	var shape := _shape(rng, floor)
+	var shape := _shape(rng, level)
 	for x in Balance.COLS:
 		if not shape[x]:
 			continue
-		row[x] = _block(rng, floor, color)
+		row[x] = _block(rng, level, color)
 	return row
 
 
-static func _shape(rng: RandomNumberGenerator, floor: int) -> Array:
+static func _shape(rng: RandomNumberGenerator, level: int) -> Array:
 	var cols := Balance.COLS
 	var shape := []
 	shape.resize(cols)
 	shape.fill(true)
 	var roll := rng.randf()
-	if floor == 0 and roll < 0.55:
+	if level == 0 and roll < 0.55:
 		return shape
 	if roll < 0.3:
 		pass
@@ -140,22 +140,22 @@ static func _shape(rng: RandomNumberGenerator, floor: int) -> Array:
 	else:
 		# Scattered gaps.
 		for x in cols:
-			shape[x] = rng.randf() > 0.18 + minf(floor * 0.01, 0.1)
+			shape[x] = rng.randf() > 0.18 + minf(level * 0.01, 0.1)
 	var count := shape.count(true)
 	if count < 4:
 		shape.fill(true)
 	return shape
 
 
-static func _block(rng: RandomNumberGenerator, floor: int, color: Color) -> Dictionary:
-	var deep := floor - Balance.FLOORS
+static func _block(rng: RandomNumberGenerator, level: int, color: Color) -> Dictionary:
+	var deep := level - Balance.FLOORS
 	var r := rng.randf()
-	var steel := 0.0 if floor < 2 else minf(0.02 + (floor - 2) * 0.012, 0.11)
-	var tnt := 0.0 if floor < 1 else 0.045
-	var moss := 0.0 if floor < 4 else minf(0.025 + (floor - 4) * 0.01, 0.07)
+	var steel := 0.0 if level < 2 else minf(0.02 + (level - 2) * 0.012, 0.11)
+	var tnt := 0.0 if level < 1 else 0.045
+	var moss := 0.0 if level < 4 else minf(0.025 + (level - 4) * 0.01, 0.07)
 	var prize := 0.05
 	var gold := 0.02
-	var tough := minf(0.06 + floor * 0.045, 0.4)
+	var tough := minf(0.06 + level * 0.045, 0.4)
 	var acc := 0.0
 	for pick: Array in [[Block.Kind.STEEL, steel], [Block.Kind.TNT, tnt], [Block.Kind.MOSS, moss],
 			[Block.Kind.PRIZE, prize], [Block.Kind.GOLD, gold]]:
@@ -166,7 +166,7 @@ static func _block(rng: RandomNumberGenerator, floor: int, color: Color) -> Dict
 	acc += tough
 	if r < acc:
 		var hp := 2
-		if floor >= 3 and rng.randf() < 0.3 + maxf(deep, 0) * 0.05:
+		if level >= 3 and rng.randf() < 0.3 + maxf(deep, 0) * 0.05:
 			hp = 3
 		return {"kind": Block.Kind.NORMAL, "hp": hp, "color": color}
 	return {"kind": Block.Kind.NORMAL, "hp": 1, "color": color}

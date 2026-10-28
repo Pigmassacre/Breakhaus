@@ -1,0 +1,323 @@
+extends Node
+## The game: the board in the middle of the rays, the HUD round it, and
+## everything that makes a hit feel like one (the shake, the hitstop, the
+## flash and the shock wave, the music heating up). Reads the controls and
+## drives the paddle with them, runs a floor from its blocks raining in to
+## its collapse, and the game from the top floor to the end.
+##
+## Controls: the mouse moves the paddle to where it is; keys and sticks
+## drive it; a finger drags it (from anywhere, so it doesn't cover the
+## ball). A click, a press of smash or a touch smashes (or launches).
+
+const POST_SHADER := preload("res://src/fx/post.gdshader")
+
+var level := 0
+var board: Board
+var hud: Hud
+var backdrop: Backdrop
+var world: Node2D
+var post: ShaderMaterial
+
+var _trauma := 0.0
+var _hitstop := 0.0
+var _kb_speed := 0.0
+var _mouse_active := false
+var _overlay: CanvasLayer
+var _flash_tween: Tween
+var _shock_tween: Tween
+var _over := false
+var _paused := false
+
+
+func setup(args: Dictionary) -> void:
+	level = args.get("floor", 0)
+
+
+func _ready() -> void:
+	backdrop = Backdrop.new()
+	var back_layer := CanvasLayer.new()
+	back_layer.layer = -10
+	back_layer.add_child(backdrop)
+	add_child(back_layer)
+	world = Node2D.new()
+	add_child(world)
+	board = Board.new()
+	world.add_child(board)
+	var post_layer := CanvasLayer.new()
+	post_layer.layer = 5
+	var post_rect := ColorRect.new()
+	post_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	post_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	post = ShaderMaterial.new()
+	post.shader = POST_SHADER
+	post_rect.material = post
+	post_layer.add_child(post_rect)
+	add_child(post_layer)
+	hud = Hud.new()
+	add_child(hud)
+	hud.set_board(board)
+	hud.pause_pressed.connect(pause)
+	hud.quake_pressed.connect(_quake)
+	board.shake.connect(add_shake)
+	board.hitstop.connect(_on_hitstop)
+	board.flashed.connect(flash)
+	board.shocked.connect(shock)
+	board.missed.connect(func() -> void: hud.show_message("MISS", Color("ff5a5a"), 0.3))
+	board.combo_ended.connect(func(c: int) -> void: hud.show_message("%d COMBO!" % c, UI.GOLD, 0.5))
+	board.quake_ready.connect(func() -> void: hud.show_message("QUAKE READY!", Color("ffb03b"), 0.5))
+	board.floor_cleared.connect(_on_floor_cleared)
+	board.overrun.connect(_on_overrun)
+	board.launched.connect(func() -> void:
+		Audio.play("go", -4.0)
+		if level == 0:
+			Game.seen_help = true
+			Game.save())
+	get_viewport().size_changed.connect(_layout)
+	_layout()
+	_start_floor(level)
+
+
+func _start_floor(n: int) -> void:
+	level = n
+	board.start_floor(n)
+	var t := Floors.theme(n)
+	backdrop.set_theme_colors(t, 1.0)
+	Audio.play_music(t["music"], 1.5)
+	Audio.muffle(0.0)
+	hud.floor_card(n)
+	hud.refresh()
+
+
+func _layout() -> void:
+	var view := get_viewport().get_visible_rect().size
+	var above := 200.0
+	var below := 180.0
+	var spare := maxf(view.y - above - below - Balance.BOARD_H, 0.0)
+	var at := Vector2(roundf((view.x - Balance.BOARD_W) * 0.5), roundf(above + spare * 0.5))
+	board.position = at
+	backdrop.center = at + Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.4)
+	hud.layout(Rect2(at, Vector2(Balance.BOARD_W, Balance.BOARD_H)))
+
+
+# --- controls -----------------------------------------------------------------------------------
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _over or _paused:
+		return
+	if event.is_action_pressed("pause"):
+		pause()
+		return
+	if event.is_action_pressed("smash"):
+		board.smash()
+	if event.is_action_pressed("quake"):
+		_quake()
+	if event is InputEventScreenTouch and event.pressed:
+		board.smash()
+	elif event is InputEventScreenDrag:
+		var gain: float = Balance.TOUCH_GAIN * float(Game.settings["touch_gain"])
+		board.paddle_target = clampf(board.paddle_target + event.relative.x * gain, 0.0, Balance.BOARD_W)
+		_mouse_active = false
+	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION and event.pressed:
+		_mouse_active = true
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			board.smash()
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			_quake()
+	elif event is InputEventMouseMotion and event.device != InputEvent.DEVICE_ID_EMULATION:
+		_mouse_active = true
+
+
+func _quake() -> void:
+	board.use_quake()
+
+
+func _process(delta: float) -> void:
+	_drive_paddle(delta)
+	if Game.autoplay and not _over:
+		board.autopilot()
+		if randf() < 0.02:
+			board.smash()
+		if board.quake_charged() and board.danger() > 0.5:
+			_quake()
+	_update_shake(delta)
+	if _hitstop > 0.0:
+		_hitstop -= delta
+		if _hitstop <= 0.0:
+			board.process_mode = Node.PROCESS_MODE_INHERIT
+	var danger := board.danger()
+	backdrop.danger = danger
+	post.set_shader_parameter("vignette", danger * danger * 0.6 if not _over else 0.0)
+	var combo_heat := clampf(board.combo / 30.0, 0.0, 1.0)
+	Audio.heat = 0.0 if _over else maxf(maxf(danger, combo_heat), 0.5 if board.effects.size() >= 2 else 0.0)
+	_update_cursor()
+
+
+func _drive_paddle(delta: float) -> void:
+	var axis := Input.get_axis("move_left", "move_right")
+	if absf(axis) > 0.0:
+		_mouse_active = false
+		var target_speed := axis * Balance.PADDLE_SPEED
+		_kb_speed = move_toward(_kb_speed, target_speed, Balance.PADDLE_ACCEL * delta)
+		# Starting from where the paddle is, so it never runs ahead of itself.
+		if absf(board.paddle_target - board.paddle_x) > Balance.BLOCK_W:
+			board.paddle_target = board.paddle_x
+		board.paddle_target = clampf(board.paddle_target + _kb_speed * delta, 0.0, Balance.BOARD_W)
+	else:
+		_kb_speed = 0.0
+	if _mouse_active and Inputs.device == Inputs.Device.MOUSE:
+		var mouse := board.get_local_mouse_position()
+		board.paddle_target = clampf(mouse.x, 0.0, Balance.BOARD_W)
+
+
+func _update_cursor() -> void:
+	var playing := not _over and not _paused and board.state != Board.State.CLEARED
+	var want := Input.MOUSE_MODE_HIDDEN if playing and Inputs.device == Inputs.Device.MOUSE else Input.MOUSE_MODE_VISIBLE
+	if Input.mouse_mode != want:
+		Input.mouse_mode = want
+
+
+# --- feel ---------------------------------------------------------------------------------------
+
+func add_shake(amount: float) -> void:
+	_trauma = minf(_trauma + amount / 22.0, 1.0)
+
+
+func _update_shake(delta: float) -> void:
+	_trauma = maxf(_trauma - delta * 1.8, 0.0)
+	var power := _trauma * _trauma * Game.shake_amount()
+	world.position = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * power * 24.0
+	world.rotation = randf_range(-1, 1) * power * 0.012
+	post.set_shader_parameter("aberration", power * 0.004)
+
+
+func _on_hitstop(seconds: float) -> void:
+	_hitstop = maxf(_hitstop, seconds)
+	board.process_mode = Node.PROCESS_MODE_DISABLED
+
+
+func flash(color: Color, amount: float) -> void:
+	if not Game.flashes():
+		amount *= 0.25
+	if _flash_tween:
+		_flash_tween.kill()
+	post.set_shader_parameter("flash_color", color)
+	_flash_tween = create_tween()
+	_flash_tween.tween_method(func(v: float) -> void: post.set_shader_parameter("flash", v), amount, 0.0, 0.3)
+
+
+## A shock wave rippling out over the screen from `at` (on the board).
+func shock(at: Vector2, strength: float) -> void:
+	var view := get_viewport().get_visible_rect().size
+	var screen_at := (board.position + world.position + at) / view
+	post.set_shader_parameter("shock_center", screen_at)
+	if _shock_tween:
+		_shock_tween.kill()
+	_shock_tween = create_tween().set_parallel()
+	_shock_tween.tween_method(func(v: float) -> void: post.set_shader_parameter("shock_radius", v), 0.0, 1.4, 0.7)
+	_shock_tween.tween_method(func(v: float) -> void: post.set_shader_parameter("shock_strength", v), strength, 0.0, 0.7)
+
+
+# --- floors -------------------------------------------------------------------------------------
+
+func _on_floor_cleared() -> void:
+	var demolished := level == Balance.FLOORS - 1
+	Audio.play("cleared", 0.0)
+	backdrop.bloom(1.0, 1.5)
+	flash(Color.WHITE, 0.5)
+	if demolished:
+		hud.show_message("HAUS\nDEMOLISHED!", UI.GOLD, 2.2)
+		Game.demolished += 1
+		Game.save()
+	else:
+		hud.show_message("FLOOR\nCLEARED!", Color("3dffb1"), 1.2)
+	await get_tree().create_timer(2.6 if demolished else 1.8).timeout
+	if _over:
+		return
+	# Down through the floor: everything shakes, then the next one drops in.
+	Audio.play("collapse", 0.0)
+	add_shake(20.0)
+	shock(Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.5), 1.0)
+	flash(Color.BLACK, 0.8)
+	await get_tree().create_timer(0.35).timeout
+	if _over:
+		return
+	_start_floor(level + 1)
+
+
+func _on_overrun(_block: Block) -> void:
+	_over = true
+	Audio.play("game_over", 0.0)
+	Audio.muffle(1.0, 1.5)
+	Audio.heat = 0.0
+	add_shake(16.0)
+	flash(Color("ff2a2a"), 0.5)
+	# Slow motion, the colour draining out (the original's grayscale), and the wall crumbles.
+	Engine.time_scale = 0.3
+	var gray := create_tween()
+	gray.tween_method(func(v: float) -> void: post.set_shader_parameter("gray", v), 0.0, 1.0, 1.2).set_ignore_time_scale()
+	var bricks := board.blocks()
+	bricks.sort_custom(func(a: Block, b: Block) -> bool: return a.row > b.row)
+	await get_tree().create_timer(0.6, true, false, true).timeout
+	Engine.time_scale = 1.0
+	var i := 0
+	for b in bricks:
+		if not is_inside_tree():
+			return
+		board._break(b, false)
+		i += 1
+		if i % 6 == 0:
+			Audio.play("break", -8.0, randf_range(0.7, 0.9))
+			await get_tree().process_frame
+	var place := Game.add_score(board.score, level, board.best_combo)
+	await get_tree().create_timer(0.6).timeout
+	_show_overlay(GameOver.new(board, place))
+
+
+# --- pausing ------------------------------------------------------------------------------------
+
+func pause() -> void:
+	if _over or _paused or board.state == Board.State.CLEARED:
+		return
+	_paused = true
+	get_tree().paused = true
+	Audio.play("pause", -2.0)
+	Audio.muffle(0.7)
+	var menu := PauseMenu.new()
+	menu.resumed.connect(resume)
+	_show_overlay(menu)
+
+
+func resume() -> void:
+	_paused = false
+	get_tree().paused = false
+	Audio.muffle(0.0)
+	if _overlay:
+		_overlay.queue_free()
+		_overlay = null
+
+
+func _show_overlay(layer: CanvasLayer) -> void:
+	if _overlay:
+		_overlay.queue_free()
+	_overlay = layer
+	add_child.call_deferred(layer)
+
+
+func go_back() -> void:
+	if _overlay and _overlay.has_method("go_back"):
+		_overlay.go_back()
+	elif not _over:
+		pause()
+
+
+func _notification(what: int) -> void:
+	# The window losing focus (another app on the phone, alt-tab) pauses the game.
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
+		if board and board.state == Board.State.PLAY and not Game.autoplay:
+			pause()
+
+
+func _exit_tree() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Engine.time_scale = 1.0
+	Audio.muffle(0.0)
