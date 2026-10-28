@@ -433,6 +433,18 @@ func _on_floor_cleared() -> void:
 	await get_tree().create_timer(2.6 if demolished else 1.8).timeout
 	if _over:
 		return
+	# A perk to take down with you.
+	var offer := Perks.offer(board.rng, board.perks)
+	if not offer.is_empty():
+		var pick := PerkPick.new(offer, board.perks)
+		_show_overlay(pick)
+		var id: String = await pick.chosen
+		board.add_perk(id)
+		if _overlay == pick:
+			_overlay = null
+		pick.queue_free()
+		if _over or not is_inside_tree():
+			return
 	# Down through the floor: the glass cracks from the middle out and falls away, then the next one drops in.
 	Audio.play("collapse", 0.0)
 	add_shake(12.0)
@@ -524,6 +536,7 @@ func pause() -> void:
 	Audio.play("pause", -2.0)
 	Audio.muffle(0.7)
 	var menu := PauseMenu.new()
+	menu.perks = board.perks
 	menu.resumed.connect(resume)
 	_show_overlay(menu)
 

@@ -254,7 +254,7 @@ func _draw_laser() -> void:
 func _paddle_hop() -> float:
 	if board.smash_time <= 0.0:
 		return 0.0
-	var t := 1.0 - board.smash_time / Balance.SMASH_TIME
+	var t := 1.0 - board.smash_time / board.smash_length
 	return sin(t * PI) * Balance.SMASH_HOP
 
 

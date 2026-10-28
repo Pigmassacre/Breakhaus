@@ -4,6 +4,8 @@ extends CanvasLayer
 
 signal resumed
 
+## The run's perks (id -> how many), shown under the buttons.
+var perks := {}
 var _root: Control
 var _menu: VBoxContainer
 var _options: OptionsPanel
@@ -40,6 +42,14 @@ func _ready() -> void:
 		b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		_menu.add_child(b)
 	UI.link_focus(buttons)
+	if not perks.is_empty():
+		var names: Array[String] = []
+		for id: String in perks:
+			names.append(String(Perks.info(id)["name"]) + ("" if perks[id] == 1 else " x%d" % perks[id]))
+		var list := UI.label("PERKS\n" + ", ".join(names), 2, UI.DIM)
+		list.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		list.custom_minimum_size = Vector2(560, 0)
+		_menu.add_child(list)
 	UI.pop_in(_menu)
 	buttons[0].grab_focus.call_deferred()
 

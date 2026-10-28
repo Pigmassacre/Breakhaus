@@ -29,6 +29,7 @@ signal wave_came
 signal quake_ready
 signal quake_drained(amount: float)
 signal floor_cleared
+signal saved
 ## The block that cleared the board just broke, at `at`: the floor's last (`big`), or a clean sweep's.
 signal final_blow(at: Vector2, big: bool)
 signal overrun(block: Block)
@@ -81,6 +82,8 @@ var paddle_squash := 0.0
 ## Seconds left of a smash hop, and before the next one.
 var smash_time := 0.0
 var smash_cooldown := 0.0
+## How long this run's smash hop lasts (the Sweet Spot perk stretches it).
+var smash_length := Balance.SMASH_TIME
 ## Where the controls want the paddle (set every frame by whoever drives it).
 var paddle_target := W * 0.5
 
@@ -106,6 +109,9 @@ var quake := 0.0
 var effects := {}
 ## The synergies running now (Pickups.SYNERGIES' ids), to tell when a new one starts.
 var _synergies_on := {}
+## The run's perks (Perks.INFO's ids -> how many), and whether this floor's Safety Net has gone.
+var perks := {}
+var _net_used := false
 var rocket_timer := 0.0
 ## Rocket Barrage: rockets still to go, and the time to the next.
 var barrage_left := 0
@@ -177,6 +183,26 @@ func effect(kind: Pickups.Kind) -> float:
 	return effects.get(kind, 0.0)
 
 
+func perk(id: String) -> int:
+	return perks.get(id, 0)
+
+
+func add_perk(id: String) -> void:
+	perks[id] = perk(id) + 1
+	smash_length = Balance.SMASH_TIME * (1.0 + 0.5 * perk("sweet_spot"))
+	paddle_target_w = _paddle_size()
+
+
+## The paddle's width with the pickups running (wider or narrower) and the Wide Load perk.
+func _paddle_size() -> float:
+	var w := Balance.PADDLE_W
+	if effect(Pickups.Kind.WIDE) > 0.0:
+		w = Balance.PADDLE_W_WIDE
+	elif effect(Pickups.Kind.NARROW) > 0.0:
+		w = Balance.PADDLE_W_NARROW
+	return w * (1.0 + 0.15 * perk("wide_load"))
+
+
 func quake_charged() -> bool:
 	return quake >= Balance.QUAKE_CHARGE
 
@@ -199,7 +225,8 @@ func rows_left() -> int:
 func start_floor(n: int) -> void:
 	level = n
 	theme = Floors.theme(n)
-	wave_time = Floors.wave_time(n) * wave_scale * float(twist.get("wave", 1.0))
+	wave_time = Floors.wave_time(n) * wave_scale * float(twist.get("wave", 1.0)) * (1.0 + 0.12 * perk("slow_wall"))
+	_net_used = false
 	wave_timer = 0.0
 	grid.fill(null)
 	balls.clear()
@@ -211,7 +238,7 @@ func start_floor(n: int) -> void:
 	_quake_blocks.clear()
 	effects.clear()
 	_synergies_on.clear()
-	paddle_target_w = Balance.PADDLE_W
+	paddle_target_w = _paddle_size()
 	shatter = 0.0
 	rows_made = 0
 	var start := Floors.start_rows(n)
@@ -267,6 +294,14 @@ func launch() -> void:
 	# Triple Trouble: every serve splits in three.
 	if int(twist.get("balls", 1)) > 1:
 		_split_balls()
+	# Extra Ball: a spare goes up beside it.
+	if perk("extra_ball") > 0 and balls.size() < Balance.MAX_BALLS:
+		var spare := Ball.new()
+		spare.pos = balls[0].pos
+		spare.speed = Balance.BALL_SPEED
+		spare.set_direction(balls[0].direction().rotated(0.5))
+		spare.fix_angle()
+		balls.append(spare)
 	launched.emit()
 
 
@@ -286,7 +321,7 @@ func smash_window() -> float:
 			continue
 		var speed := ball.vel.y * (Balance.OVERDRIVE_SPEED if effect(Pickups.Kind.OVERDRIVE) > 0.0 else 1.0)
 		var eta := (Balance.PADDLE_Y - Balance.BALL_R - ball.pos.y) / speed
-		best = maxf(best, 1.0 - clampf(eta / (Balance.SMASH_TIME * 1.6), 0.0, 1.0))
+		best = maxf(best, 1.0 - clampf(eta / (smash_length * 1.6), 0.0, 1.0))
 	return best
 
 
@@ -304,7 +339,7 @@ func smash() -> void:
 			let_go = true
 	if let_go or smash_cooldown > 0.0:
 		return
-	smash_time = Balance.SMASH_TIME
+	smash_time = smash_length
 	smash_cooldown = Balance.SMASH_COOLDOWN
 
 
@@ -585,7 +620,7 @@ func active_synergies() -> Array:
 func _effect_ended(kind: Pickups.Kind) -> void:
 	match kind:
 		Pickups.Kind.WIDE, Pickups.Kind.NARROW:
-			paddle_target_w = Balance.PADDLE_W
+			paddle_target_w = _paddle_size()
 		Pickups.Kind.FROST:
 			for b in blocks():
 				if b.frozen:
@@ -696,6 +731,17 @@ func _bottom(ball: Ball) -> void:
 		ripples.append({"pos": ball.pos, "t": 0.0, "strength": 0.6})
 		if synergy("tesla"):
 			_tesla(ball.pos)
+		return
+	# Safety Net: the floor's first miss bounces back off the bottom.
+	if perk("safety_net") > 0 and not _net_used and balls.size() == 1:
+		_net_used = true
+		shield_flash = 1.0
+		ball.fix_angle()
+		_ball_hit(ball, Vector2.UP, 1.0)
+		Audio.play("shield", -2.0, 1.2)
+		ripples.append({"pos": ball.pos, "t": 0.0, "strength": 1.0})
+		message.emit("SAVED!", Color("6ad8ff"))
+		saved.emit()
 		return
 	if quake > 0.0:
 		quake_drained.emit(minf(quake, Balance.QUAKE_MISS))
@@ -853,7 +899,7 @@ func _collide_blocks(ball: Ball) -> void:
 	var fire := effect(Pickups.Kind.FIRE) > 0.0
 	# Fire and Fever both go straight through all but steel (and bumpers, which always kick back).
 	var hot := (fire or fever > 0.0) and best.kind != Block.Kind.STEEL and best.kind != Block.Kind.BUMPER
-	var damage := 2 if (fire or fever > 0.0 or ball.smashed) else 1
+	var damage := (2 if (fire or fever > 0.0 or ball.smashed) else 1) + perk("heavy_ball")
 	var breaks := best.frozen or best.hp <= damage or hot
 	var through := (breaks and (ball.pierce > 0 or hot)) or best.kind == Block.Kind.ICE
 	if best.kind == Block.Kind.BUMPER:
@@ -983,7 +1029,7 @@ func _break(b: Block, scores := true) -> void:
 		return
 	blocks_broken += 1
 	combo += 1
-	combo_timer = Balance.COMBO_TIME
+	combo_timer = Balance.COMBO_TIME * (1.0 + 0.5 * perk("long_fuse"))
 	best_combo = maxi(best_combo, combo)
 	combo_changed.emit(combo, multiplier())
 	# Rising with the combo: the original's break, and a note higher each time.
@@ -996,11 +1042,11 @@ func _break(b: Block, scores := true) -> void:
 		Audio.play("fanfare", -6.0)
 	var points := Balance.SCORE_BLOCK * b.max_hp
 	if b.kind == Block.Kind.GOLD:
-		points = Balance.SCORE_GOLD
+		points = Balance.SCORE_GOLD * (1 + perk("gold_digger"))
 		Audio.play("coin", -2.0)
 		particles.spray(center, Vector2.UP, Color("ffe066"), 16, 10.0)
 	elif b.kind == Block.Kind.COIN:
-		points = b.coin_value()
+		points = b.coin_value() * (1 + perk("gold_digger"))
 		Audio.play("coin", -2.0, 0.8 + float(points) / Balance.COIN_MAX * 0.6)
 		particles.spray(center, Vector2.UP, Color("ffd23d"), 6 + points / 50, 10.0)
 	elif b.kind == Block.Kind.ICE:
@@ -1015,13 +1061,13 @@ func _break(b: Block, scores := true) -> void:
 		_row_blast(b.row)
 	_add_score(points, center)
 	var was_charged := quake_charged()
-	quake = minf(quake + 1.0 + combo * 0.04, Balance.QUAKE_CHARGE)
+	quake = minf(quake + (1.0 + combo * 0.04) * (1.0 + 0.4 * perk("quick_quake")), Balance.QUAKE_CHARGE)
 	if quake_charged() and not was_charged:
 		quake_ready.emit()
 		Audio.play("charged", -2.0)
 	hitstop.emit(Balance.HITSTOP_BREAK if combo < 12 else Balance.HITSTOP_BREAK * 1.6)
 	shake.emit(1.5 + minf(combo * 0.1, 2.5))
-	if b.carries_pickup or rng.randf() < Balance.DROP_CHANCE * float(twist.get("drop", 1.0)):
+	if b.carries_pickup or rng.randf() < Balance.DROP_CHANCE * float(twist.get("drop", 1.0)) * (1.0 + 0.5 * perk("lucky")):
 		_drop_pickup(center)
 	if b.kind == Block.Kind.TNT:
 		blasts.append({"col": b.col, "row": b.row, "t": 0.08})
@@ -1070,7 +1116,7 @@ func _split_balls() -> void:
 
 
 func _start_fever() -> void:
-	fever = Balance.FEVER_TIME
+	fever = Balance.FEVER_TIME + 4.0 * perk("hot_streak")
 	_fever_spent = true
 	message.emit("FEVER!", Color("ff3dff"))
 	Audio.play("fanfare", -2.0)
@@ -1126,6 +1172,13 @@ func _row_blast(row: int) -> void:
 		var b := at(c, row)
 		if b:
 			_hit_block(b, 3)
+	# Big Bang: the rows either side take a knock too.
+	if perk("big_bang") > 0:
+		for r in [row - 1, row + 1]:
+			for c in COLS:
+				var b := at(c, r)
+				if b:
+					_hit_block(b, 1)
 	var y := (row + 0.5) * Balance.ROW_H
 	beams.append({"row": row, "t": 0.0})
 	for i in 8:
@@ -1183,7 +1236,7 @@ func _warp(ball: Ball, into: Block, out: Block) -> void:
 ## TNT going off: everything around it takes a beating (and other TNT goes off in its turn).
 func _explode(col: int, row: int) -> void:
 	var center := Vector2((col + 0.5) * Balance.BLOCK_W, (row + 0.5) * Balance.ROW_H)
-	var reach := Balance.TNT_RADIUS
+	var reach := Balance.TNT_RADIUS + perk("big_bang")
 	for r in range(row - reach - 1, row + reach + 2):
 		for c in range(col - reach, col + reach + 1):
 			var b := at(c, r)
@@ -1314,7 +1367,7 @@ func _update_quake_blocks(delta: float) -> void:
 # --- pickups ------------------------------------------------------------------------------------
 
 func _drop_pickup(at_pos: Vector2) -> void:
-	var kind := Pickups.pick(rng)
+	var kind := Pickups.pick(rng, 1.0 + perk("rare_taste"))
 	pickups.append({"kind": kind, "pos": at_pos, "t": 0.0})
 	Audio.play("release", -6.0)
 	# A rare one is an event: a chime, a gold flash and a shout.
@@ -1372,11 +1425,11 @@ func _collect(p: Dictionary) -> void:
 		Pickups.Kind.WIDE:
 			effects.erase(Pickups.Kind.NARROW)
 			effects[kind] = Balance.WIDE_TIME
-			paddle_target_w = Balance.PADDLE_W_WIDE
+			paddle_target_w = _paddle_size()
 		Pickups.Kind.NARROW:
 			effects.erase(Pickups.Kind.WIDE)
 			effects[kind] = Balance.NARROW_TIME
-			paddle_target_w = Balance.PADDLE_W_NARROW
+			paddle_target_w = _paddle_size()
 		Pickups.Kind.OVERDRIVE:
 			effects[kind] = Balance.OVERDRIVE_TIME
 		Pickups.Kind.ROCKET:
@@ -1400,6 +1453,9 @@ func _collect(p: Dictionary) -> void:
 		Pickups.Kind.HASTE:
 			effects[kind] = Balance.HASTE_TIME
 			Audio.play("danger", -4.0, 1.2)
+	# Long Haul: the good ones last longer.
+	if effects.has(kind) and not info.get("bad", false):
+		effects[kind] *= 1.0 + 0.3 * perk("long_haul")
 	picked_up.emit(kind)
 
 

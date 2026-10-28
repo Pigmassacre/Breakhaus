@@ -159,16 +159,21 @@ static func rarity(kind: Kind) -> Rarity:
 	return INFO[kind]["rarity"]
 
 
-static func pick(rng: RandomNumberGenerator) -> Kind:
+## A pickup, weighted by rarity; `rare_boost` multiplies the rare ones' weight (the Rare Taste perk).
+static func pick(rng: RandomNumberGenerator, rare_boost := 1.0) -> Kind:
 	var total := 0.0
 	for kind: Kind in INFO:
-		total += RARITY_WEIGHT[rarity(kind)]
+		total += _weight(kind, rare_boost)
 	var roll := rng.randf() * total
 	for kind: Kind in INFO:
-		roll -= RARITY_WEIGHT[rarity(kind)]
+		roll -= _weight(kind, rare_boost)
 		if roll < 0.0:
 			return kind
 	return Kind.WIDE
+
+
+static func _weight(kind: Kind, rare_boost: float) -> float:
+	return RARITY_WEIGHT[rarity(kind)] * (rare_boost if rarity(kind) == Rarity.RARE else 1.0)
 
 
 ## The icon's shadow: its own outline filled with `color` (one flat layer, so it doesn't darken where
