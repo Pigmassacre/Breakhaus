@@ -19,6 +19,8 @@ var world: Node2D
 var post: ShaderMaterial
 
 var _trauma := 0.0
+## A zoom in on a big hit, springing back (0 to 1).
+var _punch := 0.0
 var _hitstop := 0.0
 var _kb_speed := 0.0
 var _mouse_active := false
@@ -173,6 +175,8 @@ func _process(delta: float) -> void:
 			board.process_mode = Node.PROCESS_MODE_INHERIT
 	var danger := board.danger()
 	backdrop.danger = danger
+	# The rays turn faster with the combo.
+	backdrop.speed = lerpf(backdrop.speed, 0.08 + minf(board.combo, 40) * 0.02, minf(delta * 2.0, 1.0))
 	post.set_shader_parameter("vignette", danger * danger * 0.6 if not _over else 0.0)
 	var combo_heat := clampf(board.combo / 30.0, 0.0, 1.0)
 	Audio.heat = 0.0 if _over else maxf(maxf(danger, combo_heat), 0.5 if board.effects.size() >= 2 else 0.0)
@@ -207,12 +211,19 @@ func _update_cursor() -> void:
 
 func add_shake(amount: float) -> void:
 	_trauma = minf(_trauma + amount / 22.0, 1.0)
+	if amount >= 7.0:
+		_punch = minf(_punch + amount / 20.0, 1.0)
 
 
 func _update_shake(delta: float) -> void:
 	_trauma = maxf(_trauma - delta * 1.8, 0.0)
+	_punch = move_toward(_punch, 0.0, delta * 4.0)
 	var power := _trauma * _trauma * Game.shake_amount()
-	world.position = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * power * 24.0
+	# The punch zooms in round the middle of the board.
+	var zoom := 1.0 + _punch * _punch * 0.035 * Game.shake_amount()
+	var center := board.position + Vector2(Balance.BOARD_W, Balance.BOARD_H) * 0.5 * board.scale.x
+	world.scale = Vector2(zoom, zoom)
+	world.position = center - center * zoom + Vector2(randf_range(-1, 1), randf_range(-1, 1)) * power * 24.0
 	world.rotation = randf_range(-1, 1) * power * 0.012
 	post.set_shader_parameter("aberration", power * 0.004)
 
@@ -235,7 +246,7 @@ func flash(color: Color, amount: float) -> void:
 ## A shock wave rippling out over the screen from `at` (on the board).
 func shock(at: Vector2, strength: float) -> void:
 	var view := get_viewport().get_visible_rect().size
-	var screen_at := (board.position + world.position + at * board.scale.x) / view
+	var screen_at := (world.position + (board.position + at * board.scale.x) * world.scale.x) / view
 	post.set_shader_parameter("shock_center", screen_at)
 	if _shock_tween:
 		_shock_tween.kill()

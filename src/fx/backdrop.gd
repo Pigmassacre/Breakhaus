@@ -50,5 +50,5 @@ func bloom(amount := 1.0, seconds := 1.2) -> void:
 	var t := create_tween()
 	t.tween_method(func(v: float) -> void: _material.set_shader_parameter("bloom", v), amount, 0.0, seconds) \
 		.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	# A kick round; whoever owns it eases the speed back.
 	speed = 1.5
-	create_tween().tween_property(self, "speed", 0.08, seconds * 1.5).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
