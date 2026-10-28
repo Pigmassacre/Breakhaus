@@ -149,7 +149,7 @@ func _blocks() -> Control:
 		box.add_child(row)
 	box.add_child(_gap(10))
 	box.add_child(_text("Break blocks in quick succession to build a combo. Reach x8 to trigger Fever and smash through everything. Clear the whole board for a big bonus (and six new rows).", 2, UI.GOLD))
-	box.add_child(_text("Breaking blocks charges your Quake. Use it to wipe out the bottom three rows.", 2, Color("ffb03b")))
+	box.add_child(_text("Breaking blocks charges your Quake; every miss drains it. Use it to wipe out the bottom three rows.", 2, Color("ffb03b")))
 	return box
 
 

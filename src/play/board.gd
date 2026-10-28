@@ -26,6 +26,7 @@ signal picked_up(kind: Pickups.Kind)
 signal launched
 signal wave_came
 signal quake_ready
+signal quake_drained(amount: float)
 signal floor_cleared
 signal overrun(block: Block)
 
@@ -622,7 +623,8 @@ func _collide_walls(ball: Ball) -> bool:
 	return hit
 
 
-## A ball at the bottom: off the shield, gone (if there are others), or a miss.
+## A ball at the bottom: off the shield, or gone (if there are others) or a miss, either way draining
+## the quake.
 func _bottom(ball: Ball) -> void:
 	if effect(Pickups.Kind.SHIELD) > 0.0 or demo:
 		shield_flash = 1.0
@@ -631,6 +633,9 @@ func _bottom(ball: Ball) -> void:
 		Audio.play("shield_hit", -4.0, rng.randf_range(0.95, 1.1))
 		ripples.append({"pos": ball.pos, "t": 0.0, "strength": 0.6})
 		return
+	if quake > 0.0:
+		quake_drained.emit(minf(quake, Balance.QUAKE_MISS))
+		quake = maxf(quake - Balance.QUAKE_MISS, 0.0)
 	if balls.size() > 1:
 		ball.dead = true
 		particles.burst(ball.pos, Color.WHITE, 8, 0.6)

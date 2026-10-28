@@ -44,6 +44,8 @@ var _quake_spring: Spring
 ## Whether the quake was charged last frame, and the time to its button's next wobble.
 var _quake_was_ready := false
 var _quake_nudge := 0.0
+## The charge a miss has just drained, shown red past the meter's end and running down to it.
+var _quake_lost := 0.0
 var _tower: Tower
 ## Rush: the clock, big, and the time left on it (set by the game). Other modes: their name.
 var _clock: Label
@@ -134,6 +136,7 @@ func set_board(b: Board) -> void:
 	board.combo_changed.connect(_on_combo)
 	board.message.connect(show_message)
 	board.launched.connect(_update_prompt)
+	board.quake_drained.connect(func(amount: float) -> void: _quake_lost += amount)
 	_shown_score = board.score
 
 
@@ -242,6 +245,7 @@ func _process(delta: float) -> void:
 	_rows_label.add_theme_color_override("font_color", UI.DIM if rows > 0 else UI.GOLD)
 	var touch := Inputs.device == Inputs.Device.TOUCH
 	_pause_button.visible = touch
+	_quake_lost = move_toward(_quake_lost, 0.0, delta * Balance.QUAKE_CHARGE * 0.12 + _quake_lost * delta * 2.0)
 	_update_quake_button(delta, touch)
 	# The button names the meter on a touch screen; the words would only run under it.
 	_quake_label.visible = not touch
@@ -378,6 +382,10 @@ func _draw_bars() -> void:
 		UI.draw_round(_bars, q.grow(4.0 + pulse * 6.0), Color(qc, 0.3 * pulse))
 		qc = qc.lerp(Color.WHITE, pulse * 0.5)
 	UI.draw_round(_bars, q, Color(UI.SHADOW, 0.75))
+	if _quake_lost > 0.0:
+		var lost := minf(charge + _quake_lost / Balance.QUAKE_CHARGE, 1.0)
+		var blink := 0.6 + 0.4 * sin(board.clock * 30.0)
+		UI.draw_round(_bars, Rect2(q.position, Vector2(maxf(q.size.x * lost, qh), qh)), Color(Color("ff3d3d"), blink))
 	if charge > 0.0:
 		UI.draw_round(_bars, Rect2(q.position, Vector2(maxf(q.size.x * charge, qh), qh)), qc)
 	# The pickups running: a round badge each, a ring round it for the time left (the icons go on top).

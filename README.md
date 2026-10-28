@@ -127,7 +127,10 @@ A miss puts it out; the next combo can light it again.
 charges it faster). When it is full the paddle hums, and the quake (Shift,
 right click, Y, or the button on a touch screen) brings down the bottom
 three rows of the wall at once, from the bottom up, and knocks the wave
-bar back to empty. It is the way out when the wall is at the line.
+bar back to empty. It is the way out when the wall is at the line. A
+ball let through to the bottom drains a quarter of the charge
+(`QUAKE_MISS`; a shield's bounce doesn't), the lost part flashing red on
+the meter as it runs out.
 
 **The floors.** Clearing a floor's last block clears it: a bonus, a burst
 of light, the glass cracking from the middle out and falling away into
