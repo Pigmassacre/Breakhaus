@@ -1,0 +1,14 @@
+Breakhaus
+
+A game by Pigmassacre.
+
+Made with Godot Engine (godotengine.org); its notices are in GODOT_COPYRIGHT.txt.
+
+Art, the pixel font (AddLG) and the ball and block sounds from the original
+Breakhaus (libGDX).
+
+Music: Ovani Sound, Electronic Music Pack Vol. 5 ("Midnight Cruise", "Pump",
+"Zinger") and 80s Music Pack ("Synth Rock Station").
+
+Sounds: Ovani Sound's Casual & Mobile Sound FX Pack Vol. 1 and Retro Gaming
+Sound FX Pack.
