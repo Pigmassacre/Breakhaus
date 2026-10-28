@@ -1,0 +1,22 @@
+{
+  "title": "Breakhaus",
+  "byline": "A game for Windows, Linux, Android and your browser",
+  "short_description": "Bring the haus down - before it comes down on you!",
+  "cover": "out/cover.png",
+  "banner": {"image": "out/banner.png", "align": "center"},
+  "background": {"image": "out/background.jpg", "repeat": "no-repeat", "align": "center", "fixed": true},
+  "fonts": {"body": "Rubik", "headers": "Bungee", "size": "large"},
+  "colors": {
+    "bg": "#1c0a22",
+    "bg2": "#2a1235",
+    "bg2_alpha": 1.0,
+    "text": "#fff4fb",
+    "link": "#ff4fa3",
+    "button": "#ff4fa3",
+    "button_text": "#ffffff",
+    "headers": "#ffd23d"
+  },
+  "screenshots": "hidden",
+  "embed": {"width": 960, "height": 640, "background": "out/embed.png"},
+  "description": "description.html"
+}

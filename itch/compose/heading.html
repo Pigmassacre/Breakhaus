@@ -1,0 +1,42 @@
+<!doctype html>
+<!-- A section heading for the page's text, as an image (920x56, the text's width with no screenshot sidebar; shot at
+     1840x112, transparent to sit on the column). The word comes from the
+     address, heading.html?text=features, drawn by the game
+     (../build/plates/words_heading_<word>.png); after it a row of the logo's
+     little blocks, a colour each, running off to the right. -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .canvas { width: 920px; height: 56px; display: flex; align-items: center; gap: 16px; }
+  .word { height: 40px; margin-left: 2px; }
+  .blocks { display: flex; gap: 4px; align-items: center; flex: 1; overflow: hidden; }
+  /* One of the logo's blocks: its face, a lighter top and a darker front (Logo._draw). */
+  .block {
+    flex: none; width: 22px; height: 18px; border-top: 4px solid rgba(255, 255, 255, 0.35);
+    box-sizing: border-box; box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.45), 3px 4px 0 rgba(0, 0, 0, 0.35);
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <img class="word" id="word">
+  <div class="blocks" id="blocks"></div>
+</div>
+<script>
+  const word = (new URLSearchParams(location.search).get("text") || "features").toLowerCase();
+  document.getElementById("word").src = "../build/plates/words_heading_" + word + ".png";
+  const colours = ["--pink", "--orange", "--yellow", "--cyan", "--violet"];
+  const blocks = document.getElementById("blocks");
+  for (let i = 0; i < 40; i++) {
+    const b = document.createElement("div");
+    b.className = "block";
+    b.style.background = "var(" + colours[i % colours.length] + ")";
+    // Fading out as they go, as if still raining in.
+    b.style.opacity = Math.max(1 - i * 0.045, 0.06);
+    blocks.appendChild(b);
+  }
+</script>
+</body>
+</html>

@@ -10,3 +10,6 @@
 # Misc
 *.swp
 .DS_Store
+
+# The store page's plates, shots and previews (itch/tools/ makes them again)
+/itch/build/

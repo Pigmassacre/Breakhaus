@@ -1,0 +1,44 @@
+<!doctype html>
+<!-- The controls (920 wide, the text's width with no screenshot sidebar;
+     shot at 2x, transparent): each action in the game's lettering
+     (../build/plates/words_<action>.png), and what does it on keys, mouse,
+     pad and touch as the game's own rounded buttons, the prompts as the
+     game names them (src/autoload/inputs.gd). -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .canvas { width: 920px; height: 372px; }
+  .card { position: absolute; inset: 0 0 10px; border-radius: 28px; background: var(--button-lip); padding: 22px 28px; box-sizing: border-box; }
+  table { border-collapse: collapse; width: 100%; }
+  th { font: 700 17px/1 "Rubik", sans-serif; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em;
+    text-align: center; padding: 0 0 16px; }
+  td { padding: 10px 0 18px; text-align: center; }
+  td.action { text-align: left; width: 170px; }
+  td.action img { height: 32px; display: block; }
+  .key { height: 44px; min-width: 50px; padding: 0 16px; border-radius: 13px; font-size: 20px; box-shadow: 0 6px 0 #12061a; }
+  .key.hot { box-shadow: 0 6px 0 #8c2b5a; }
+  .key + .key { margin-left: 8px; }
+</style>
+</head>
+<body>
+<div class="canvas"><div class="card">
+<table>
+  <tr><th></th><th>Keys</th><th>Mouse</th><th>Pad</th><th>Touch</th></tr>
+  <tr><td class="action"><img src="../build/plates/words_move.png"></td>
+    <td><span class="key">&larr; &rarr;</span><span class="key">A D</span></td>
+    <td><span class="key">Move</span></td><td><span class="key">Stick</span></td><td><span class="key">Drag</span></td></tr>
+  <tr><td class="action"><img src="../build/plates/words_smash.png"></td>
+    <td><span class="key hot">Space</span></td>
+    <td><span class="key hot">Click</span></td><td><span class="key hot">A</span><span class="key hot">RT</span></td><td><span class="key hot">Tap</span></td></tr>
+  <tr><td class="action"><img src="../build/plates/words_quake.png"></td>
+    <td><span class="key">Shift</span></td>
+    <td><span class="key">Right click</span></td><td><span class="key">Y</span><span class="key">LT</span></td><td><span class="key">Quake</span></td></tr>
+  <tr><td class="action"><img src="../build/plates/words_pause.png"></td>
+    <td><span class="key">Esc</span></td>
+    <td></td><td><span class="key">Start</span></td><td><span class="key">II</span></td></tr>
+</table>
+</div></div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- The page's banner: across the top of the column, in place of the
+     title (960 wide on itch.io; shot at 1920x640). The logo in the rays on
+     the left, the title's tagline under it; the board on the right, the
+     wall half way down, a rare pickup under it and a smashed ball. -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .canvas { width: 960px; height: 320px; background: var(--panel); }
+  .logo { position: absolute; left: 22px; top: 22px; width: 483.5px; }
+  /* The words drawn by the game (../build/plates/words_*.png, 2x). */
+  .tagline { position: absolute; left: 264px; top: 250px; height: 24px; transform: translateX(-50%); }
+  /* Into the column's colour along the bottom, where the page starts. */
+  .fade {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
+    background: linear-gradient(to bottom, rgba(42, 18, 53, 0), var(--panel));
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <img class="plate" src="../build/plates/banner.png">
+  <div class="fade"></div>
+  <img class="logo" src="../build/plates/logo.png">
+  <img class="tagline" src="../build/plates/words_tagline.png">
+</div>
+</body>
+</html>

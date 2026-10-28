@@ -1,0 +1,48 @@
+/* The game's look for the store page's pieces: UI's colours (src/ui/ui_kit.gd),
+   its two faces and its rounded, lipped buttons. Every page here is laid out
+   in CSS pixels at the size itch.io shows it and shot at twice that
+   (tools/build.py); the pictures in it are the game's own (tools/plates.py). */
+
+@font-face { font-family: "Bungee"; src: url("../../assets/fonts/Bungee-Regular.ttf"); }
+@font-face { font-family: "Rubik"; font-weight: 700; src: url("../../assets/fonts/Rubik-Bold.ttf"); }
+
+:root {
+  --ink: #fff4fb;
+  --dim: #c9a3c4;
+  --accent: #ff4fa3;
+  --gold: #ffd23d;
+  --panel: #2a1235;
+  --shadow: #0d0510;
+  --button: #43204f;
+  --button-lip: #1f0b29;
+  /* What the side art fades into: the theme's BG. */
+  --page: #1c0a22;
+  /* The logo's letters, in turn. */
+  --pink: #ff4fa3;
+  --orange: #ff8a3d;
+  --yellow: #ffd23d;
+  --cyan: #46d9ff;
+  --violet: #8a5cff;
+}
+
+html, body { margin: 0; padding: 0; overflow: hidden; background: transparent; }
+
+.canvas { position: relative; overflow: hidden; }
+
+.plate {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  image-rendering: pixelated;
+}
+
+/* The game's pictures are pixel art: never smoothed when they're scaled. */
+img { image-rendering: pixelated; }
+
+/* A button at rest (UI's theme): rounded, with a darker lip under it. */
+.key {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; height: 30px; padding: 0 10px; box-sizing: border-box;
+  border-radius: 9px; background: var(--button); box-shadow: 0 4px 0 var(--button-lip);
+  font: 700 14px/1 "Rubik", sans-serif; color: var(--ink); text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(13, 5, 16, 0.6); white-space: nowrap;
+}
+.key.hot { background: var(--accent); box-shadow: 0 4px 0 #8c2b5a; color: #fff; }

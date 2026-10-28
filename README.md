@@ -335,6 +335,9 @@ muffled under the pause menu and the end. Each floor has its track.
   the menus' hover and press in screenshots.
 - `--shots=1.5,4,9` saves a screenshot to `shots/` at each of those seconds
   and quits after the last; `--size=720x1280` sizes the window first.
+- `--scene=keyart` (and `logo`, `haus`, `words`) draws pictures for the
+  itch.io page instead of starting the game (`src/debug/key_art.gd`);
+  `itch/README.md` has how the page is made.
 - `tools/check_gdscript.gd` compiles every script (the build runs it).
 
 ## Assets

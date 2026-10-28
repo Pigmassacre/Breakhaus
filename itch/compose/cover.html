@@ -1,0 +1,31 @@
+<!doctype html>
+<!-- The cover: the game in every itch.io listing (315x250, cropped from
+     this 630x500), and the picture when the page is shared. An empty board,
+     the logo where its wall would be, a smashed ball flying up at it. -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .canvas { width: 630px; height: 500px; background: var(--panel); }
+  /* The logo as the game draws it (../build/plates/logo.png, 2x), with a dark
+     rim so its pink and violet hold on the glass. */
+  .logo {
+    position: absolute; left: 50%; top: 14px; width: 483.5px; transform: translateX(-50%);
+    filter: drop-shadow(0 0 2px var(--shadow)) drop-shadow(0 0 2px var(--shadow));
+  }
+  /* A touch darker round the edges, to hold the eye in. */
+  .vignette {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(13, 5, 16, 0.5) 100%);
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <img class="plate" src="../build/plates/cover.png">
+  <div class="vignette"></div>
+  <img class="logo" src="../build/plates/logo.png">
+</div>
+</body>
+</html>

@@ -32,6 +32,8 @@ var _cell := Vector2(13, 12)
 var _depth := 6.0
 ## Set before it is added: the blocks are already in place, with a ripple through them instead of the rain.
 var settled := false
+## Set before it is added: the size of a square of a letter, in place of fitting it to the screen (the key art's).
+var square := 0.0
 
 
 func _ready() -> void:
@@ -45,6 +47,8 @@ func _ready() -> void:
 
 ## A block's size for the screen: a square of a letter as wide as the screen leaves room for, within reason.
 func _fit() -> Vector2:
+	if square > 0.0:
+		return Vector2(square, roundf(square * 0.9)) / SPLIT
 	var widest := 0
 	for line: String in LINES:
 		widest = maxi(widest, line.length() * 5 - 1)

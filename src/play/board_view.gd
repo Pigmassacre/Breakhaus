@@ -12,6 +12,8 @@ const MAX_LIGHTS := 8
 
 var board: Board
 var floor_rect: ColorRect
+## Just what is on the board, without its walls (the store page's key art hides the floor too).
+var bare := false
 var _material: ShaderMaterial
 
 
@@ -58,7 +60,8 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if board.theme.is_empty():
 		return
-	_draw_walls()
+	if not bare:
+		_draw_walls()
 	if board.effect(Pickups.Kind.SHIELD) > 0.0 or board.shield_flash > 0.0:
 		_draw_shield()
 	_draw_shadows()

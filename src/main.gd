@@ -37,6 +37,11 @@ var _pattern := 0
 func _ready() -> void:
 	Game.main = self
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# `--scene=keyart` (or logo, words, haus): pictures for the store page (src/debug/key_art.gd) in place of the game.
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--scene="):
+			add_child(preload("res://src/debug/key_art.gd").new())
+			return
 	get_tree().root.min_size = Vector2i(360, 480)
 	var layer := CanvasLayer.new()
 	layer.layer = 100

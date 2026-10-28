@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- The side art, behind the page's 960 column at its own size (itch.io
+     never scales it), centred and fixed: the rays out from behind the
+     column, the haus in the left-hand band and pickups in their columns of
+     light in the right (both about 700 px out from the middle, where a
+     1920 screen shows 480 px each side). Faded into the page's BG at the
+     edges and the bottom. -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .canvas { width: 3440px; height: 1440px; background: var(--page); }
+  .haus { position: absolute; left: 925px; top: 110px; width: 300px; }
+  .fade { position: absolute; inset: 0; }
+  .fade.sides { background: linear-gradient(to right, var(--page) 0, rgba(28, 10, 34, 0) 380px,
+      rgba(28, 10, 34, 0) 3060px, var(--page) 3440px); }
+  .fade.bottom { background: linear-gradient(to bottom, rgba(28, 10, 34, 0) 900px, var(--page) 1300px); }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <img class="plate" src="../build/plates/background.png">
+  <img class="haus" src="../build/plates/haus.png">
+  <div class="fade sides"></div>
+  <div class="fade bottom"></div>
+</div>
+</body>
+</html>
