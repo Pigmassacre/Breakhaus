@@ -323,6 +323,12 @@ func _draw_balls() -> void:
 			tc.a = t * (0.5 if not ball.smashed and board.fever <= 0.0 else 0.8)
 			Pixels.square(self, ball.trail[i] - Vector2(0, lift + ball.z), s, tc)
 		_draw_ball(ball, ball.pos - Vector2(0, lift + ball.z), c)
+		# Spinning: two pixels going round it, as fast as it turns.
+		var spin := absf(ball.spin) / Balance.SPIN_MAX
+		if spin > 0.2:
+			for i in 2:
+				var a := board.clock * signf(ball.spin) * 18.0 + i * PI
+				Pixels.square(self, ball.pos - Vector2(0, lift + ball.z) + Vector2.from_angle(a) * PX * 5.0, 1, Color(c, spin))
 
 
 ## The original's ball: six art pixels round, with a dark rim, a shine and a shaded bottom. Just hit,

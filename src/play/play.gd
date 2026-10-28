@@ -41,6 +41,11 @@ var _arrive := 1.0
 var _board_at := Vector2.ZERO
 var _board_zoom := 1.0
 var _rush_second := 0
+## Where on the board the camera zooms in round (its middle, or the last block of a floor), and how far
+## in beyond the punch.
+var _focus := Vector2(Balance.BOARD_W, Balance.BOARD_H) * 0.5
+var _zoom := 0.0
+var _slowmo_tween: Tween
 
 
 func setup(args: Dictionary) -> void:
@@ -87,6 +92,7 @@ func _ready() -> void:
 	board.combo_ended.connect(func(c: int) -> void: hud.show_message("%d COMBO!" % c, UI.GOLD, 0.5))
 	board.quake_ready.connect(func() -> void: hud.show_message("QUAKE READY!", Color("ffb03b"), 0.5))
 	board.floor_cleared.connect(_on_floor_cleared)
+	board.final_blow.connect(_slowmo)
 	board.missed.connect(Game.buzz.bind(60))
 	board.hitstop.connect(func(seconds: float) -> void:
 		if seconds >= Balance.HITSTOP_BIG:
@@ -346,12 +352,28 @@ func _update_shake(delta: float) -> void:
 	_punch = move_toward(_punch, 0.0, delta * 4.0)
 	var power := _trauma * _trauma * Game.shake_amount()
 	# The punch zooms in round the middle of the board.
-	var zoom := 1.0 + _punch * _punch * 0.035 * Game.shake_amount()
-	var center := board.position + Vector2(Balance.BOARD_W, Balance.BOARD_H) * 0.5 * board.scale.x
+	var zoom := 1.0 + _punch * _punch * 0.035 * Game.shake_amount() + _zoom
+	var center := board.position + _focus * board.scale.x
 	world.scale = Vector2(zoom, zoom)
 	world.position = center - center * zoom + Vector2(randf_range(-1, 1), randf_range(-1, 1)) * power * 24.0
 	world.rotation = randf_range(-1, 1) * power * 0.012
 	post.set_shader_parameter("aberration", power * 0.004)
+
+
+## The block that clears the board: time all but stops and the camera leans in on it, then it all
+## comes back up to speed. A floor's last block gets the long version, a clean sweep a quick one.
+func _slowmo(at: Vector2, big: bool) -> void:
+	if _slowmo_tween:
+		_slowmo_tween.kill()
+	_focus = at
+	Engine.time_scale = 0.12 if big else 0.3
+	Audio.play("smash", -2.0, 0.5)
+	_slowmo_tween = create_tween().set_ignore_time_scale()
+	_slowmo_tween.tween_property(self, "_zoom", 0.1 if big else 0.05, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_slowmo_tween.tween_interval(0.55 if big else 0.2)
+	_slowmo_tween.tween_property(Engine, "time_scale", 1.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_slowmo_tween.parallel().tween_property(self, "_zoom", 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	_slowmo_tween.tween_callback(func() -> void: _focus = Vector2(Balance.BOARD_W, Balance.BOARD_H) * 0.5)
 
 
 func _on_hitstop(seconds: float) -> void:
@@ -450,6 +472,9 @@ func _game_over(title: String) -> void:
 	if _over:
 		return
 	_over = true
+	if _slowmo_tween:
+		_slowmo_tween.kill()
+	_zoom = 0.0
 	Game.buzz(250)
 	Audio.play("game_over", 0.0)
 	Audio.muffle(1.0, 1.5)

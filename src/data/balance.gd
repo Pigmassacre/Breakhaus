@@ -33,6 +33,11 @@ const PADDLE_ACCEL := 9000.0
 const PADDLE_MAX_ANGLE := deg_to_rad(64.0)
 ## How much of the paddle's own speed goes into the ball's angle.
 const PADDLE_ENGLISH := 0.00022
+## Spin: a moving paddle sets the ball turning, this much per unit of the paddle's speed, up to
+## SPIN_MAX radians a second, dying away at SPIN_DECAY (so a curve of SPIN_MAX / SPIN_DECAY at most).
+const SPIN_FROM_PADDLE := 0.0011
+const SPIN_MAX := 1.4
+const SPIN_DECAY := 2.2
 ## A ball that comes up under the paddle is knocked down and out at this angle below the flat:
 ## shallow, so it gets out from under in a bounce or two.
 const PADDLE_UNDER_ANGLE := deg_to_rad(20.0)

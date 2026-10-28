@@ -12,6 +12,9 @@ var held := false
 var held_offset := 0.0
 ## Stuck to a Magnet paddle: let go when this runs out.
 var hold_time := 0.0
+## Spin off a moving paddle: it turns this fast (radians a second, clockwise on the screen), and less
+## and less, so the ball curves. A bounce mirrors the curve.
+var spin := 0.0
 ## Blocks it will still go straight through (a smash, or fire).
 var pierce := 0
 ## A smashed ball glows until it next meets the paddle.

@@ -28,6 +28,8 @@ signal wave_came
 signal quake_ready
 signal quake_drained(amount: float)
 signal floor_cleared
+## The block that cleared the board just broke, at `at`: the floor's last (`big`), or a clean sweep's.
+signal final_blow(at: Vector2, big: bool)
 signal overrun(block: Block)
 
 enum State { INTRO, SERVE, PLAY, CLEARED, OVER }
@@ -580,6 +582,12 @@ func _move_ball(ball: Ball, delta: float) -> void:
 	var steps := maxi(1, ceili(distance / Balance.BALL_STEP))
 	var step := distance / steps
 	ball.idle += delta
+	if ball.spin != 0.0:
+		ball.vel = ball.vel.rotated(ball.spin * delta)
+		ball.spin *= exp(-Balance.SPIN_DECAY * delta)
+		if absf(ball.spin) < 0.05:
+			ball.spin = 0.0
+		ball.fix_angle()
 	for i in steps:
 		ball.pos += ball.direction() * step
 		_collide_walls(ball)
@@ -617,6 +625,7 @@ func _collide_walls(ball: Ball) -> bool:
 		_bottom(ball)
 		return true
 	if hit:
+		ball.spin *= -0.7
 		ball.fix_angle()
 		_ball_hit(ball, ball.direction(), 0.6)
 		Audio.play("wall", -8.0, rng.randf_range(0.95, 1.1))
@@ -645,6 +654,7 @@ func _bottom(ball: Ball) -> void:
 	ball.speed = Balance.BALL_SPEED
 	ball.smashed = false
 	ball.pierce = 0
+	ball.spin = 0.0
 	ball.fix_angle()
 	particles.burst(ball.pos, Color("ff3d3d"), 10, 0.7)
 	ripples.append({"pos": ball.pos, "t": 0.0, "strength": 1.0})
@@ -695,6 +705,10 @@ func _collide_paddle(ball: Ball) -> void:
 		Audio.play("paddle", -4.0, 0.9 + (ball.speed - Balance.BALL_SPEED) / Balance.BALL_SPEED_MAX * 0.4)
 	ball.set_direction(Vector2.UP.rotated(angle))
 	ball.fix_angle()
+	# Spin: the paddle's own speed sets the ball turning the way the paddle went.
+	ball.spin = clampf(paddle_vx * Balance.SPIN_FROM_PADDLE, -Balance.SPIN_MAX, Balance.SPIN_MAX)
+	if absf(ball.spin) > Balance.SPIN_MAX * 0.6:
+		Audio.play("release", -10.0, 1.6)
 	paddle_flash = 1.0
 	paddle_squash = 1.0 if smashed else 0.6
 	_ball_hit(ball, ball.direction(), 1.0)
@@ -783,6 +797,7 @@ func _collide_blocks(ball: Ball) -> void:
 	if not through:
 		if ball.vel.dot(best_normal) < 0.0:
 			ball.vel = ball.vel.bounce(best_normal)
+			ball.spin *= -0.7
 		ball.pos += best_normal * (best_depth + 0.5)
 		ball.fix_angle()
 	elif ball.pierce > 0:
@@ -910,7 +925,7 @@ func _break(b: Block, scores := true) -> void:
 	if b.kind == Block.Kind.TNT:
 		blasts.append({"col": b.col, "row": b.row, "t": 0.08})
 	_find_lowest()
-	_check_cleared()
+	_check_cleared(center)
 
 
 func _add_score(points: int, at_pos: Vector2) -> void:
@@ -965,9 +980,11 @@ func _start_fever() -> void:
 	fever_started.emit()
 
 
-func _check_cleared() -> void:
+func _check_cleared(at_pos := Vector2(W * 0.5, H * 0.35)) -> void:
 	if state != State.PLAY or block_count() > 0:
 		return
+	if not demo:
+		final_blow.emit(at_pos, rows_queued <= 0)
 	if rows_queued > 0:
 		# Swept clean with more to come: a big bonus, and the next rows all rain in at once.
 		_add_score(Balance.SCORE_SWEEP, Vector2(W * 0.5, H * 0.35))
