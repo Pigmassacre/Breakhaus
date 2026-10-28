@@ -45,6 +45,19 @@ func _row(title: String) -> HBoxContainer:
 	return row
 
 
+## The row's name lights up pink and bounces while its control has the focus.
+func _light(row: HBoxContainer, control: Control) -> void:
+	var l := row.get_child(0) as Label
+	control.focus_entered.connect(func() -> void:
+		l.add_theme_color_override("font_color", UI.ACCENT)
+		l.pivot_offset = Vector2(l.size.x, l.size.y * 0.5)
+		l.scale = Vector2(1.25, 1.25)
+		l.create_tween().tween_property(l, "scale", Vector2.ONE * 1.08, 0.35).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT))
+	control.focus_exited.connect(func() -> void:
+		l.add_theme_color_override("font_color", UI.INK)
+		l.create_tween().tween_property(l, "scale", Vector2.ONE, 0.15))
+
+
 func _slider(title: String, key: String, low := 0.0, high := 1.0) -> void:
 	var row := _row(title)
 	var s := HSlider.new()
@@ -59,6 +72,8 @@ func _slider(title: String, key: String, low := 0.0, high := 1.0) -> void:
 		Game.set_setting(key, v)
 		Audio.play("tick", -4.0, 0.8 + v / high * 0.5))
 	s.mouse_entered.connect(s.grab_focus)
+	UI.springy(s).hot_scale = 1.04
+	_light(row, s)
 	row.add_child(s)
 	_focusables.append(s)
 
@@ -73,5 +88,7 @@ func _toggle(title: String, key: String) -> void:
 		Game.set_setting(key, on)
 		Audio.play("accept", -4.0))
 	c.mouse_entered.connect(c.grab_focus)
+	UI.springy(c)
+	_light(row, c)
 	row.add_child(c)
 	_focusables.append(c)

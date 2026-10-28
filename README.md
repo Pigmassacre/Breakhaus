@@ -4,9 +4,8 @@ Break the haus before it breaks you.
 
 Breakhaus is a brick breaker where the wall comes down on you, made in
 Godot 4.7.2. The blocks come down a row at a time, on a clock; let them
-cross the red line and the haus wins. Every block you break holds the wall
-back a little, and every ball you let past your paddle lets it gain on
-you. Clear a floor and you crash through it to the next: eight floors from
+cross the red line and the haus wins. Keep its bottom rows broken to keep
+it off the line; every ball you let past your paddle lets it gain on you. Clear a floor and you crash through it to the next: eight floors from
 the penthouse to the lobby, and then the basements, for ever. It plays
 with a keyboard, a mouse, a gamepad or a finger, on Windows, Linux,
 Android and in a browser.
@@ -16,7 +15,7 @@ in this repository's history (tag `libgdx-original`). This is a rewrite
 from scratch rather than a port, keeping its idea (the wall coming down on
 a timer, the ball that never dies, the fake 3D of things with a height and
 a shadow, blocks raining in from the sky and hopping in a ripple when one
-is hit), its sprites, its font and a few of its sounds, and finishing it.
+is hit), its sprites and a few of its sounds, and finishing it.
 Every number worth tuning is in one place, `src/data/balance.gd`.
 
 ## Running
@@ -91,8 +90,9 @@ bar over the board fills, and when it is full the whole wall comes down a
 row and a new row rains in at the top, until the floor has none left to
 send (the count is under the floor's name). The blocks shake for a moment
 before they come down when the wall is getting close. If any block reaches
-the red line, the game is over. Every block broken knocks the bar back
-(`HOLD_PER_BLOCK`), so breaking fast holds the wall where it is.
+the red line, the game is over. Nothing holds the bar back: the clock is
+the clock, and the only way to keep the wall off the line is to keep
+breaking its bottom rows.
 
 **The ball never dies.** It bounces off the bottom of the board as off any
 wall, as in the original. But that's a miss: the ball is back to its
@@ -135,7 +135,8 @@ demolishes the haus, and the basements go on down for as long as you
 last. On a wide screen the board is as tall as the screen, the floor and
 the haus (the floor you are on lit up) to its left and the score and the
 pickups running to its right; on a tall one (a phone) they are over it. A wall that is swept clean while the floor still has
-rows to send is a Clean Sweep: a bonus, and the next row right away.
+rows to send is a Clean Sweep: a big bonus (`SCORE_SWEEP`), and the next
+six rows (`SWEEP_ROWS`) rain in all at once.
 
 **Blocks.** Plain ones take one hit; studded ones a hit per stud and one
 more. Steel takes five and won't burn. TNT goes off when it breaks, a
@@ -198,7 +199,7 @@ src/autoload/          Inputs (actions, which device), Audio (sounds, layered mu
 src/data/              balance.gd (every number), floors.gd (themes, rows), pickups.gd
 src/play/              the game: play.gd (the screen), board.gd (the rules), board_view.gd (drawing),
                        block.gd, ball.gd, block_art.gd, particles.gd, hud.gd, tower.gd, pause and game over
-src/ui/                splash, title (logo.gd), how to play, high scores, options, ui_kit.gd
+src/ui/                splash, title (logo.gd), how to play, high scores, options, ui_kit.gd, spring.gd
 src/fx/                backdrop.gd and the screen-wide shaders
 tools/                 import_audio.py, check_gdscript.gd, make_icon.gd, write_godot_copyright.gd
 ```
@@ -217,6 +218,16 @@ every shadow (down and to the right, further the higher the thing is),
 the blocks back to front (so a block hides the front face of the one
 behind it), the pickups, the paddle, the balls and their trails, and a
 thousand particles kept in packed arrays (`Particles`).
+
+**Pixels for the game, HD for the UI.** Everything on the board is pixel
+art; the menus and the HUD around it are flat and smooth: big words in
+Bangers and small print in Ubuntu (both MSDF fonts, so they stay sharp at
+any size and any scale a tween gives them), rounded buttons with a darker
+lip they press down into, round pill bars and timer rings, and a flat
+drawing of the haus. Every button, slider and switch has a `Spring` in it
+(`src/ui/spring.gd`): three damped springs, on real time, so it swells
+and breathes while it has the focus, leans toward the pointer over it,
+squashes when pressed and boings back when let go.
 
 **Shaders, not pictures.** The original spun a big image for its rays and
 had its glass floor drawn; here they are worked out per art pixel, so they
@@ -261,6 +272,10 @@ muffled under the pause menu and the end. Each floor has its track.
   `--autoplay=lazy` only launches the ball, and the wall wins.
 - `--short-floors` makes every floor a single row, and `--clear-at=5`
   clears the floor after five seconds: for what comes between floors.
+  `--sweep-at=5` breaks every block after five seconds, for a Clean Sweep.
+- `--mouse=1.5:800:400,2:800:460:click` moves the pointer to those window
+  coordinates at those seconds (and clicks, with `:click`): for catching
+  the menus' hover and press in screenshots.
 - `--shots=1.5,4,9` saves a screenshot to `shots/` at each of those seconds
   and quits after the last; `--size=720x1280` sizes the window first.
 - `tools/check_gdscript.gd` compiles every script (the build runs it).
@@ -273,8 +288,10 @@ next to the repo (`../Assets`) and the original game's own sounds
 sound, and loops each music layer by folding its reverb tail back over its
 start. Needs ffmpeg.
 
-- Sprites (the ball, block, paddle and pickup icons), the AddLG pixel font
-  and the Pigmassacre splash: the original Breakhaus.
+- Sprites (the ball, block, paddle and pickup icons) and the Pigmassacre
+  splash: the original Breakhaus.
+- Fonts: Bangers by Vernon Adams (SIL Open Font License 1.1) and Ubuntu
+  (Ubuntu Font Licence 1.0), their licences beside them in `assets/fonts/`.
 - Music: Ovani Sound's Electronic Music Pack Vol. 5 and 80s Music Pack.
 - Sounds: Ovani Sound's Casual & Mobile and Retro Gaming sound packs, and
   the original's ball, block, select and activate sounds.

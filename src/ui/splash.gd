@@ -28,6 +28,7 @@ func _ready() -> void:
 	pig.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_material.shader = preload("res://src/ui/splash.gdshader")
 	pig.material = _material
+	pig.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	column.add_child(pig)
 	var name_label := UI.label("PIGMASSACRE", 5, Color("ff8fa8"))
 	name_label.modulate.a = 0.0

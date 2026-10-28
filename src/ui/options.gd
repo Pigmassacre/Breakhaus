@@ -9,7 +9,7 @@ func _ready() -> void:
 	add_child(Backdrop.new())
 	_panel = OptionsPanel.new()
 	_panel.closed.connect(func() -> void: Game.goto("title"))
-	add_child(_panel)
+	UI.centered(self, _panel)
 	_panel.focus_first.call_deferred()
 
 

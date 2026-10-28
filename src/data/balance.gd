@@ -58,12 +58,10 @@ const MAX_BALLS := 24
 
 # --- waves --------------------------------------------------------------------------------------
 ## Seconds between the wall coming down a row: on the first floor, and the fastest it gets.
-const WAVE_TIME := 9.0
-const WAVE_TIME_MIN := 4.2
+const WAVE_TIME := 10.0
+const WAVE_TIME_MIN := 5.0
 ## Taken off WAVE_TIME for every floor down.
 const WAVE_TIME_STEP := 0.5
-## Every block broken holds the wall back this much (the timer goes back, never below zero).
-const HOLD_PER_BLOCK := 0.22
 ## A miss lets the wall come on: this much of a wave at once.
 const MISS_PUSH := 0.3
 ## The blocks shake for this long before they come down.
@@ -93,6 +91,9 @@ const TNT_RADIUS := 1
 const SCORE_BLOCK := 10
 const SCORE_GOLD := 250
 const SCORE_FLOOR := 2500
+## Sweeping the board clean with rows still to come: this, and SWEEP_ROWS of them rain in at once.
+const SCORE_SWEEP := 2000
+const SWEEP_ROWS := 6
 ## Each floor down is worth this much more, on everything.
 const SCORE_FLOOR_MULT := 0.25
 ## The combo: every break adds one; it lasts COMBO_TIME without a break, and a miss ends it.

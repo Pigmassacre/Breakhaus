@@ -87,6 +87,11 @@ func _ready() -> void:
 			await get_tree().create_timer(float(arg.trim_prefix("--clear-at="))).timeout
 			board.state = Board.State.CLEARED
 			board.floor_cleared.emit()
+		# `--sweep-at=5`: every block is broken after that many seconds, for a clean sweep.
+		elif arg.begins_with("--sweep-at="):
+			await get_tree().create_timer(float(arg.trim_prefix("--sweep-at="))).timeout
+			for b in board.blocks():
+				board._break(b)
 
 
 func _start_floor(n: int) -> void:

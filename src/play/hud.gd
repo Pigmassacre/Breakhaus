@@ -31,6 +31,8 @@ var _prompt: Label
 var _help: Label
 var _quake_label: Label
 var _bars: Control
+## The pickups' pixel icons go on their own layer, filtered sharp; the rest of the HUD is smooth.
+var _icons: Control
 var _popups: Control
 var _pause_button: Button
 var _quake_button: Button
@@ -54,13 +56,21 @@ func _ready() -> void:
 	_bars.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bars.draw.connect(_draw_bars)
 	root.add_child(_bars)
+	_icons = Control.new()
+	_icons.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_icons.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_icons.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_icons.draw.connect(_draw_icons)
+	root.add_child(_icons)
 	_floor_label = UI.label("8F", 6, UI.INK, HORIZONTAL_ALIGNMENT_LEFT)
 	_floor_name = UI.label("", 2, UI.DIM, HORIZONTAL_ALIGNMENT_LEFT)
 	_rows_label = UI.label("", 2, UI.DIM, HORIZONTAL_ALIGNMENT_LEFT)
 	_score_label = UI.label("0", 5, UI.INK, HORIZONTAL_ALIGNMENT_RIGHT)
 	_best_label = UI.label("", 2, UI.DIM, HORIZONTAL_ALIGNMENT_RIGHT)
 	_combo_label = UI.label("", 4, UI.GOLD)
-	_combo_mult = UI.label("", 2, UI.GOLD)
+	_combo_mult = UI.label("", 3, UI.GOLD)
+	UI.outline(_combo_label, 10)
+	UI.outline(_combo_mult, 8)
 	_quake_label = UI.label("", 2, UI.DIM)
 	for l: Label in [_floor_label, _floor_name, _rows_label, _score_label, _best_label, _combo_label, _combo_mult, _quake_label]:
 		root.add_child(l)
@@ -70,11 +80,14 @@ func _ready() -> void:
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_popups)
 	_message = UI.label("", 7, UI.INK)
+	UI.outline(_message, 14)
 	_message.modulate.a = 0.0
 	root.add_child(_message)
 	_prompt = UI.label("", 3, UI.INK)
+	UI.outline(_prompt, 8)
 	root.add_child(_prompt)
 	_help = UI.label("", 2, UI.DIM)
+	UI.outline(_help, 6)
 	root.add_child(_help)
 	_pause_button = _touch_button("II", func() -> void: pause_pressed.emit())
 	_quake_button = _touch_button("QUAKE", func() -> void: quake_pressed.emit())
@@ -88,8 +101,8 @@ func _touch_button(text: String, on_press: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.focus_mode = Control.FOCUS_NONE
-	b.add_theme_font_size_override("font_size", UI.FONT_PX * 3)
 	b.pressed.connect(on_press)
+	UI.springy(b).hot_scale = 1.0
 	return b
 
 
@@ -135,8 +148,8 @@ func layout(rect: Rect2, zoom: float) -> void:
 		_place(_floor_name, Rect2(x0, top - 88, width * 0.6, 24))
 		_place(_rows_label, Rect2(x0, top - 62, width * 0.6, 24))
 		_place(_score_label, Rect2(x0 + width * 0.35, top - 146, width * 0.65, 50))
-		_place(_best_label, Rect2(x0 + width * 0.4, top - 88, width * 0.6, 24))
-		_effects_at = Vector2(rect.position.x, top - Balance.PX * 18.0)
+		_place(_best_label, Rect2(x0 + width * 0.4, top - 80, width * 0.6, 24))
+		_effects_at = Vector2(rect.position.x, top - 100.0)
 		for l: Label in [_floor_label, _floor_name, _rows_label]:
 			l.horizontal_alignment = align_left
 		for l: Label in [_score_label, _best_label]:
@@ -174,7 +187,7 @@ func _process(delta: float) -> void:
 	_tower.level = board.level
 	_floor_name.text = String(board.theme.get("name", "")).to_upper()
 	var rows := board.rows_queued
-	_rows_label.text = ("%d ROWS TO GO" % rows) if rows > 0 else "LAST ROWS!"
+	_rows_label.text = ("%d ROW%s TO GO" % [rows, "" if rows == 1 else "S"]) if rows > 0 else "LAST ROWS!"
 	_rows_label.add_theme_color_override("font_color", UI.DIM if rows > 0 else UI.GOLD)
 	var touch := Inputs.device == Inputs.Device.TOUCH
 	_pause_button.visible = touch
@@ -189,6 +202,7 @@ func _process(delta: float) -> void:
 	if board.state == Board.State.SERVE:
 		_prompt.modulate.a = 0.6 + 0.4 * sin(board.clock * 5.0)
 	_bars.queue_redraw()
+	_icons.queue_redraw()
 
 
 func _update_prompt() -> void:
@@ -225,43 +239,64 @@ func _draw_bars() -> void:
 		return
 	var px := Balance.PX
 	var r := board_rect
-	# The wave bar, along the top: fills as the wall gets ready to come down.
-	var bar := Rect2(r.position.x, r.position.y - (Balance.WALL + Balance.BLOCK_DEPTH + px * 5.0) * zoom, r.size.x, px * 3.0 * zoom)
-	_bars.draw_rect(bar.grow(px), UI.SHADOW)
+	# The wave bar, along the top: fills as the wall gets ready to come down, and glows as it gets there.
+	var h := maxf(px * 3.0 * zoom, 10.0)
+	var bar := Rect2(r.position.x, r.position.y - (Balance.WALL + Balance.BLOCK_DEPTH) * zoom - h - 12.0, r.size.x, h)
 	var fill := clampf(board.wave_timer / board.wave_time, 0.0, 1.0)
-	var c := Color("ff4fa3").lerp(Color("ff2a2a"), fill)
+	var c := UI.ACCENT.lerp(Color("ff2a2a"), fill)
 	if board.effect(Pickups.Kind.FROST) > 0.0:
 		c = Color("9fe8ff")
-	elif fill > 0.85 and fmod(board.clock, 0.2) < 0.1:
-		c = Color.WHITE
-	_bars.draw_rect(Rect2(bar.position, Vector2(bar.size.x * fill, bar.size.y)), c)
-	# Notches, one per second.
-	var seconds := int(board.wave_time)
-	for i in range(1, seconds):
-		_bars.draw_rect(Rect2(bar.position.x + bar.size.x * i / board.wave_time, bar.position.y, px * 0.5, bar.size.y), Color(0, 0, 0, 0.4))
+	elif fill > 0.85:
+		var blink := 0.5 + 0.5 * sin(board.clock * 30.0)
+		UI.draw_round(_bars, bar.grow(4.0 + blink * 4.0), Color(c, 0.25 * blink))
+		c = c.lerp(Color.WHITE, blink * 0.6)
+	UI.draw_round(_bars, bar, Color(UI.SHADOW, 0.75))
+	UI.draw_round(_bars, Rect2(bar.position, Vector2(maxf(bar.size.x * fill, h), h)), c)
+	# A notch a second.
+	for i in range(1, int(board.wave_time)):
+		var nx := bar.position.x + bar.size.x * i / board.wave_time
+		_bars.draw_circle(Vector2(nx, bar.get_center().y), h * 0.14, Color(UI.SHADOW, 0.5), true, -1.0, true)
 	# The quake meter, under the board.
-	var q := Rect2(r.position.x, r.end.y + (Balance.BLOCK_DEPTH + px * 6.0) * zoom, r.size.x, px * 4.0 * zoom)
-	_bars.draw_rect(q.grow(px), UI.SHADOW)
+	var qh := maxf(px * 4.0 * zoom, 12.0)
+	var q := Rect2(r.position.x, r.end.y + (Balance.BLOCK_DEPTH + px * 4.0) * zoom, r.size.x, qh)
 	var charge := board.quake / Balance.QUAKE_CHARGE
 	var qc := Color("ffb03b")
 	if board.quake_charged():
-		qc = qc.lerp(Color.WHITE, 0.5 + 0.5 * sin(board.clock * 10.0))
-	_bars.draw_rect(Rect2(q.position, Vector2(q.size.x * charge, q.size.y)), qc)
-	# The pickups running: their icons along the top of the board, each with a bar for the time left.
-	var x := _effects_at.x
-	var y := _effects_at.y
+		var pulse := 0.5 + 0.5 * sin(board.clock * 10.0)
+		UI.draw_round(_bars, q.grow(4.0 + pulse * 6.0), Color(qc, 0.3 * pulse))
+		qc = qc.lerp(Color.WHITE, pulse * 0.5)
+	UI.draw_round(_bars, q, Color(UI.SHADOW, 0.75))
+	if charge > 0.0:
+		UI.draw_round(_bars, Rect2(q.position, Vector2(maxf(q.size.x * charge, qh), qh)), qc)
+	# The pickups running: a round badge each, a ring round it for the time left (the icons go on top).
+	var at := _effects_at + Vector2(BADGE, BADGE)
 	for kind: Pickups.Kind in board.effects:
 		var left: float = board.effects[kind]
-		var full := _duration(kind)
-		var at := Vector2(x + px * 5.0, y + px * 5.0)
-		if left > 2.0 or fmod(left, 0.3) < 0.18:
-			Pickups.draw_icon(_bars, kind, at, px)
-		_bars.draw_rect(Rect2(x + px, y + px * 11.0, px * 8.0, px), UI.SHADOW)
-		_bars.draw_rect(Rect2(x + px, y + px * 11.0, px * 8.0 * clampf(left / full, 0.0, 1.0), px), Pickups.info(kind)["color"])
-		x += px * 11.0
+		var color: Color = Pickups.info(kind)["color"]
+		var part := clampf(left / _duration(kind), 0.0, 1.0)
+		var blink := left < 2.0 and fmod(left, 0.3) > 0.18
+		_bars.draw_circle(at, BADGE, Color(UI.SHADOW, 0.8), true, -1.0, true)
+		_bars.draw_circle(at, BADGE - 5.0, Color(color.darkened(0.6), 0.9), true, -1.0, true)
+		if not blink:
+			_bars.draw_arc(at, BADGE - 2.5, -PI * 0.5, -PI * 0.5 + TAU * part, 48, color, 5.0, true)
+		at.x += BADGE * 2.0 + 10.0
 	# Over the board, the icons take the place of the floor's name and rows.
 	_rows_label.visible = wide or board.effects.is_empty()
 	_floor_name.visible = wide or board.effects.is_empty()
+
+
+const BADGE := 26.0
+
+
+func _draw_icons() -> void:
+	if board == null:
+		return
+	var at := _effects_at + Vector2(BADGE, BADGE)
+	for kind: Pickups.Kind in board.effects:
+		var left: float = board.effects[kind]
+		if left > 2.0 or fmod(left, 0.3) < 0.18:
+			Pickups.draw_icon(_icons, kind, at, Balance.PX * 0.75)
+		at.x += BADGE * 2.0 + 10.0
 
 
 static func _duration(kind: Pickups.Kind) -> float:
@@ -291,6 +326,7 @@ func _on_scored(points: int, at: Vector2) -> void:
 	var start := board_rect.position + (at - Vector2(0, Balance.BLOCK_DEPTH)) * zoom
 	var big := points >= 200
 	var l := UI.label(str(points), 3 if big else 2, UI.GOLD if big else UI.INK)
+	UI.outline(l, 8 if big else 6)
 	l.size = Vector2(160, 30)
 	l.position = start - l.size * 0.5
 	l.pivot_offset = l.size * 0.5
@@ -335,7 +371,7 @@ func show_message(text: String, color := UI.INK, hold := 0.6, scale := 7) -> voi
 	if _message_tween:
 		_message_tween.kill()
 	_message.text = text
-	_message.add_theme_font_size_override("font_size", UI.FONT_PX * scale)
+	_message.add_theme_font_size_override("font_size", UI.font_size(scale))
 	_message.add_theme_color_override("font_color", color)
 	_message.modulate.a = 1.0
 	_message.scale = Vector2(2.2, 2.2)

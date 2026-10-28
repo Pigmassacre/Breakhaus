@@ -184,20 +184,7 @@ func start_floor(n: int) -> void:
 		start = 1
 		rows_queued = 0
 	# The top rows left empty to start with, so the first waves have room.
-	var top := 2
-	var delay := 0.15
-	for r in range(start - 1, -1, -1):
-		var row := Floors.make_row(rng, n, rows_made)
-		rows_made += 1
-		for c in COLS:
-			if row[c] == null:
-				continue
-			var b := Block.new().setup(row[c], c, top + r)
-			b.z = 900.0 + rng.randf() * 200.0
-			b.hop_delay = delay + rng.randf() * 0.12
-			b.raining = true
-			put(c, top + r, b)
-		delay += 0.09
+	_rain_rows(start, 2, 900.0)
 	_find_lowest()
 	paddle_z = 900.0
 	var ball := Ball.new()
@@ -206,6 +193,25 @@ func start_floor(n: int) -> void:
 	balls.append(ball)
 	state = State.INTRO
 	_view.queue_redraw()
+
+
+## Drops `count` new rows of the floor's in from high up, the lowest at row `top + count - 1`, the bottom one landing first.
+func _rain_rows(count: int, top: int, height: float) -> void:
+	var delay := 0.15
+	for r in range(count - 1, -1, -1):
+		var row := Floors.make_row(rng, level, rows_made)
+		rows_made += 1
+		for c in COLS:
+			if row[c] == null:
+				continue
+			var b := Block.new().setup(row[c], c, top + r)
+			b.z = height + rng.randf() * 200.0
+			b.hop_delay = delay + rng.randf() * 0.12
+			b.raining = true
+			if effect(Pickups.Kind.FROST) > 0.0:
+				b.frozen = true
+			put(c, top + r, b)
+		delay += 0.09
 
 
 ## The intro done: the ball sits on the paddle until launched.
@@ -804,7 +810,6 @@ func _break(b: Block, scores := true) -> void:
 	if quake_charged() and not was_charged:
 		quake_ready.emit()
 		Audio.play("charged", -2.0)
-	wave_timer = maxf(wave_timer - Balance.HOLD_PER_BLOCK, 0.0)
 	hitstop.emit(Balance.HITSTOP_BREAK if combo < 12 else Balance.HITSTOP_BREAK * 1.6)
 	shake.emit(1.5 + minf(combo * 0.1, 2.5))
 	if b.carries_pickup or rng.randf() < Balance.DROP_CHANCE:
@@ -835,11 +840,17 @@ func _check_cleared() -> void:
 	if state != State.PLAY or block_count() > 0:
 		return
 	if rows_queued > 0:
-		# Swept clean with more to come: a bonus, and the next row now.
-		_add_score(Balance.SCORE_FLOOR / 5, Vector2(W * 0.5, H * 0.35))
+		# Swept clean with more to come: a big bonus, and the next rows all rain in at once.
+		_add_score(Balance.SCORE_SWEEP, Vector2(W * 0.5, H * 0.35))
 		message.emit("CLEAN SWEEP!", Color("3dffb1"))
 		Audio.play("fanfare", -2.0)
-		wave_timer = wave_time
+		hitstop.emit(Balance.HITSTOP_BIG)
+		shake.emit(6.0)
+		var count := mini(Balance.SWEEP_ROWS, rows_queued)
+		rows_queued -= count
+		_rain_rows(count, 0, 700.0)
+		wave_timer = 0.0
+		_find_lowest()
 		return
 	if demo:
 		start_floor(level)

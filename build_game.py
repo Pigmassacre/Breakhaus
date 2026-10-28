@@ -128,6 +128,8 @@ for preset in presets:
     run([godot_path, "--headless", "--path", ".", "--script", "tools/write_godot_copyright.gd", "--",
         os.path.join(build_dir, "GODOT_COPYRIGHT.txt")], f"Writing the engine notices for {preset}")
     shutil.copyfile(os.path.join(script_dir, "CREDITS.txt"), os.path.join(build_dir, "CREDITS.txt"))
+    for licence in ("Bangers-OFL.txt", "Ubuntu-LICENCE.txt"):
+        shutil.copyfile(os.path.join(script_dir, "assets", "fonts", licence), os.path.join(build_dir, licence))
     if make_zips:
         archive = os.path.join(script_dir, "builds", f"Breakhaus-{preset}-{commit or 'unknown'}")
         shutil.make_archive(archive, "zip", build_dir)

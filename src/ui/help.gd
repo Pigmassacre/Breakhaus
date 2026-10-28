@@ -31,11 +31,15 @@ func _ready() -> void:
 	nav.alignment = BoxContainer.ALIGNMENT_CENTER
 	nav.add_theme_constant_override("separation", 20)
 	column.add_child(nav)
-	var prev := UI.button("<", func() -> void: _turn(-1), 90)
+	var prev := UI.button("←", func() -> void: _turn(-1), 90)
 	_page_label = UI.label("", 2, UI.DIM)
 	_page_label.custom_minimum_size = Vector2(90, 0)
-	var next := UI.button(">", func() -> void: _turn(1), 90)
+	var next := UI.button("→", func() -> void: _turn(1), 90)
 	var back := UI.button("BACK", go_back, 200)
+	# Bangers has no arrows; Ubuntu does.
+	for b: Button in [prev, next]:
+		b.add_theme_font_override("font", UI.body_font())
+		b.add_theme_font_size_override("font_size", UI.font_size(4))
 	for c: Control in [prev, _page_label, next, back]:
 		nav.add_child(c)
 	for b: Button in [prev, next, back]:
@@ -96,9 +100,9 @@ func _gap(h: float) -> Control:
 
 func _rules() -> Control:
 	var box := _page_box("HOW TO PLAY")
-	box.add_child(_text("THE WALL OF BLOCKS COMES DOWN A ROW AT A TIME. IF IT CROSSES THE RED LINE, THE HAUS WINS."))
-	box.add_child(_text("EVERY BLOCK YOU BREAK HOLDS IT BACK A LITTLE. LET THE BALL PAST YOUR PADDLE AND IT GAINS ON YOU.", 2, UI.DIM))
-	box.add_child(_text("CLEAR A FLOOR TO CRASH DOWN TO THE NEXT. EIGHT FLOORS TO THE GROUND... THEN THE BASEMENTS.", 2, UI.DIM))
+	box.add_child(_text("The wall of blocks comes down a row at a time, like clockwork. If it crosses the red line, the haus wins."))
+	box.add_child(_text("Keep the bottom rows broken to keep it off the line. Let the ball past your paddle and the wall gains on you.", 2, UI.DIM))
+	box.add_child(_text("Clear a floor to crash down to the next. Eight floors to the ground... then the basements.", 2, UI.DIM))
 	box.add_child(_gap(16))
 	var grid := GridContainer.new()
 	grid.columns = 5
@@ -118,20 +122,20 @@ func _rules() -> Control:
 			grid.add_child(UI.label(rows[r][c], 2, color, HORIZONTAL_ALIGNMENT_LEFT if c == 0 else HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(grid)
 	box.add_child(_gap(16))
-	box.add_child(_text("SMASH JUST AS THE BALL MEETS THE PADDLE: IT FLIES OFF FAST AND PLOUGHS THROUGH THREE BLOCKS.", 2, UI.GOLD))
+	box.add_child(_text("Smash just as the ball meets the paddle: it flies off fast and ploughs through three blocks.", 2, UI.GOLD))
 	return box
 
 
 func _blocks() -> Control:
 	var box := _page_box("BLOCKS")
 	var kinds := [
-		[Block.Kind.NORMAL, 1, "ONE HIT."],
-		[Block.Kind.NORMAL, 3, "STUDDED: A HIT FOR EVERY STUD, AND ONE MORE."],
-		[Block.Kind.STEEL, Balance.STEEL_HP, "STEEL: FIVE HITS, AND IT WON'T BURN."],
-		[Block.Kind.TNT, 1, "TNT: TAKES ITS NEIGHBOURS WITH IT."],
-		[Block.Kind.PRIZE, 1, "PRIZE: ALWAYS HOLDS A PICKUP."],
-		[Block.Kind.GOLD, 1, "GOLD: A PILE OF POINTS."],
-		[Block.Kind.MOSS, 1, "MOSS: GROWS EVERY TIME THE WALL COMES DOWN."],
+		[Block.Kind.NORMAL, 1, "One hit."],
+		[Block.Kind.NORMAL, 3, "Studded: a hit for every stud, and one more."],
+		[Block.Kind.STEEL, Balance.STEEL_HP, "Steel: five hits, and it won't burn."],
+		[Block.Kind.TNT, 1, "TNT: takes its neighbours with it."],
+		[Block.Kind.PRIZE, 1, "Prize: always holds a pickup."],
+		[Block.Kind.GOLD, 1, "Gold: a pile of points."],
+		[Block.Kind.MOSS, 1, "Moss: grows every time the wall comes down."],
 	]
 	for k: Array in kinds:
 		var row := HBoxContainer.new()
@@ -146,14 +150,14 @@ func _blocks() -> Control:
 		row.add_child(l)
 		box.add_child(row)
 	box.add_child(_gap(10))
-	box.add_child(_text("COMBO: BREAK BLOCKS QUICKLY ONE AFTER ANOTHER TO MULTIPLY YOUR POINTS.", 2, UI.GOLD))
-	box.add_child(_text("QUAKE: BREAKING BLOCKS CHARGES IT. SET IT OFF TO BRING DOWN THE BOTTOM THREE ROWS.", 2, Color("ffb03b")))
+	box.add_child(_text("Combo: break blocks quickly one after another to multiply your points. Sweep the board clean for a big bonus, and six more rows.", 2, UI.GOLD))
+	box.add_child(_text("Quake: breaking blocks charges it. Set it off to bring down the bottom three rows.", 2, Color("ffb03b")))
 	return box
 
 
 func _pickups() -> Control:
 	var box := _page_box("PICKUPS")
-	box.add_child(_text("PRIZE BLOCKS (AND NOW AND THEN ANY BLOCK) LET ONE GO. CATCH IT WITH THE PADDLE OR HIT IT WITH A BALL.", 2, UI.DIM))
+	box.add_child(_text("Prize blocks (and now and then any block) let one go. Catch it with the paddle or hit it with a ball.", 2, UI.DIM))
 	box.add_child(_gap(6))
 	for kind: Pickups.Kind in Pickups.INFO:
 		var info := Pickups.info(kind)
@@ -164,7 +168,7 @@ func _pickups() -> Control:
 		sample.help = self
 		sample.custom_minimum_size = Vector2(60, 44)
 		row.add_child(sample)
-		var l := UI.label("%s: %s" % [String(info["name"]).to_upper(), String(info["blurb"]).to_upper()], 2,
+		var l := UI.label("%s: %s" % [String(info["name"]), String(info["blurb"])], 2,
 			Color("ff7a6a") if info.get("bad", false) else UI.INK, HORIZONTAL_ALIGNMENT_LEFT)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size = Vector2(580, 0)
@@ -180,6 +184,7 @@ class _Sample extends Control:
 	var help: Control
 
 	func _init() -> void:
+		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		custom_minimum_size = Vector2(Balance.BLOCK_W + 8, Balance.ROW_H + Balance.BLOCK_DEPTH + 8)
 
 	func _process(_delta: float) -> void:

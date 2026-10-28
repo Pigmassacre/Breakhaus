@@ -10,6 +10,9 @@ extends Node
 ## floor after five seconds, and
 ## `--shots=1.5,4,9` saves a screenshot to shots/ at each of those seconds
 ## and quits after the last (`--size=720x1280` sizes the window first).
+## `--sweep-at=5` breaks every block after five seconds (a clean sweep), and
+## `--mouse=1.5:800:400,2:800:460` moves the pointer to those window
+## coordinates at those seconds (`:click` on the end presses there).
 
 const SCREENS := {
 	"splash": "res://src/ui/splash.gd",
@@ -57,6 +60,9 @@ func _ready() -> void:
 		elif arg.begins_with("--size="):
 			var wh := arg.trim_prefix("--size=").split("x")
 			get_window().size = Vector2i(int(wh[0]), int(wh[1]))
+		elif arg.begins_with("--mouse="):
+			for step in arg.trim_prefix("--mouse=").split(","):
+				_mouse_at(step.split(":"))
 		elif arg.begins_with("--shots="):
 			_take_shots(Array(arg.trim_prefix("--shots=").split(",")).map(func(t: String) -> float: return float(t)))
 	show_screen(first, args)
@@ -64,6 +70,8 @@ func _ready() -> void:
 
 func _take_shots(times: Array) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://shots"))
+	# Kept out of the editor's imports (and so out of the builds).
+	FileAccess.open("res://shots/.gdignore", FileAccess.WRITE)
 	var start := Time.get_ticks_msec()
 	for t: float in times:
 		while (Time.get_ticks_msec() - start) / 1000.0 < t:
@@ -73,6 +81,25 @@ func _take_shots(times: Array) -> void:
 		get_viewport().get_texture().get_image().save_png(path)
 		print("Saved ", path)
 	get_tree().quit()
+
+
+## One step of `--mouse=`: [seconds, x, y] or [seconds, x, y, "click"].
+func _mouse_at(step: PackedStringArray) -> void:
+	await get_tree().create_timer(float(step[0])).timeout
+	var at := Vector2(float(step[1]), float(step[2]))
+	var motion := InputEventMouseMotion.new()
+	motion.position = at
+	motion.global_position = at
+	Input.parse_input_event(motion)
+	if step.size() > 3 and step[3] == "click":
+		for down: bool in [true, false]:
+			var click := InputEventMouseButton.new()
+			click.button_index = MOUSE_BUTTON_LEFT
+			click.pressed = down
+			click.position = at
+			click.global_position = at
+			Input.parse_input_event(click)
+			await get_tree().create_timer(0.08).timeout
 
 
 func _set_curtain(progress: float) -> void:
