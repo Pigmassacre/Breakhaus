@@ -8,12 +8,14 @@ var _board: Board
 var _place := -1
 var _score_label: Label
 var _again: Button
+var _title := ""
 
 
-func _init(board: Board, place: int) -> void:
+func _init(board: Board, place: int, title := "THE HAUS\nWINS") -> void:
 	layer = 20
 	_board = board
 	_place = place
+	_title = title
 
 
 func _ready() -> void:
@@ -28,13 +30,19 @@ func _ready() -> void:
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_theme_constant_override("separation", 14)
 	UI.centered(root, box)
-	var title := UI.label("THE HAUS\nWINS", 8, Color("ff4f6a"))
+	var title := UI.label(_title, 8, Color("ff4f6a"))
 	box.add_child(title)
 	box.add_child(_gap(10))
-	box.add_child(UI.label("SCORE", 2, UI.DIM))
+	var mode := Modes.name_of(Game.mode).to_upper()
+	if Game.mode == Modes.DAILY:
+		mode += " - " + String(_board.twist.get("name", "")).to_upper()
+	box.add_child(UI.label(mode + " SCORE" if Game.mode != Modes.CLASSIC else "SCORE", 2, UI.DIM))
 	_score_label = UI.label("0", 7, UI.INK)
 	box.add_child(_score_label)
-	var best := UI.label("NEW BEST!" if _place == 0 else ("#%d ON THE TABLE" % (_place + 1) if _place > 0 else ""), 3, UI.GOLD)
+	var best_text := "NEW BEST!" if _place == 0 else ("#%d ON THE TABLE" % (_place + 1) if _place > 0 else "")
+	if Game.mode == Modes.DAILY and _place == 0:
+		best_text = "TODAY'S BEST!"
+	var best := UI.label(best_text, 3, UI.GOLD)
 	box.add_child(best)
 	box.add_child(_gap(10))
 	var reached := "Reached " + Floors.long_label(_board.level)

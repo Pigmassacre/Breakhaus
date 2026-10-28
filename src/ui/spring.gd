@@ -70,7 +70,7 @@ func kick(amount := 1.0) -> void:
 
 ## Pops in from nothing after `delay`, overshooting on the way.
 func pop(delay := 0.0) -> void:
-	_wait = delay
+	_wait = maxf(delay, 0.001)
 	_size = 0.0
 	_size_v = 0.0
 	target.modulate.a = 0.0

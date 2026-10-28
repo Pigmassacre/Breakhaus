@@ -117,6 +117,12 @@ without a break, and a miss ends it. Every six breaks raise the
 multiplier, up to x8, and the breaking sound climbs a note each time. A
 combo of 10, 20, 30 ... gets a fanfare.
 
+**Fever.** The first time a combo reaches x8, Fever sets in for eight
+seconds (`FEVER_TIME`): the balls plough straight through everything but
+steel, every point is doubled again, the balls trail a rainbow, the rays
+behind the board turn every colour and spin, and the music goes flat out.
+A miss puts it out; the next combo can light it again.
+
 **The quake.** Breaking blocks charges the meter under the board (a combo
 charges it faster). When it is full the paddle hums, and the quake (Shift,
 right click, Y, or the button on a touch screen) brings down the bottom
@@ -170,6 +176,25 @@ more a floor), and doubled in Overdrive. The points fly off each block to
 the score (the original's), which counts up to them. The ten best runs
 are kept, with how deep each got.
 
+### Modes
+
+Play opens the modes (`src/data/modes.gd`), each described, with its best,
+as it gets the focus:
+
+- **Classic**: the haus floor by floor, and on into the basements.
+- **Daily Haus**: today's haus. Its rows come from a generator of their own
+  (`Board.row_rng`), seeded with the date, so they are the same for
+  everyone who plays it that day however differently they play; pickups,
+  moss and the ball's bounces are still left to chance. Each day also has
+  a twist (`Modes.TWISTS`): Lucky Day (three times the pickups), Demolition
+  Day (TNT everywhere), Gold Rush, Rush Hour (faster waves, points x1.5),
+  Triple Trouble (every serve splits in three), Hard Hats (tougher blocks,
+  more steel, points x1.5) or Overgrown (moss from the top floor down).
+  The day's best is kept, and starts over the next day.
+- **Rush**: three minutes on the clock and the wall at 70% of its usual
+  wait. Clearing a floor adds 30 seconds and a Clean Sweep 10; the last
+  ten tick down out loud. When the clock runs out, so does the game.
+
 ### Controls
 
 | | Keys | Mouse | Pad | Touch |
@@ -196,7 +221,7 @@ screen, and on a touch screen how far a drag moves the paddle.
 ```
 src/main.gd            the root: one screen at a time, a curtain between them
 src/autoload/          Inputs (actions, which device), Audio (sounds, layered music), Game (settings, scores)
-src/data/              balance.gd (every number), floors.gd (themes, rows), pickups.gd
+src/data/              balance.gd (every number), floors.gd (themes, rows), pickups.gd, modes.gd
 src/play/              the game: play.gd (the screen), board.gd (the rules), board_view.gd (drawing),
                        block.gd, ball.gd, block_art.gd, particles.gd, hud.gd, tower.gd, pause and game over
 src/ui/                splash, title (logo.gd), how to play, high scores, options, ui_kit.gd, spring.gd
@@ -266,7 +291,9 @@ muffled under the pause menu and the end. Each floor has its track.
 
 - `--screen=<name>` starts on that screen (splash, title, play, help,
   scores, options); `--floor=3` starts the game on that floor (0 is the
-  top).
+  top), and `--mode=rush` (or `daily`, or `classic`) in that mode. The
+  game starts on the title; the splash is skipped for now, as it is to be
+  redone, but `--screen=splash` still shows it.
 - `--autoplay` has the game play itself: the paddle follows the lowest ball
   down, smashes now and then and quakes when it is in trouble;
   `--autoplay=lazy` only launches the ball, and the wall wins.

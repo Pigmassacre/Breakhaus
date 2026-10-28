@@ -14,6 +14,8 @@ extends Node2D
 signal scored(points: int, at: Vector2)
 signal combo_changed(combo: int, multiplier: int)
 signal combo_ended(combo: int)
+signal fever_started
+signal swept
 signal missed
 signal shake(amount: float)
 signal hitstop(seconds: float)
@@ -38,6 +40,12 @@ var state := State.INTRO
 var level := 0
 var theme := {}
 var rng := RandomNumberGenerator.new()
+## The rows come from their own generator, so a seeded one (the Daily Haus) gives everyone the same
+## rows however differently they play.
+var row_rng := RandomNumberGenerator.new()
+## The day's twist (Modes.TWISTS) or nothing, and the waves sped up or slowed down by the mode.
+var twist := {}
+var wave_scale := 1.0
 
 ## The blocks, COLS by ROWS, row by row from the top: a Block or null.
 var grid: Array = []
@@ -81,6 +89,9 @@ var lowest_row := -1
 var score := 0
 var combo := 0
 var combo_timer := 0.0
+## Seconds of Fever left, and whether this combo has had its Fever.
+var fever := 0.0
+var _fever_spent := false
 var best_combo := 0
 var blocks_broken := 0
 var quake := 0.0
@@ -101,6 +112,7 @@ var _view: Node2D
 
 func _ready() -> void:
 	rng.randomize()
+	row_rng.randomize()
 	grid.resize(COLS * ROWS)
 	_view = preload("res://src/play/board_view.gd").new()
 	_view.board = self
@@ -165,7 +177,7 @@ func rows_left() -> int:
 func start_floor(n: int) -> void:
 	level = n
 	theme = Floors.theme(n)
-	wave_time = Floors.wave_time(n)
+	wave_time = Floors.wave_time(n) * wave_scale * float(twist.get("wave", 1.0))
 	wave_timer = 0.0
 	grid.fill(null)
 	balls.clear()
@@ -199,7 +211,7 @@ func start_floor(n: int) -> void:
 func _rain_rows(count: int, top: int, height: float) -> void:
 	var delay := 0.15
 	for r in range(count - 1, -1, -1):
-		var row := Floors.make_row(rng, level, rows_made)
+		var row := Floors.make_row(row_rng, level, rows_made, twist)
 		rows_made += 1
 		for c in COLS:
 			if row[c] == null:
@@ -228,6 +240,9 @@ func launch() -> void:
 			b.speed = Balance.BALL_SPEED
 			b.set_direction(Vector2(clampf(paddle_vx * 0.0006, -0.5, 0.5), -1.0))
 	state = State.PLAY
+	# Triple Trouble: every serve splits in three.
+	if int(twist.get("balls", 1)) > 1:
+		_split_balls()
 	launched.emit()
 
 
@@ -302,6 +317,7 @@ func _process(delta: float) -> void:
 		combo_timer -= delta
 		if combo > 0 and combo_timer <= 0.0:
 			_end_combo()
+		fever = maxf(fever - delta, 0.0)
 	if state == State.PLAY or state == State.SERVE or state == State.INTRO:
 		_update_balls(delta)
 	_update_pickups(delta)
@@ -421,7 +437,7 @@ func _wave() -> void:
 
 
 func _new_row() -> void:
-	var row := Floors.make_row(rng, level, rows_made)
+	var row := Floors.make_row(row_rng, level, rows_made, twist)
 	rows_made += 1
 	rows_queued -= 1
 	for c in COLS:
@@ -688,9 +704,11 @@ func _collide_blocks(ball: Ball) -> void:
 		return
 	ball.idle = 0.0
 	var fire := effect(Pickups.Kind.FIRE) > 0.0
-	var damage := 2 if (fire or ball.smashed) else 1
-	var breaks := best.frozen or best.hp <= damage or (fire and best.kind != Block.Kind.STEEL)
-	var through := breaks and (ball.pierce > 0 or (fire and best.kind != Block.Kind.STEEL))
+	# Fire and Fever both go straight through all but steel.
+	var hot := (fire or fever > 0.0) and best.kind != Block.Kind.STEEL
+	var damage := 2 if (fire or fever > 0.0 or ball.smashed) else 1
+	var breaks := best.frozen or best.hp <= damage or hot
+	var through := breaks and (ball.pierce > 0 or hot)
 	if not through:
 		if ball.vel.dot(best_normal) < 0.0:
 			ball.vel = ball.vel.bounce(best_normal)
@@ -796,7 +814,9 @@ func _break(b: Block, scores := true) -> void:
 	# Rising with the combo: the original's break, and a note higher each time.
 	Audio.play("break", -6.0, rng.randf_range(0.95, 1.05))
 	Audio.play_take("combo", mini(combo - 1, Audio.takes("combo") - 1), -7.0 + minf(combo * 0.2, 3.0))
-	if combo > 0 and combo % 10 == 0:
+	if multiplier() == Balance.COMBO_MULT_MAX and not _fever_spent and not demo:
+		_start_fever()
+	elif combo > 0 and combo % 10 == 0:
 		message.emit("%d COMBO!" % combo, Color("fff23d"))
 		Audio.play("fanfare", -6.0)
 	var points := Balance.SCORE_BLOCK * b.max_hp
@@ -812,7 +832,7 @@ func _break(b: Block, scores := true) -> void:
 		Audio.play("charged", -2.0)
 	hitstop.emit(Balance.HITSTOP_BREAK if combo < 12 else Balance.HITSTOP_BREAK * 1.6)
 	shake.emit(1.5 + minf(combo * 0.1, 2.5))
-	if b.carries_pickup or rng.randf() < Balance.DROP_CHANCE:
+	if b.carries_pickup or rng.randf() < Balance.DROP_CHANCE * float(twist.get("drop", 1.0)):
 		_drop_pickup(center)
 	if b.kind == Block.Kind.TNT:
 		blasts.append({"col": b.col, "row": b.row, "t": 0.08})
@@ -824,6 +844,9 @@ func _add_score(points: int, at_pos: Vector2) -> void:
 	var mult := multiplier() * (1.0 + level * Balance.SCORE_FLOOR_MULT)
 	if effect(Pickups.Kind.OVERDRIVE) > 0.0:
 		mult *= 2.0
+	if fever > 0.0:
+		mult *= 2.0
+	mult *= float(twist.get("score", 1.0))
 	var total := int(round(points * mult))
 	score += total
 	scored.emit(total, at_pos)
@@ -833,7 +856,40 @@ func _end_combo() -> void:
 	if combo >= 10:
 		combo_ended.emit(combo)
 	combo = 0
+	fever = 0.0
+	_fever_spent = false
 	combo_changed.emit(0, 1)
+
+
+## Every ball in play splits in three.
+func _split_balls() -> void:
+	var new_balls: Array[Ball] = []
+	for ball in balls:
+		if ball.held:
+			continue
+		for side in [-1.0, 1.0]:
+			if balls.size() + new_balls.size() >= Balance.MAX_BALLS:
+				break
+			var b := Ball.new()
+			b.pos = ball.pos
+			b.speed = ball.speed
+			b.set_direction(ball.direction().rotated(side * 0.45))
+			b.fix_angle()
+			b.flash = 1.0
+			new_balls.append(b)
+	balls.append_array(new_balls)
+
+
+func _start_fever() -> void:
+	fever = Balance.FEVER_TIME
+	_fever_spent = true
+	message.emit("FEVER!", Color("ff3dff"))
+	Audio.play("fanfare", -2.0)
+	Audio.play("charged", -4.0, 1.3)
+	hitstop.emit(Balance.HITSTOP_BIG)
+	shake.emit(8.0)
+	flashed.emit(Color("ff8af0"), 0.3)
+	fever_started.emit()
 
 
 func _check_cleared() -> void:
@@ -843,6 +899,7 @@ func _check_cleared() -> void:
 		# Swept clean with more to come: a big bonus, and the next rows all rain in at once.
 		_add_score(Balance.SCORE_SWEEP, Vector2(W * 0.5, H * 0.35))
 		message.emit("CLEAN SWEEP!", Color("3dffb1"))
+		swept.emit()
 		Audio.play("fanfare", -2.0)
 		hitstop.emit(Balance.HITSTOP_BIG)
 		shake.emit(6.0)
@@ -1018,21 +1075,7 @@ func _collect(p: Dictionary) -> void:
 	flashed.emit(info["color"], 0.12)
 	match kind:
 		Pickups.Kind.MULTI:
-			var new_balls: Array[Ball] = []
-			for ball in balls:
-				if ball.held:
-					continue
-				for side in [-1.0, 1.0]:
-					if balls.size() + new_balls.size() >= Balance.MAX_BALLS:
-						break
-					var b := Ball.new()
-					b.pos = ball.pos
-					b.speed = ball.speed
-					b.set_direction(ball.direction().rotated(side * 0.45))
-					b.fix_angle()
-					b.flash = 1.0
-					new_balls.append(b)
-			balls.append_array(new_balls)
+			_split_balls()
 		Pickups.Kind.FIRE:
 			effects[kind] = Balance.FIRE_TIME
 			Audio.play("burn", -4.0)

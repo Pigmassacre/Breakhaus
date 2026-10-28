@@ -29,6 +29,9 @@ var _flash_tween: Tween
 var _shock_tween: Tween
 var _over := false
 var _paused := false
+## Rush: the time left on the clock, and the last whole second of it (for the tick in the last ten).
+var rush_left := 0.0
+var _rush_second := 0
 
 
 func setup(args: Dictionary) -> void:
@@ -45,6 +48,13 @@ func _ready() -> void:
 	add_child(world)
 	board = Board.new()
 	world.add_child(board)
+	match Game.mode:
+		Modes.DAILY:
+			board.row_rng.seed = Modes.daily_seed(Modes.today())
+			board.twist = Modes.daily_twist(Modes.today())
+		Modes.RUSH:
+			board.wave_scale = Modes.RUSH_WAVE
+			rush_left = Modes.RUSH_TIME
 	var post_layer := CanvasLayer.new()
 	post_layer.layer = 5
 	var post_rect := ColorRect.new()
@@ -72,7 +82,10 @@ func _ready() -> void:
 	board.hitstop.connect(func(seconds: float) -> void:
 		if seconds >= Balance.HITSTOP_BIG:
 			Game.buzz(35))
-	board.overrun.connect(_on_overrun)
+	board.overrun.connect(func(_b: Block) -> void: _game_over("THE HAUS\nWINS"))
+	board.swept.connect(func() -> void:
+		if Game.mode == Modes.RUSH:
+			_add_time(Modes.RUSH_SWEEP_BONUS))
 	board.launched.connect(func() -> void:
 		Audio.play("go", -4.0)
 		if level == 0:
@@ -164,6 +177,8 @@ func _quake() -> void:
 
 func _process(delta: float) -> void:
 	_drive_paddle(delta)
+	if Game.mode == Modes.RUSH and not _over and (board.state == Board.State.PLAY or board.state == Board.State.SERVE):
+		_tick_rush(delta)
 	if Game.autoplay_lazy:
 		board.launch()
 		board.paddle_target = 0.0
@@ -181,10 +196,13 @@ func _process(delta: float) -> void:
 	var danger := board.danger()
 	backdrop.danger = danger
 	# The rays turn faster with the combo.
-	backdrop.speed = lerpf(backdrop.speed, 0.08 + minf(board.combo, 40) * 0.02, minf(delta * 2.0, 1.0))
+	backdrop.speed = lerpf(backdrop.speed, 0.08 + minf(board.combo, 40) * 0.02 + (0.8 if board.fever > 0.0 else 0.0), minf(delta * 2.0, 1.0))
+	backdrop.fever = move_toward(backdrop.fever, 1.0 if board.fever > 0.0 else 0.0, delta * 3.0)
 	post.set_shader_parameter("vignette", danger * danger * 0.6 if not _over else 0.0)
 	var combo_heat := clampf(board.combo / 30.0, 0.0, 1.0)
 	Audio.heat = 0.0 if _over else maxf(maxf(danger, combo_heat), 0.5 if board.effects.size() >= 2 else 0.0)
+	if board.fever > 0.0 and not _over:
+		Audio.heat = 1.0
 	_update_cursor()
 
 
@@ -269,10 +287,13 @@ func _on_floor_cleared() -> void:
 	flash(Color.WHITE, 0.5)
 	if demolished:
 		hud.show_message("HAUS\nDEMOLISHED!", UI.GOLD, 2.2)
-		Game.demolished += 1
-		Game.save()
+		if not Game.autoplay and not Game.autoplay_lazy:
+			Game.demolished += 1
+			Game.save()
 	else:
 		hud.show_message("FLOOR\nCLEARED!", Color("3dffb1"), 1.2)
+	if Game.mode == Modes.RUSH:
+		_add_time(Modes.RUSH_FLOOR_BONUS)
 	await get_tree().create_timer(2.6 if demolished else 1.8).timeout
 	if _over:
 		return
@@ -297,7 +318,32 @@ func _on_floor_cleared() -> void:
 	_start_floor(level + 1)
 
 
-func _on_overrun(_block: Block) -> void:
+# --- rush ---------------------------------------------------------------------------------------
+
+func _tick_rush(delta: float) -> void:
+	rush_left = maxf(rush_left - delta, 0.0)
+	hud.rush_left = rush_left
+	var second := ceili(rush_left)
+	if second != _rush_second:
+		_rush_second = second
+		if second <= 10 and second > 0:
+			Audio.play("tick", -2.0, 1.0 + (10 - second) * 0.05)
+			hud.punch_clock()
+	if rush_left <= 0.0:
+		board.state = Board.State.OVER
+		_game_over("TIME'S\nUP!")
+
+
+func _add_time(seconds: float) -> void:
+	rush_left += seconds
+	hud.rush_left = rush_left
+	hud.time_bonus(seconds)
+
+
+## The end, the wall through or the clock run out: `title` is what the game over says.
+func _game_over(title: String) -> void:
+	if _over:
+		return
 	_over = true
 	Game.buzz(250)
 	Audio.play("game_over", 0.0)
@@ -322,9 +368,9 @@ func _on_overrun(_block: Block) -> void:
 		if i % 6 == 0:
 			Audio.play("break", -8.0, randf_range(0.7, 0.9))
 			await get_tree().process_frame
-	var place := Game.add_score(board.score, level, board.best_combo)
+	var place := Game.add_score(board.score, level, board.best_combo, Game.mode)
 	await get_tree().create_timer(0.6).timeout
-	_show_overlay(GameOver.new(board, place))
+	_show_overlay(GameOver.new(board, place, title))
 
 
 # --- pausing ------------------------------------------------------------------------------------

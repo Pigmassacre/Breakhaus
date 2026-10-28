@@ -37,6 +37,10 @@ var _popups: Control
 var _pause_button: Button
 var _quake_button: Button
 var _tower: Tower
+## Rush: the clock, big, and the time left on it (set by the game). Other modes: their name.
+var _clock: Label
+var _mode_label: Label
+var rush_left := 0.0
 var _shown_score := 0.0
 var _combo_shown := 0
 var _message_tween: Tween
@@ -76,6 +80,12 @@ func _ready() -> void:
 		root.add_child(l)
 	_tower = Tower.new()
 	root.add_child(_tower)
+	_clock = UI.label("", 6, UI.INK)
+	UI.outline(_clock, 10)
+	_clock.visible = Game.mode == Modes.RUSH
+	root.add_child(_clock)
+	_mode_label = UI.label("", 2, UI.ACCENT)
+	root.add_child(_mode_label)
 	_popups = Control.new()
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_popups)
@@ -143,6 +153,10 @@ func layout(rect: Rect2, zoom: float) -> void:
 			l.horizontal_alignment = align_left
 		_tower.visible = column >= Tower.WIDTH + 140.0
 		_place(_tower, Rect2(x0 - 40 - column, top + 150, column, rect.end.y - top - 150))
+		_place(_mode_label, Rect2(x1 + 40, rect.end.y - 40, column, 30))
+		_mode_label.horizontal_alignment = align_left
+		_place(_clock, Rect2(x1 + 40, top + 190, column, 80))
+		_clock.horizontal_alignment = align_left
 	else:
 		_place(_floor_label, Rect2(x0, top - 150, width * 0.4, 60))
 		_place(_floor_name, Rect2(x0, top - 88, width * 0.6, 24))
@@ -155,6 +169,10 @@ func layout(rect: Rect2, zoom: float) -> void:
 		for l: Label in [_score_label, _best_label]:
 			l.horizontal_alignment = align_right
 		_tower.visible = false
+		_place(_mode_label, Rect2(x0, view.y - 44, width, 30))
+		_mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_place(_clock, Rect2(x0 + width * 0.3, top - 160, width * 0.4, 80))
+		_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var at := func(board_y: float) -> float: return rect.position.y + board_y * zoom
 	_place(_combo_label, Rect2(rect.get_center().x - 120, at.call(30.0), 240, 40))
 	_place(_combo_mult, Rect2(rect.get_center().x - 120, at.call(72.0), 240, 24))
@@ -181,9 +199,14 @@ func _process(delta: float) -> void:
 	# The score counts up to what it is, quicker the further behind it is.
 	_shown_score = move_toward(_shown_score, board.score, maxf(absf(board.score - _shown_score) * 6.0, 60.0) * delta)
 	_score_label.text = _format(int(_shown_score))
-	var best := maxi(Game.best_score(), board.score)
+	var best := maxi(Game.mode_best(Game.mode), board.score)
 	_best_label.text = ("BEST " + _format(best)) if best > 0 else ""
 	_floor_label.text = Floors.label(board.level)
+	_mode_label.text = _mode_text()
+	if _clock.visible:
+		_clock.text = "%d:%02d" % [ceili(rush_left) / 60, ceili(rush_left) % 60]
+		var hurry := rush_left <= 10.0
+		_clock.add_theme_color_override("font_color", Color("ff4f6a") if hurry else UI.INK)
 	_tower.level = board.level
 	_floor_name.text = String(board.theme.get("name", "")).to_upper()
 	var rows := board.rows_queued
@@ -199,6 +222,12 @@ func _process(delta: float) -> void:
 	else:
 		_quake_label.text = "QUAKE"
 		_quake_label.add_theme_color_override("font_color", UI.DIM)
+	# Fever: the combo in rainbow, and how long it has left.
+	if board.fever > 0.0:
+		var rainbow := Color.from_hsv(fmod(board.clock * 1.5, 1.0), 0.7, 1.0)
+		_combo_label.add_theme_color_override("font_color", rainbow)
+		_combo_mult.text = "FEVER x%d  %.1f" % [board.multiplier() * 2, board.fever]
+		_combo_mult.add_theme_color_override("font_color", rainbow.lightened(0.3))
 	if board.state == Board.State.SERVE:
 		_prompt.modulate.a = 0.6 + 0.4 * sin(board.clock * 5.0)
 	_bars.queue_redraw()
@@ -211,8 +240,11 @@ func _update_prompt() -> void:
 		_help.text = ""
 		return
 	_prompt.text = Inputs.prompt("smash").to_upper() + " TO LAUNCH"
+	# The day's twist, before the first serve of a Daily Haus.
+	if Game.mode == Modes.DAILY and board.level == 0 and not board.twist.is_empty():
+		_help.text = "TODAY: %s\n%s" % [String(board.twist["name"]).to_upper(), board.twist["blurb"]]
 	# The controls, on the first floor of the game.
-	if board.level == 0 or not Game.seen_help:
+	elif board.level == 0 or not Game.seen_help:
 		_help.text = "%s: MOVE\n%s: SMASH (TIME IT!)\n%s: QUAKE (WHEN CHARGED)" % [
 			Inputs.prompt("move").to_upper(), Inputs.prompt("smash").to_upper(), Inputs.prompt("quake").to_upper()]
 	else:
@@ -221,6 +253,39 @@ func _update_prompt() -> void:
 
 func refresh() -> void:
 	_update_prompt()
+
+
+func _mode_text() -> String:
+	match Game.mode:
+		Modes.DAILY:
+			return "DAILY HAUS %s - %s" % [Modes.today(), String(board.twist.get("name", "")).to_upper()]
+		Modes.RUSH:
+			return "RUSH"
+	return ""
+
+
+## The clock jumps, as each of the last ten seconds goes.
+func punch_clock() -> void:
+	_clock.scale = Vector2(1.3, 1.3)
+	_clock.create_tween().tween_property(_clock, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## "+30s" flying up off the clock, which swells.
+func time_bonus(seconds: float) -> void:
+	var l := UI.label("+%ds" % int(seconds), 4, Color("3dffb1"))
+	UI.outline(l, 8)
+	l.size = Vector2(200, 50)
+	l.position = _clock.position + Vector2(_clock.size.x * 0.5 - 100, _clock.size.y)
+	l.pivot_offset = l.size * 0.5
+	_popups.add_child(l)
+	l.scale = Vector2(0.4, 0.4)
+	var t := l.create_tween()
+	t.tween_property(l, "scale", Vector2(1.2, 1.2), 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(l, "position:y", _clock.position.y - 10.0, 0.5).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
+	t.parallel().tween_property(l, "modulate:a", 0.0, 0.5)
+	t.tween_callback(func() -> void:
+		punch_clock()
+		l.queue_free())
 
 
 static func _format(n: int) -> String:
@@ -355,6 +420,7 @@ func _on_combo(combo: int, mult: int) -> void:
 	_combo_shown = combo
 	_combo_label.text = "%d COMBO" % combo
 	_combo_mult.text = "x%d" % mult
+	_combo_mult.add_theme_color_override("font_color", UI.GOLD)
 	_combo_label.modulate.a = 1.0
 	_combo_mult.modulate.a = 1.0
 	var heat := clampf(combo / 40.0, 0.0, 1.0)

@@ -24,6 +24,11 @@ var games_played := 0
 var seen_help := false
 ## Runs that have reached the ground floor's end: the haus demolished.
 var demolished := 0
+## The mode the next game is played in (Modes), the best Rush, and today's Daily Haus:
+## {"date", "best", "tries"} (a new day starts it over).
+var mode := Modes.CLASSIC
+var rush_best := {}
+var daily := {}
 
 ## The game plays itself (`--autoplay`, for testing).
 var autoplay := false
@@ -51,6 +56,8 @@ func load_save() -> void:
 	games_played = cfg.get_value("scores", "games_played", 0)
 	demolished = cfg.get_value("scores", "demolished", 0)
 	seen_help = cfg.get_value("progress", "seen_help", false)
+	rush_best = cfg.get_value("scores", "rush_best", {})
+	daily = cfg.get_value("scores", "daily", {})
 
 
 func save() -> void:
@@ -58,6 +65,8 @@ func save() -> void:
 	for key: String in settings:
 		cfg.set_value("settings", key, settings[key])
 	cfg.set_value("scores", "high_scores", high_scores)
+	cfg.set_value("scores", "rush_best", rush_best)
+	cfg.set_value("scores", "daily", daily)
 	cfg.set_value("scores", "games_played", games_played)
 	cfg.set_value("scores", "demolished", demolished)
 	cfg.set_value("progress", "seen_help", seen_help)
@@ -95,13 +104,45 @@ func best_score() -> int:
 	return high_scores[0]["score"] if not high_scores.is_empty() else 0
 
 
-## Files a finished run's score; its place in the table (from 0), or -1 if it didn't make it.
-func add_score(score: int, level: int, combo: int) -> int:
+## The best in `mode`: Classic's table's top, the best Rush, or today's best Daily Haus.
+func mode_best(which: String) -> int:
+	match which:
+		Modes.RUSH:
+			return int(rush_best.get("score", 0))
+		Modes.DAILY:
+			return int(today_daily().get("best", 0))
+	return best_score()
+
+
+## Today's Daily Haus record, a fresh one if the last was another day.
+func today_daily() -> Dictionary:
+	if daily.get("date", "") != Modes.today():
+		daily = {"date": Modes.today(), "best": 0, "tries": 0}
+	return daily
+
+
+## Files a finished run's score in `game_mode`; its place in that mode's table (from 0; Rush and the
+## Daily Haus keep only the best), or -1 if it didn't make it.
+func add_score(score: int, level: int, combo: int, game_mode := Modes.CLASSIC) -> int:
 	# A game that played itself isn't kept.
 	if autoplay or autoplay_lazy:
 		return -1
 	games_played += 1
 	var entry := {"score": score, "level": level, "combo": combo, "date": Time.get_date_string_from_system()}
+	if game_mode == Modes.RUSH:
+		var beat := score > int(rush_best.get("score", 0))
+		if beat:
+			rush_best = entry
+		save()
+		return 0 if beat else -1
+	if game_mode == Modes.DAILY:
+		var today := today_daily()
+		today["tries"] = int(today["tries"]) + 1
+		var beat := score > int(today["best"])
+		if beat:
+			today["best"] = score
+		save()
+		return 0 if beat else -1
 	var place := high_scores.size()
 	for i in high_scores.size():
 		if score > int(high_scores[i]["score"]):

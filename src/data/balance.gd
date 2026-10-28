@@ -101,6 +101,9 @@ const COMBO_TIME := 2.4
 ## Every COMBO_STEP breaks raise the multiplier by one, up to COMBO_MULT_MAX.
 const COMBO_STEP := 6
 const COMBO_MULT_MAX := 8
+## Reaching COMBO_MULT_MAX sets off Fever, once a combo: this long, the balls ploughing through
+## everything but steel and every point doubled. A miss puts it out.
+const FEVER_TIME := 8.0
 
 # --- the quake ----------------------------------------------------------------------------------
 ## Breaks it takes to charge (a combo charges it faster), and how many rows it brings down.

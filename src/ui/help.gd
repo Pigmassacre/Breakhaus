@@ -150,7 +150,7 @@ func _blocks() -> Control:
 		row.add_child(l)
 		box.add_child(row)
 	box.add_child(_gap(10))
-	box.add_child(_text("Combo: break blocks quickly one after another to multiply your points. Sweep the board clean for a big bonus, and six more rows.", 2, UI.GOLD))
+	box.add_child(_text("Combo: break blocks quickly one after another to multiply your points. Hit x8 and Fever sets in: the ball ploughs through everything. Sweep the board clean for a big bonus, and six more rows.", 2, UI.GOLD))
 	box.add_child(_text("Quake: breaking blocks charges it. Set it off to bring down the bottom three rows.", 2, Color("ffb03b")))
 	return box
 

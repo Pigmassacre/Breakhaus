@@ -16,6 +16,12 @@ uniform float clock = 0.0;
 uniform float danger = 0.0;
 // Brightens it all for a moment (a floor cleared).
 uniform float bloom = 0.0;
+// Fever: every ray its own colour, the rainbow running round.
+uniform float fever = 0.0;
+
+vec3 hue(float h) {
+	return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+}
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -30,6 +36,9 @@ void fragment() {
 	float slice = fract(angle / TAU * rays);
 	float on = step(0.5, slice);
 	vec3 col = mix(ray_a.rgb, ray_b.rgb, on);
+	float index = floor(angle / TAU * rays);
+	vec3 rainbow = hue(fract(index / rays * 0.5 + clock * 0.4)) * (0.24 + 0.2 * on);
+	col = mix(col, rainbow, fever);
 	// Darker the further out, in flat steps.
 	float fall = floor(clamp(dist / (max(size.x, size.y) * 0.75), 0.0, 1.0) * 4.0) / 4.0;
 	col *= 1.0 - fall * 0.45;

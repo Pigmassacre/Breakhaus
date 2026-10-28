@@ -10,6 +10,7 @@ extends Node
 ## floor after five seconds, and
 ## `--shots=1.5,4,9` saves a screenshot to shots/ at each of those seconds
 ## and quits after the last (`--size=720x1280` sizes the window first).
+## `--mode=rush` (or daily, or classic) picks the mode,
 ## `--sweep-at=5` breaks every block after five seconds (a clean sweep), and
 ## `--mouse=1.5:800:400,2:800:460` moves the pointer to those window
 ## coordinates at those seconds (`:click` on the end presses there).
@@ -44,7 +45,8 @@ func _ready() -> void:
 	_curtain.material = _curtain_material
 	layer.add_child(_curtain)
 	_set_curtain(0.0)
-	var first := "splash"
+	# The splash is skipped for now (it is to be redone); `--screen=splash` still shows it.
+	var first := "title"
 	var args := {}
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen="):
@@ -55,6 +57,8 @@ func _ready() -> void:
 			Game.autoplay = true
 		elif arg == "--autoplay=lazy":
 			Game.autoplay_lazy = true
+		elif arg.begins_with("--mode="):
+			Game.mode = arg.trim_prefix("--mode=")
 		elif arg == "--short-floors":
 			Game.short_floors = true
 		elif arg.begins_with("--size="):
@@ -120,6 +124,8 @@ func show_screen(which: String, args := {}) -> void:
 		await close.finished
 		screen.queue_free()
 		await get_tree().process_frame
+	# Where it came from, for the title to know whether to make an entrance.
+	args["from"] = screen_name
 	screen_name = which
 	screen = (load(SCREENS[which]) as GDScript).new()
 	screen.process_mode = Node.PROCESS_MODE_PAUSABLE

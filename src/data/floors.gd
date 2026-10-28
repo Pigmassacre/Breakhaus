@@ -96,7 +96,8 @@ static func queue_rows(level: int) -> int:
 ## A row of blocks for `floor`: COLS entries, each null (a gap) or
 ## {"kind": Block.Kind, "hp": int, "color": Color}. `n` is the row's number
 ## on the floor, for its stripe of colour.
-static func make_row(rng: RandomNumberGenerator, level: int, n: int) -> Array:
+## `twist` is the Daily Haus's (Modes.TWISTS), scaling how often each kind comes.
+static func make_row(rng: RandomNumberGenerator, level: int, n: int, twist := {}) -> Array:
 	var t := theme(level)
 	var palette: Array = t["blocks"]
 	var color: Color = palette[(n / 2) % palette.size()]
@@ -106,7 +107,7 @@ static func make_row(rng: RandomNumberGenerator, level: int, n: int) -> Array:
 	for x in Balance.COLS:
 		if not shape[x]:
 			continue
-		row[x] = _block(rng, level, color)
+		row[x] = _block(rng, level, color, twist)
 	return row
 
 
@@ -147,15 +148,17 @@ static func _shape(rng: RandomNumberGenerator, level: int) -> Array:
 	return shape
 
 
-static func _block(rng: RandomNumberGenerator, level: int, color: Color) -> Dictionary:
+static func _block(rng: RandomNumberGenerator, level: int, color: Color, twist := {}) -> Dictionary:
 	var deep := level - Balance.FLOORS
 	var r := rng.randf()
-	var steel := 0.0 if level < 2 else minf(0.02 + (level - 2) * 0.012, 0.11)
-	var tnt := 0.0 if level < 1 else 0.045
-	var moss := 0.0 if level < 4 else minf(0.025 + (level - 4) * 0.01, 0.07)
+	var steel := (0.0 if level < 2 else minf(0.02 + (level - 2) * 0.012, 0.11)) * float(twist.get("steel", 1.0))
+	if twist.has("steel") and level < 2:
+		steel = 0.03
+	var tnt := (0.03 if level < 1 else 0.045) * float(twist.get("tnt", 0.0 if level < 1 else 1.0))
+	var moss := maxf(0.0 if level < 4 else minf(0.025 + (level - 4) * 0.01, 0.07), 0.025 if twist.has("moss") else 0.0) * float(twist.get("moss", 1.0))
 	var prize := 0.05
-	var gold := 0.02
-	var tough := minf(0.06 + level * 0.045, 0.4)
+	var gold := 0.02 * float(twist.get("gold", 1.0))
+	var tough := minf((0.06 + level * 0.045) * float(twist.get("tough", 1.0)), 0.6)
 	var acc := 0.0
 	for pick: Array in [[Block.Kind.STEEL, steel], [Block.Kind.TNT, tnt], [Block.Kind.MOSS, moss],
 			[Block.Kind.PRIZE, prize], [Block.Kind.GOLD, gold]]:

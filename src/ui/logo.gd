@@ -26,6 +26,8 @@ var _blocks: Array = []
 var _clock := 0.0
 var _next_wave := 3.0
 var _landed := 0
+## Set before it is added: the blocks are already in place, with a ripple through them instead of the rain.
+var settled := false
 
 
 func _ready() -> void:
@@ -53,6 +55,12 @@ func _ready() -> void:
 						"vz": 0.0, "delay": delay + randf() * 0.1, "power": 0.0, "color": color.darkened(r * 0.04), "flash": 0.0,
 						"raining": true})
 			delay += 0.07
+	if settled:
+		for b: Dictionary in _blocks:
+			b["z"] = 0.0
+			b["delay"] = 0.0
+			b["raining"] = false
+		ripple(Vector2(custom_minimum_size.x * 0.5, custom_minimum_size.y), 0.6)
 
 
 func _process(delta: float) -> void:

@@ -228,7 +228,9 @@ func _draw_paddle() -> void:
 
 func _ball_color(ball: Ball) -> Color:
 	var c := Color.WHITE
-	if board.effect(Pickups.Kind.FIRE) > 0.0:
+	if board.fever > 0.0:
+		c = Color.from_hsv(fmod(board.clock * 1.5, 1.0), 0.6, 1.0)
+	elif board.effect(Pickups.Kind.FIRE) > 0.0:
 		c = Color("ffb03b").lerp(Color("ff4a1a"), 0.5 + 0.5 * sin(board.clock * 20.0))
 	elif ball.smashed:
 		c = Color("fff23d")
@@ -249,7 +251,10 @@ func _draw_balls() -> void:
 			var t := float(i + 1) / (n + 1)
 			var s := Balance.BALL_R * 2.0 * t * 0.8
 			var tc := c
-			tc.a = t * (0.5 if not ball.smashed else 0.8)
+			if board.fever > 0.0:
+				# A rainbow streaming out behind.
+				tc = Color.from_hsv(fmod(board.clock * 1.5 + (n - i) * 0.07, 1.0), 0.8, 1.0)
+			tc.a = t * (0.5 if not ball.smashed and board.fever <= 0.0 else 0.8)
 			draw_rect(Rect2(ball.trail[i] - Vector2(0, lift + ball.z) - Vector2(s, s) * 0.5, Vector2(s, s)), tc)
 		var at := ball.pos - Vector2(0, lift + ball.z)
 		# Squashed along the way it was hit, without turning the pixels.

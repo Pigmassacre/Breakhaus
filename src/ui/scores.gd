@@ -1,6 +1,7 @@
 extends Control
-## The ten best runs: the score, how far down the haus each got, its best
-## combo and when.
+## The ten best Classic runs: the score, how far down the haus each got,
+## its best combo and when. Under them, the best Rush and today's best
+## Daily Haus.
 
 
 func _ready() -> void:
@@ -28,7 +29,21 @@ func _ready() -> void:
 		grid.add_child(UI.label(Hud._format(int(entry["score"])), 3, color, HORIZONTAL_ALIGNMENT_RIGHT))
 		grid.add_child(UI.label(Floors.label(int(entry.get("level", 0))), 3, color))
 		grid.add_child(UI.label("x%d" % int(entry.get("combo", 0)), 2, UI.DIM, HORIZONTAL_ALIGNMENT_LEFT))
-	column.add_child(_gap(30))
+	column.add_child(_gap(20))
+	var others := HBoxContainer.new()
+	others.alignment = BoxContainer.ALIGNMENT_CENTER
+	others.add_theme_constant_override("separation", 60)
+	column.add_child(others)
+	for mode: String in [Modes.RUSH, Modes.DAILY]:
+		var box := VBoxContainer.new()
+		var title := Modes.name_of(mode).to_upper()
+		if mode == Modes.DAILY:
+			title += " TODAY"
+		box.add_child(UI.label(title, 2, UI.ACCENT))
+		var best := Game.mode_best(mode)
+		box.add_child(UI.label(Hud._format(best) if best > 0 else "-", 4, UI.INK))
+		others.add_child(box)
+	column.add_child(_gap(20))
 	var back := UI.button("BACK", go_back)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(back)
