@@ -14,16 +14,12 @@ config/name="Breakhaus"
 config/description="Break the haus before it breaks you."
 config/version="1.0"
 run/main_scene="res://src/main.tscn"
-config/features=PackedStringArray("4.7", "GL Compatibility")
 config/quit_on_go_back=false
+config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.0784314, 0.0392157, 0.0941176, 1)
 boot_splash/show_image=false
 config/icon="res://icon.svg"
 config/windows_native_icon="res://icon.ico"
-
-[audio]
-
-driver/enable_input=false
 
 [autoload]
 
@@ -40,11 +36,6 @@ window/size/window_height_override=900
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
-window/energy_saving/keep_screen_on=true
-
-[input_devices]
-
-pointing/emulate_mouse_from_touch=true
 
 [physics]
 
@@ -52,8 +43,8 @@ common/physics_ticks_per_second=120
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-textures/canvas_textures/default_texture_filter=0
-environment/defaults/default_clear_color=Color(0.0784314, 0.0392157, 0.0941176, 1)
 textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.0784314, 0.0392157, 0.0941176, 1)
