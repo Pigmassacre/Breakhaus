@@ -392,6 +392,20 @@ func _draw_bars() -> void:
 	var fit := _badge_fit()
 	var radius := fit.x
 	var at := _effects_at + Vector2(radius, BADGE)
+	# A synergy links its two badges with a band in its colour, pulsing (or rings the one it has).
+	var spots := {}
+	var spot := at
+	for kind: Pickups.Kind in board.effects:
+		spots[kind] = spot
+		spot.x += fit.y
+	for s: Dictionary in board.active_synergies():
+		var pulse := 0.6 + 0.4 * sin(board.clock * 8.0)
+		var color := Color(s["color"], pulse)
+		if spots.has(s["a"]) and spots.has(s["b"]):
+			_bars.draw_line(spots[s["a"]], spots[s["b"]], color, radius * 0.9, true)
+		for kind: Pickups.Kind in [s["a"], s["b"]]:
+			if spots.has(kind):
+				_bars.draw_circle(spots[kind], radius + 8.0, color, true, -1.0, true)
 	for kind: Pickups.Kind in board.effects:
 		var left: float = board.effects[kind]
 		var color: Color = Pickups.info(kind)["color"]

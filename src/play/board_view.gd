@@ -231,6 +231,17 @@ func _draw_laser() -> void:
 		return
 	var flicker := 0.75 + 0.25 * sin(board.clock * 70.0)
 	var red := Color("ff4f6a")
+	# Mega Laser: a beam up each column beside it too, from the paddle's top across.
+	for i in 2:
+		var end: float = board.laser_sides[i]
+		if end < 0.0:
+			continue
+		var sx := x + (-1.0 if i == 0 else 1.0) * Balance.BLOCK_W
+		var stop := snappedf(end, PX)
+		draw_rect(Rect2(minf(x, sx), bottom - PX, absf(sx - x) + PX, PX * 2.0), Color(red, 0.6 * flicker))
+		draw_rect(Rect2(sx - PX, stop, PX * 3.0, bottom - stop), Color(red, 0.45 * flicker))
+		draw_rect(Rect2(sx, stop, PX, bottom - stop), Color(1.0, 0.85, 0.9, flicker))
+		Pixels.square(self, Vector2(sx + PX * 0.5, stop), 3, Color(red.lerp(Color.WHITE, 0.6), flicker))
 	draw_rect(Rect2(x - PX * 2.0, top, PX * 5.0, bottom - top), Color(red, 0.18 * flicker))
 	draw_rect(Rect2(x - PX, top, PX * 3.0, bottom - top), Color(red, 0.6 * flicker))
 	draw_rect(Rect2(x, top, PX, bottom - top), Color(1.0, 0.94, 0.96))

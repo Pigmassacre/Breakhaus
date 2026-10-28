@@ -15,6 +15,7 @@ signal scored(points: int, at: Vector2)
 signal combo_changed(combo: int, multiplier: int)
 signal combo_ended(combo: int)
 signal fever_started
+signal synergy_started(id: String)
 signal swept
 signal missed
 signal shake(amount: float)
@@ -103,12 +104,16 @@ var quake := 0.0
 
 ## Seconds left of each pickup that lasts (Pickups.Kind -> seconds).
 var effects := {}
+## The synergies running now (Pickups.SYNERGIES' ids), to tell when a new one starts.
+var _synergies_on := {}
 var rocket_timer := 0.0
 ## Rocket Barrage: rockets still to go, and the time to the next.
 var barrage_left := 0
 var barrage_timer := 0.0
 ## Laser: where its beam ends (the bottom of the block it is burning, or the top), -1 when off.
 var laser_end := -1.0
+## Mega Laser's beams beside the middle one: where each ends (-1: none), left then right.
+var laser_sides := [-1.0, -1.0]
 var _laser_tick := 0.0
 var _laser_hum := 0.0
 var shield_flash := 0.0
@@ -205,6 +210,7 @@ func start_floor(n: int) -> void:
 	bolts.clear()
 	_quake_blocks.clear()
 	effects.clear()
+	_synergies_on.clear()
 	paddle_target_w = Balance.PADDLE_W
 	shatter = 0.0
 	rows_made = 0
@@ -330,6 +336,7 @@ func _update_paddle(delta: float) -> void:
 		_update_laser(delta)
 	else:
 		laser_end = -1.0
+		laser_sides = [-1.0, -1.0]
 	# Pickups it catches.
 	var catch := paddle_rect().grow(Balance.PX * 2.0)
 	for p: Dictionary in pickups.duplicate():
@@ -540,6 +547,39 @@ func _update_effects(delta: float) -> void:
 		if effects[kind] <= 0.0:
 			effects.erase(kind)
 			_effect_ended(kind)
+	# A synergy starting is an event of its own.
+	for s: Dictionary in Pickups.SYNERGIES:
+		var on := synergy(s["id"])
+		if on and not _synergies_on.has(s["id"]):
+			_synergies_on[s["id"]] = true
+			message.emit(String(s["name"]).to_upper() + "!", s["color"])
+			Audio.play("fanfare", -4.0, 1.2)
+			Audio.play("charged", -6.0, 1.5)
+			flashed.emit(s["color"], 0.25)
+			shocked.emit(paddle_rect().get_center(), 0.5)
+			hitstop.emit(Balance.HITSTOP_BIG)
+			particles.spray(paddle_rect().get_center(), Vector2.UP, s["color"], 24, 12.0)
+			synergy_started.emit(s["id"])
+		elif not on:
+			_synergies_on.erase(s["id"])
+
+
+## Whether synergy `id` is running: both its pickups are (Cluster Bombs: Blast Ball, and three balls).
+func synergy(id: String) -> bool:
+	for s: Dictionary in Pickups.SYNERGIES:
+		if s["id"] != id:
+			continue
+		if effect(s["a"]) <= 0.0:
+			return false
+		if s["b"] == Pickups.Kind.MULTI:
+			return balls.size() >= 3
+		return effect(s["b"]) > 0.0
+	return false
+
+
+## The synergies running now, as Pickups.SYNERGIES has them.
+func active_synergies() -> Array:
+	return Pickups.SYNERGIES.filter(func(s: Dictionary) -> bool: return _synergies_on.has(s["id"]))
 
 
 func _effect_ended(kind: Pickups.Kind) -> void:
@@ -654,6 +694,8 @@ func _bottom(ball: Ball) -> void:
 		_ball_hit(ball, Vector2.UP, 0.8)
 		Audio.play("shield_hit", -4.0, rng.randf_range(0.95, 1.1))
 		ripples.append({"pos": ball.pos, "t": 0.0, "strength": 0.6})
+		if synergy("tesla"):
+			_tesla(ball.pos)
 		return
 	if quake > 0.0:
 		quake_drained.emit(minf(quake, Balance.QUAKE_MISS))
@@ -1177,6 +1219,20 @@ func _burn(b: Block, delta: float) -> void:
 		_hit_block(b, 1)
 
 
+## Tesla Fence: lightning up off the shield into the lowest blocks of the wall.
+func _tesla(from: Vector2) -> void:
+	var lowest: Array = []
+	for b in blocks():
+		if not b.raining:
+			lowest.append(b)
+	lowest.sort_custom(func(a: Block, b: Block) -> bool: return a.row > b.row)
+	for i in mini(3, lowest.size()):
+		var target: Block = lowest[rng.randi() % mini(8, lowest.size())]
+		bolts.append({"points": _bolt_points(from, target.center()), "t": 0.0})
+		_hit_block(target, 1)
+	Audio.play("zap", -4.0, rng.randf_range(0.8, 1.0))
+
+
 ## Lightning from `from` to the nearest few blocks.
 func _zap(from: Vector2) -> void:
 	var targets: Array = []
@@ -1185,9 +1241,13 @@ func _zap(from: Vector2) -> void:
 		if d > 1.0 and d < Balance.ZAP_REACH:
 			targets.append([d, b])
 	targets.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
-	for i in mini(Balance.ZAP_ARCS, targets.size()):
+	# Plasma: twice the arcs, pink, and they set what they hit alight.
+	var plasma := synergy("plasma")
+	for i in mini(Balance.ZAP_ARCS * (2 if plasma else 1), targets.size()):
 		var target: Block = targets[i][1]
-		bolts.append({"points": _bolt_points(from, target.center()), "t": 0.0})
+		bolts.append({"points": _bolt_points(from, target.center()), "t": 0.0, "color": Color("ff6af0") if plasma else Color("fff23d")})
+		if plasma and target.kind != Block.Kind.STEEL:
+			target.burning = maxf(target.burning, 2.0)
 		_hit_block(target, 1)
 	if not targets.is_empty():
 		Audio.play("zap", -8.0, rng.randf_range(0.9, 1.2))
@@ -1359,11 +1419,22 @@ func _update_rockets(delta: float) -> void:
 		rockets.erase(rocket)
 		var center: Vector2 = rocket["pos"]
 		if b:
+			# Napalm: everything it hits catches fire.
+			if synergy("napalm"):
+				for c in range(cell.x - 1, cell.x + 2):
+					var n := at(c, cell.y)
+					if n and n.kind != Block.Kind.STEEL:
+						n.burning = maxf(n.burning, 2.5)
+				particles.embers(center, 8, 10.0)
 			_hit_block(b, 2)
-			for side in [-1, 1]:
-				var n := at(cell.x + side, cell.y)
-				if n:
+			# Ice Shards: a frozen chunk of the row shatters with it.
+			var reach := 3 if synergy("ice_shards") else 1
+			for c in range(cell.x - reach, cell.x + reach + 1):
+				var n := at(c, cell.y)
+				if n and c != cell.x:
 					_hit_block(n, 1)
+			if reach > 1:
+				particles.shards(center, Color("dff6ff"), 10)
 		particles.burst(center, Color("ffb03b"), 8, 0.8)
 		particles.smoke(center, 4)
 		Audio.play("boom", -10.0, rng.randf_range(1.2, 1.5))
@@ -1386,8 +1457,10 @@ func _release(ball: Ball) -> void:
 ## A small blast round a block (Blast Ball, a barrage's rockets): every neighbour takes a hit.
 func _blast(col: int, row: int) -> void:
 	var center := Vector2((col + 0.5) * Balance.BLOCK_W, (row + 0.5) * Balance.ROW_H)
-	for r in range(row - 1, row + 2):
-		for c in range(col - 1, col + 2):
+	# Cluster Bombs: twice as far.
+	var reach := 2 if synergy("cluster") else 1
+	for r in range(row - reach, row + reach + 1):
+		for c in range(col - reach, col + reach + 1):
 			var b := at(c, r)
 			if b and (c != col or r != row):
 				_hit_block(b, 1)
@@ -1432,16 +1505,29 @@ func laser_x() -> float:
 	return remap(paddle_x, half, W - half, reach, W - reach)
 
 
-## The laser: a beam straight up from the paddle, burning into the first block it meets.
-func _update_laser(delta: float) -> void:
-	var col := clampi(floori(laser_x() / Balance.BLOCK_W), 0, COLS - 1)
-	var target: Block = null
+## The lowest block in column `col` (what a beam up it meets first), or null.
+func _lowest_in(col: int) -> Block:
 	for r in range(ROWS - 1, -1, -1):
 		var b := at(col, r)
 		if b and not b.raining:
-			target = b
-			break
+			return b
+	return null
+
+
+## The laser: a beam straight up from the paddle, burning into the first block it meets (Mega Laser:
+## and one up each column beside it).
+func _update_laser(delta: float) -> void:
+	var col := clampi(floori(laser_x() / Balance.BLOCK_W), 0, COLS - 1)
+	var target := _lowest_in(col)
 	laser_end = (target.row + 1) * Balance.ROW_H if target else 0.0
+	var mega := synergy("mega_laser")
+	var side_targets: Array = []
+	for i in 2:
+		var side_col := col + (-1 if i == 0 else 1)
+		var side: Block = _lowest_in(side_col) if mega and side_col >= 0 and side_col < COLS else null
+		laser_sides[i] = ((side.row + 1) * Balance.ROW_H if side else 0.0) if mega and side_col >= 0 and side_col < COLS else -1.0
+		if side:
+			side_targets.append(side)
 	var hit := Vector2(laser_x(), laser_end)
 	if rng.randf() < 0.5:
 		particles.spray(hit, Vector2.DOWN, Color("ffb0c8"), 1, 6.0)
@@ -1453,6 +1539,8 @@ func _update_laser(delta: float) -> void:
 	if _laser_tick > 0.0 or target == null:
 		return
 	_laser_tick = Balance.LASER_TICK
+	for side: Block in side_targets:
+		_hit_block(side, 1)
 	_hit_block(target, 1)
 	particles.spray(hit, Vector2.DOWN, Color("ff4f6a"), 3, 6.0)
 

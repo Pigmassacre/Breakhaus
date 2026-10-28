@@ -44,6 +44,23 @@ const INFO := {
 		"blurb": "The wall drops twice as fast. Avoid it!"},
 }
 
+## Two pickups at once make something more: while both are running (for Cluster Bombs, Blast Ball
+## with three balls or more in play), they work together as this.
+const SYNERGIES := [
+	{"id": "plasma", "name": "Plasma", "a": Kind.FIRE, "b": Kind.ZAP, "color": Color("ff6af0"),
+		"blurb": "Twice the lightning, and it sets blocks on fire."},
+	{"id": "mega_laser", "name": "Mega Laser", "a": Kind.LASER, "b": Kind.MAGNET, "color": Color("ff4f6a"),
+		"blurb": "The laser burns three columns wide."},
+	{"id": "cluster", "name": "Cluster Bombs", "a": Kind.BLAST, "b": Kind.MULTI, "color": Color("ffb03b"),
+		"blurb": "With three balls or more, every blast is twice as big."},
+	{"id": "ice_shards", "name": "Ice Shards", "a": Kind.FROST, "b": Kind.ROCKET, "color": Color("9fe8ff"),
+		"blurb": "Every rocket shatters a whole chunk of its row."},
+	{"id": "napalm", "name": "Napalm", "a": Kind.ROCKET, "b": Kind.FIRE, "color": Color("ff7a1a"),
+		"blurb": "Rockets set fire to everything they hit."},
+	{"id": "tesla", "name": "Tesla Fence", "a": Kind.SHIELD, "b": Kind.ZAP, "color": Color("fff23d"),
+		"blurb": "Every bounce off the shield zaps the wall."},
+]
+
 ## The pickups with no sprite in the original, drawn in its style: rows of art pixels, each letter a
 ## colour from the icon's palette ("." is see-through), 8 by 9 like the sprites.
 const ICONS := {
