@@ -1,0 +1,130 @@
+class_name Balance
+## Every number worth tuning, in one place. Distances are in board units:
+## one art pixel is PX units, and the board is COLS blocks wide.
+
+# --- the board ----------------------------------------------------------------------------------
+## One art pixel. The original game drew everything at 4x, and so does this.
+const PX := 4.0
+const COLS := 12
+const BLOCK_W := 12.0 * PX
+## A block's footprint on the board, front to back; its front face is BLOCK_DEPTH tall on top of that.
+const ROW_H := 6.0 * PX
+const BLOCK_DEPTH := 2.0 * PX
+const ROWS := 36
+const BOARD_W := COLS * BLOCK_W
+const BOARD_H := ROWS * ROW_H
+## A block whose row reaches this one is over the line, and the game is over.
+const DEATH_ROW := 26
+const WALL := 3.0 * PX
+
+# --- the paddle ---------------------------------------------------------------------------------
+const PADDLE_Y := BOARD_H - 16.0 * PX
+const PADDLE_H := 6.0 * PX
+const PADDLE_DEPTH := 2.0 * PX
+const PADDLE_W := 26.0 * PX
+const PADDLE_W_WIDE := 40.0 * PX
+const PADDLE_W_NARROW := 16.0 * PX
+## How quickly the paddle closes on where it is told to be (per second, as a lerp rate).
+const PADDLE_FOLLOW := 22.0
+## Keys and sticks: top speed and how fast it gets there.
+const PADDLE_SPEED := 1250.0
+const PADDLE_ACCEL := 9000.0
+## Dragging a finger moves the paddle this many times as far (times the touch setting).
+const TOUCH_GAIN := 1.35
+## The angle off straight up at the paddle's very edge.
+const PADDLE_MAX_ANGLE := deg_to_rad(64.0)
+## How much of the paddle's own speed goes into the ball's angle.
+const PADDLE_ENGLISH := 0.00022
+
+# --- smashing -----------------------------------------------------------------------------------
+## The paddle hops up this far for SMASH_TIME after a smash press; a ball met in that time is smashed.
+const SMASH_TIME := 0.2
+const SMASH_COOLDOWN := 0.32
+const SMASH_HOP := 4.0 * PX
+const SMASH_SPEED := 1120.0
+## A smashed ball goes straight through this many blocks it breaks.
+const SMASH_PIERCE := 3
+
+# --- the ball -----------------------------------------------------------------------------------
+const BALL_R := 3.0 * PX
+const BALL_SPEED := 520.0
+const BALL_SPEED_MAX := 980.0
+## Added on every paddle hit, up to BALL_SPEED_MAX.
+const BALL_SPEED_PADDLE := 40.0
+## The ball never goes flatter than this off the horizontal, so it can't rattle side to side forever.
+const BALL_MIN_ANGLE := deg_to_rad(16.0)
+const BALL_STEP := BALL_R * 0.5
+const MAX_BALLS := 24
+
+# --- waves --------------------------------------------------------------------------------------
+## Seconds between the wall coming down a row: on the first floor, and the fastest it gets.
+const WAVE_TIME := 9.0
+const WAVE_TIME_MIN := 4.2
+## Taken off WAVE_TIME for every floor down.
+const WAVE_TIME_STEP := 0.5
+## Every block broken holds the wall back this much (the timer goes back, never below zero).
+const HOLD_PER_BLOCK := 0.22
+## A miss lets the wall come on: this much of a wave at once.
+const MISS_PUSH := 0.3
+## The blocks shake for this long before they come down.
+const WAVE_RUMBLE := 1.2
+## Rows a floor starts with, and rows still to come on it (more on each floor).
+const START_ROWS := 5
+const START_ROWS_MAX := 9
+const QUEUE_ROWS := 7
+const QUEUE_ROWS_MAX := 16
+## The haus is this many floors tall; past the ground floor come the basements, for ever.
+const FLOORS := 8
+## How close the wall is (in rows above the line) when the danger shows and the alarm goes.
+const DANGER_ROWS := 4
+const CRITICAL_ROWS := 1
+
+# --- blocks -------------------------------------------------------------------------------------
+const STEEL_HP := 5
+## Every block has this chance of carrying a pickup, prize blocks aside (they always do).
+const DROP_CHANCE := 0.035
+## A burning block takes a hit this often, and passes the fire on to a neighbour this often.
+const BURN_TICK := 0.9
+const BURN_SPREAD := 0.35
+## How far a TNT block's blast reaches, in blocks.
+const TNT_RADIUS := 1
+
+# --- scoring ------------------------------------------------------------------------------------
+const SCORE_BLOCK := 10
+const SCORE_GOLD := 250
+const SCORE_FLOOR := 2500
+## Each floor down is worth this much more, on everything.
+const SCORE_FLOOR_MULT := 0.25
+## The combo: every break adds one; it lasts COMBO_TIME without a break, and a miss ends it.
+const COMBO_TIME := 2.4
+## Every COMBO_STEP breaks raise the multiplier by one, up to COMBO_MULT_MAX.
+const COMBO_STEP := 6
+const COMBO_MULT_MAX := 8
+
+# --- the quake ----------------------------------------------------------------------------------
+## Breaks it takes to charge (a combo charges it faster), and how many rows it brings down.
+const QUAKE_CHARGE := 70.0
+const QUAKE_ROWS := 3
+
+# --- pickups ------------------------------------------------------------------------------------
+const PICKUP_FALL := 70.0
+const PICKUP_SIZE := 9.0 * PX
+const FIRE_TIME := 9.0
+const FROST_TIME := 9.0
+const ZAP_TIME := 12.0
+const ZAP_ARCS := 2
+const ZAP_REACH := 3.5 * BLOCK_W
+const WIDE_TIME := 15.0
+const NARROW_TIME := 10.0
+const OVERDRIVE_TIME := 10.0
+const OVERDRIVE_SPEED := 1.25
+const ROCKET_TIME := 9.0
+const ROCKET_RATE := 0.42
+const ROCKET_SPEED := 900.0
+const SHIELD_TIME := 15.0
+const MULTI_BALLS := 2
+
+# --- feel ---------------------------------------------------------------------------------------
+## Freezes the game for a moment on a big hit (seconds).
+const HITSTOP_BREAK := 0.018
+const HITSTOP_BIG := 0.07

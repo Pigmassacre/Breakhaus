@@ -1,0 +1,59 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Breakhaus"
+config/description="Break the haus before it breaks you."
+config/version="1.0"
+run/main_scene="res://src/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/quit_on_go_back=false
+boot_splash/bg_color=Color(0.0784314, 0.0392157, 0.0941176, 1)
+boot_splash/show_image=false
+config/icon="res://icon.svg"
+config/windows_native_icon="res://icon.ico"
+
+[audio]
+
+driver/enable_input=false
+
+[autoload]
+
+Inputs="*res://src/autoload/inputs.gd"
+Audio="*res://src/autoload/audio.gd"
+Game="*res://src/autoload/game.gd"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/size/window_width_override=1600
+window/size/window_height_override=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+window/energy_saving/keep_screen_on=true
+
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true
+
+[physics]
+
+common/physics_ticks_per_second=120
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.0784314, 0.0392157, 0.0941176, 1)
+textures/vram_compression/import_etc2_astc=true
