@@ -30,6 +30,7 @@ signal quake_ready
 signal quake_drained(amount: float)
 signal floor_cleared
 signal saved
+signal smash_landed
 ## The block that cleared the board just broke, at `at`: the floor's last (`big`), or a clean sweep's.
 signal final_blow(at: Vector2, big: bool)
 signal overrun(block: Block)
@@ -104,6 +105,9 @@ var _fever_spent := false
 var best_combo := 0
 var blocks_broken := 0
 var quake := 0.0
+## This floor's misses and smashes landed (for the challenges).
+var misses := 0
+var smashes := 0
 
 ## Seconds left of each pickup that lasts (Pickups.Kind -> seconds).
 var effects := {}
@@ -227,6 +231,8 @@ func start_floor(n: int) -> void:
 	theme = Floors.theme(n)
 	wave_time = Floors.wave_time(n) * wave_scale * float(twist.get("wave", 1.0)) * (1.0 + 0.12 * perk("slow_wall"))
 	_net_used = false
+	misses = 0
+	smashes = 0
 	wave_timer = 0.0
 	grid.fill(null)
 	balls.clear()
@@ -762,6 +768,7 @@ func _bottom(ball: Ball) -> void:
 	if combo > 0:
 		_end_combo()
 	wave_timer = minf(wave_timer + wave_time * Balance.MISS_PUSH, wave_time - 0.3)
+	misses += 1
 	Audio.play("miss", -2.0)
 	shake.emit(6.0)
 	flashed.emit(Color("ff2a2a"), 0.25)
@@ -799,6 +806,8 @@ func _collide_paddle(ball: Ball) -> void:
 		shake.emit(7.0)
 		shocked.emit(ball.pos, 0.5)
 		message.emit("SMASH!", Color("fff23d"))
+		smashes += 1
+		smash_landed.emit()
 		particles.spray(ball.pos, Vector2.UP, Color("fff23d"), 14)
 	else:
 		ball.speed = minf(ball.speed + Balance.BALL_SPEED_PADDLE, Balance.BALL_SPEED_MAX)

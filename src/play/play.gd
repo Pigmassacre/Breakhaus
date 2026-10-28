@@ -93,6 +93,15 @@ func _ready() -> void:
 	board.quake_ready.connect(func() -> void: hud.show_message("QUAKE READY!", Color("ffb03b"), 0.5))
 	board.floor_cleared.connect(_on_floor_cleared)
 	board.final_blow.connect(_slowmo)
+	# What the challenges are waiting for.
+	board.combo_changed.connect(func(c: int, _m: int) -> void: Game.note("combo", c))
+	board.fever_started.connect(Game.note.bind("fever"))
+	board.swept.connect(Game.note.bind("sweep"))
+	board.synergy_started.connect(func(_id: String) -> void: Game.note("synergy"))
+	board.smash_landed.connect(func() -> void: Game.note("smashes", board.smashes))
+	board.picked_up.connect(func(kind: Pickups.Kind) -> void:
+		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
+			Game.note("rare"))
 	board.missed.connect(Game.buzz.bind(60))
 	board.hitstop.connect(func(seconds: float) -> void:
 		if seconds >= Balance.HITSTOP_BIG:
@@ -168,6 +177,7 @@ func _start_floor(n: int) -> void:
 ## puff of dust round the walls, and its blocks rain in.
 func _fall_to_floor(n: int) -> void:
 	level = n
+	Game.note("reached", n)
 	board.start_floor(n)
 	# Held still (its blocks up out of sight, the paddle too) until it has landed.
 	board.process_mode = Node.PROCESS_MODE_DISABLED
@@ -418,6 +428,9 @@ func shock(at: Vector2, strength: float) -> void:
 
 func _on_floor_cleared() -> void:
 	var demolished := level == Balance.FLOORS - 1
+	Game.note("cleared", level + 1)
+	if board.misses == 0:
+		Game.note("clean_floor")
 	Audio.play("cleared", 0.0)
 	backdrop.bloom(1.0, 1.5)
 	flash(Color.WHITE, 0.5)
@@ -440,6 +453,10 @@ func _on_floor_cleared() -> void:
 		_show_overlay(pick)
 		var id: String = await pick.chosen
 		board.add_perk(id)
+		var total := 0
+		for count: int in board.perks.values():
+			total += count
+		Game.note("perks", total)
 		if _overlay == pick:
 			_overlay = null
 		pick.queue_free()
@@ -522,6 +539,10 @@ func _game_over(title: String) -> void:
 			Audio.play("break", -8.0, randf_range(0.7, 0.9))
 			await get_tree().process_frame
 	var place := Game.add_score(board.score, level, board.best_combo, Game.mode)
+	if Game.mode == Modes.RUSH:
+		Game.note("rush_score", board.score)
+	elif Game.mode == Modes.DAILY:
+		Game.note("daily_score", board.score)
 	await get_tree().create_timer(0.6).timeout
 	_show_overlay(GameOver.new(board, place, title))
 

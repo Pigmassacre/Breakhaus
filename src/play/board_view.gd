@@ -269,24 +269,17 @@ func _draw_paddle() -> void:
 	var z := board.paddle_z + _paddle_hop() + PX * 2.0
 	var x := board.paddle_x - w * 0.5
 	var y := r.end.y - h - depth - z
-	var body := Color("e8e8f0").lerp(Color.WHITE, board.paddle_flash)
-	var accent: Color = board.theme["blocks"][0]
+	# The skin's colours (the classic one's ends in the floor's colour), a pickup's over them.
+	var skin: Dictionary = Cosmetics.PADDLES.get(Game.paddle_skin, Cosmetics.PADDLES["classic"])
+	var body: Color = (skin["body"] as Color).lerp(Color.WHITE, board.paddle_flash)
+	var accent: Color = skin.get("accent", board.theme["blocks"][0])
 	if board.effect(Pickups.Kind.ROCKET) > 0.0:
 		accent = Color("ff4545")
 	elif board.effect(Pickups.Kind.FIRE) > 0.0:
 		accent = Color("ff7a1a")
 	if board.smash_time > 0.0:
 		body = body.lerp(Color("fff23d"), 0.6)
-	var dark := Color("26262e")
-	# Outline, front face, top, then the ends in the floor's colour and a shine along the top.
-	draw_rect(Rect2(x - PX, y - PX, w + PX * 2.0, h + depth + PX * 2.0), dark)
-	draw_rect(Rect2(x, y + h, w, depth), body.darkened(0.45))
-	draw_rect(Rect2(x, y, w, h), body)
-	draw_rect(Rect2(x, y, PX * 3.0, h + depth), accent)
-	draw_rect(Rect2(x + w - PX * 3.0, y, PX * 3.0, h + depth), accent)
-	draw_rect(Rect2(x, y + h, PX * 3.0, depth), accent.darkened(0.4))
-	draw_rect(Rect2(x + w - PX * 3.0, y + h, PX * 3.0, depth), accent.darkened(0.4))
-	draw_rect(Rect2(x + PX * 3.0, y + PX, w - PX * 6.0, PX), Color(1, 1, 1, 0.8))
+	Cosmetics.draw_paddle(self, Rect2(x, y, w, h), depth, body, accent, Game.paddle_skin, board.clock, PX)
 	# A ball about to land: the top lights up, the cue to smash.
 	var window := board.smash_window()
 	if window > 0.0 and board.smash_cooldown <= 0.0:
@@ -332,6 +325,8 @@ func _draw_balls() -> void:
 			if board.fever > 0.0:
 				# A rainbow streaming out behind.
 				tc = Color.from_hsv(fmod(board.clock * 1.5 + (n - i) * 0.07, 1.0), 0.8, 1.0)
+			elif not ball.smashed:
+				tc = Cosmetics.trail_color(Game.trail, i, n, board.clock, c)
 			tc.a = t * (0.5 if not ball.smashed and board.fever <= 0.0 else 0.8)
 			Pixels.square(self, ball.trail[i] - Vector2(0, lift + ball.z), s, tc)
 		_draw_ball(ball, ball.pos - Vector2(0, lift + ball.z), c)

@@ -21,6 +21,7 @@ extends Node
 ## dragged to the next, lifted at `:up` (`:second` taps a second finger there instead).
 
 const SCREENS := {
+	"locker": "res://src/ui/locker.gd",
 	"splash": "res://src/ui/splash.gd",
 	"title": "res://src/ui/title.gd",
 	"play": "res://src/play/play.gd",
@@ -152,6 +153,61 @@ func _touch_steps(steps: PackedStringArray) -> void:
 			drag.relative = at - last
 			Input.parse_input_event(drag)
 			last = at
+
+
+## A note sliding down from the top for a few seconds (a challenge done), over every screen; one at a
+## time, the rest waiting their turn.
+var _toasts: Array = []
+var _toasting := false
+
+
+func toast(title: String, sub: String) -> void:
+	_toasts.append([title, sub])
+	if not _toasting:
+		_next_toast()
+
+
+func _next_toast() -> void:
+	if _toasts.is_empty():
+		_toasting = false
+		return
+	_toasting = true
+	var t: Array = _toasts.pop_front()
+	var layer := CanvasLayer.new()
+	layer.layer = 90
+	add_child(layer)
+	var root := Control.new()
+	UI.screen_root(root)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(root)
+	var panel := PanelContainer.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color("2a1438")
+	box.border_color = UI.GOLD
+	box.set_border_width_all(3)
+	box.set_corner_radius_all(18)
+	box.content_margin_left = 24
+	box.content_margin_right = 24
+	box.content_margin_top = 12
+	box.content_margin_bottom = 12
+	panel.add_theme_stylebox_override("panel", box)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var column := VBoxContainer.new()
+	column.add_child(UI.label(t[0], 2, UI.GOLD))
+	column.add_child(UI.label(t[1], 1, UI.INK))
+	panel.add_child(column)
+	root.add_child(panel)
+	await get_tree().process_frame
+	var width := get_viewport().get_visible_rect().size.x
+	panel.position = Vector2((width - panel.size.x) * 0.5, -panel.size.y - 10.0)
+	Audio.play("best", -4.0)
+	var slide := create_tween()
+	slide.tween_property(panel, "position:y", 24.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	slide.tween_interval(3.0)
+	slide.tween_property(panel, "position:y", -panel.size.y - 10.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await slide.finished
+	layer.queue_free()
+	_next_toast()
 
 
 func _set_curtain(progress: float) -> void:

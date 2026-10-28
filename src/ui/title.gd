@@ -1,6 +1,6 @@
 extends Control
 ## The title: the logo raining in over the rays, and the menu under it
-## (Play, How to play, High scores, Options, and Quit where there is
+## (Play, How to play, High scores, Locker, Options, and Quit where there is
 ## something to quit to). Play swaps the menu for the modes, each described
 ## (and its best) as it gets the focus. The best score and the version
 ## along the bottom.
@@ -20,7 +20,7 @@ var _from := ""
 
 func setup(args: Dictionary) -> void:
 	_from = String(args.get("from", ""))
-	_quick = _from in ["help", "scores", "options"]
+	_quick = _from in ["help", "scores", "locker", "options"]
 
 
 func _ready() -> void:
@@ -50,6 +50,7 @@ func _ready() -> void:
 		UI.button("PLAY", _show_modes),
 		UI.button("HOW TO PLAY", func() -> void: _go("help")),
 		UI.button("HIGH SCORES", func() -> void: _go("scores")),
+		UI.button("LOCKER", func() -> void: _go("locker")),
 		UI.button("OPTIONS", func() -> void: _go("options")),
 	]
 	if Game.can_quit():
@@ -115,7 +116,7 @@ func _ready() -> void:
 	Audio.heat = 0.5
 	Audio.muffle(0.0)
 	# Back from a menu, the focus goes back to its button.
-	var back_to := ["play", "help", "scores", "options"].find(_from)
+	var back_to := ["play", "help", "scores", "locker", "options"].find(_from)
 	(_buttons[maxi(back_to, 0)] as Button).grab_focus.call_deferred()
 	resized.connect(_place_rays)
 	_place_rays.call_deferred()

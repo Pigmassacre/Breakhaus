@@ -28,6 +28,10 @@ var demolished := 0
 var mode := Modes.CLASSIC
 var rush_best := {}
 var daily := {}
+## The challenges done (Challenges.LIST's ids), and the paddle skin and ball trail in use (Cosmetics).
+var challenges_done: Array = []
+var paddle_skin := "classic"
+var trail := "classic"
 
 ## The game plays itself (`--autoplay`, for testing).
 var autoplay := false
@@ -57,6 +61,9 @@ func load_save() -> void:
 	seen_help = cfg.get_value("progress", "seen_help", false)
 	rush_best = cfg.get_value("scores", "rush_best", {})
 	daily = cfg.get_value("scores", "daily", {})
+	challenges_done = cfg.get_value("progress", "challenges", [])
+	paddle_skin = cfg.get_value("progress", "paddle", "classic")
+	trail = cfg.get_value("progress", "trail", "classic")
 
 
 func save() -> void:
@@ -69,6 +76,9 @@ func save() -> void:
 	cfg.set_value("scores", "games_played", games_played)
 	cfg.set_value("scores", "demolished", demolished)
 	cfg.set_value("progress", "seen_help", seen_help)
+	cfg.set_value("progress", "challenges", challenges_done)
+	cfg.set_value("progress", "paddle", paddle_skin)
+	cfg.set_value("progress", "trail", trail)
 	cfg.save(SAVE_PATH)
 
 
@@ -97,6 +107,26 @@ func can_fullscreen() -> bool:
 ## A game that can be quit from its menu (not in a browser, where there is nothing to quit to).
 func can_quit() -> bool:
 	return not OS.has_feature("web") and not OS.has_feature("ios")
+
+
+## Something happened that a challenge may be waiting for: `event` (Challenges.LIST's), reaching
+## `value`. Any challenge it completes is saved and announced. Not while the game plays itself.
+func note(event: String, value := 1) -> void:
+	if autoplay or autoplay_lazy:
+		return
+	for c: Dictionary in Challenges.LIST:
+		if c["event"] == event and value >= int(c["at"]) and not challenges_done.has(c["id"]):
+			challenges_done.append(c["id"])
+			save()
+			if main and main.has_method("toast"):
+				main.toast("CHALLENGE DONE: " + String(c["name"]).to_upper(), "Unlocked " + Challenges.reward(c) + " in the Locker")
+
+
+## Whether paddle skin or trail `look` is yours: the classic ones always, the rest once their challenge is done.
+func owns(kind: String, look: String) -> bool:
+	if look == "classic":
+		return true
+	return challenges_done.has(Challenges.unlocking(kind, look).get("id", ""))
 
 
 func best_score() -> int:
