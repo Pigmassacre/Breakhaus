@@ -215,12 +215,12 @@ func _draw_loot_beam(p: Dictionary, at: Vector2) -> void:
 			draw_rect(Rect2(base.x - PX * 2.0, y, PX * 5.0, PX), Color(color, a * 0.2))
 
 
-## The laser: a beam of whole pixels straight up from the middle of the paddle to what it is burning,
+## The laser: a beam of whole pixels straight up from the paddle to what it is burning,
 ## a white core in a red glow, flickering, and a flare where it meets the block.
 func _draw_laser() -> void:
 	if board.laser_end < 0.0:
 		return
-	var x := Pixels.snap(Vector2(board.paddle_x, 0.0)).x
+	var x := Pixels.snap(Vector2(board.laser_x(), 0.0)).x
 	var top := snappedf(board.laser_end, PX)
 	var bottom := snappedf(Balance.PADDLE_Y - board.paddle_z - _paddle_hop(), PX)
 	if bottom <= top:

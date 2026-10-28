@@ -183,7 +183,7 @@ in code, row by row of art pixels (`Pickups.ICONS`).
 | Fireball | Rare | Balls burn straight through blocks and set them alight; fire spreads. |
 | Deep Freeze | Rare | The wall stops coming down, and every block shatters in one hit. |
 | Shield | Rare | A barrier under the paddle: no misses. |
-| Laser | Rare | A beam straight up from the middle of the paddle burns into whatever is over it, steel and all. |
+| Laser | Rare | A beam straight up from the paddle burns into whatever is over it, steel included, for 4 seconds. Near a wall it comes out of the paddle's end, so it reaches the edge columns. |
 
 The ones that last show along the top of the board, each with the time it
 has left.
@@ -298,8 +298,8 @@ stay crisp however they move.
   wave rippling out from a big hit, colour fringes with the shake, a flash
   for a pickup or a miss, a red vignette when the wall is close, and the
   original's grayscale for the end.
-- `src/fx/curtain.gdshader` is the wipe between screens, squares growing
-  from one corner to the other; `src/ui/splash.gdshader` puts the
+- `src/fx/curtain.gdshader` is the wipe between screens: tiles (squares,
+  diamonds or dots) growing in one of seven orders, a new one each time; `src/ui/splash.gdshader` puts the
   Pigmassacre pig together tile by tile.
 
 **Sound.** `Audio` loads every sound as the game starts and plays them

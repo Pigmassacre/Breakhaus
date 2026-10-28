@@ -108,7 +108,7 @@ const FEVER_TIME := 8.0
 
 # --- the quake ----------------------------------------------------------------------------------
 ## Breaks it takes to charge (a combo charges it faster), and how many rows it brings down.
-const QUAKE_CHARGE := 70.0
+const QUAKE_CHARGE := 120.0
 const QUAKE_ROWS := 3
 
 # --- pickups ------------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ const MULTI_BALLS := 2
 const BARRAGE_ROCKETS := 14
 const BARRAGE_GAP := 0.05
 ## Laser: how long, and how often it hits the block it is burning into.
-const LASER_TIME := 6.0
+const LASER_TIME := 4.0
 const LASER_TICK := 0.07
 ## Magnet: how long; a ball it catches is let go after MAGNET_HOLD, or when you smash.
 const MAGNET_TIME := 12.0

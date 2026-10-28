@@ -1255,9 +1255,19 @@ func _update_barrage(delta: float) -> void:
 	shake.emit(1.0)
 
 
-## The laser: a beam straight up from the middle of the paddle, burning into the first block it meets.
+## Where the laser comes out of the paddle: its middle, sliding out towards the end it is moving to near
+## the walls, so that the beam reaches the outermost columns too.
+func laser_x() -> float:
+	var half := paddle_w * 0.5
+	var reach := Balance.BLOCK_W * 0.5
+	if W - half * 2.0 <= 0.0:
+		return paddle_x
+	return remap(paddle_x, half, W - half, reach, W - reach)
+
+
+## The laser: a beam straight up from the paddle, burning into the first block it meets.
 func _update_laser(delta: float) -> void:
-	var col := clampi(floori(paddle_x / Balance.BLOCK_W), 0, COLS - 1)
+	var col := clampi(floori(laser_x() / Balance.BLOCK_W), 0, COLS - 1)
 	var target: Block = null
 	for r in range(ROWS - 1, -1, -1):
 		var b := at(col, r)
@@ -1265,7 +1275,7 @@ func _update_laser(delta: float) -> void:
 			target = b
 			break
 	laser_end = (target.row + 1) * Balance.ROW_H if target else 0.0
-	var hit := Vector2(paddle_x, laser_end)
+	var hit := Vector2(laser_x(), laser_end)
 	if rng.randf() < 0.5:
 		particles.spray(hit, Vector2.DOWN, Color("ffb0c8"), 1, 6.0)
 	_laser_hum -= delta

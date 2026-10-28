@@ -1,6 +1,7 @@
 extends Node
 ## The root: shows one screen at a time (the splash, the title, the game,
-## the menus), with a curtain of squares between them.
+## the menus), with a curtain of tiles between them, a different pattern
+## each time.
 ##
 ## Run with `-- --screen=play` (or any screen's name) to start there, and
 ## `-- --floor=3` to start the game on that floor (from 0, the top). For
@@ -30,6 +31,7 @@ var screen_name := ""
 var _curtain: ColorRect
 var _curtain_material := ShaderMaterial.new()
 var _busy := false
+var _pattern := 0
 
 
 func _ready() -> void:
@@ -113,6 +115,15 @@ func _set_curtain(progress: float) -> void:
 	_curtain.visible = progress > 0.0
 
 
+## A new curtain: a pattern other than the last one's, its tiles' shape and size.
+func _pick_curtain() -> void:
+	_pattern = (_pattern + 1 + randi() % 6) % 7
+	_curtain_material.set_shader_parameter("pattern", _pattern)
+	_curtain_material.set_shader_parameter("shape", randi() % 3)
+	_curtain_material.set_shader_parameter("cell", [40.0, 48.0, 64.0].pick_random())
+	_curtain_material.set_shader_parameter("flip", 0.0)
+
+
 func show_screen(which: String, args := {}) -> void:
 	if _busy:
 		return
@@ -120,6 +131,7 @@ func show_screen(which: String, args := {}) -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	if screen:
+		_pick_curtain()
 		var close := create_tween()
 		close.tween_method(_set_curtain, 0.0, 1.0, 0.3)
 		await close.finished
@@ -134,6 +146,7 @@ func show_screen(which: String, args := {}) -> void:
 		screen.setup(args)
 	add_child(screen)
 	move_child(screen, 0)
+	_curtain_material.set_shader_parameter("flip", 1.0)
 	var open := create_tween()
 	open.tween_method(_set_curtain, 1.0 if _curtain.visible else 0.0, 0.0, 0.35)
 	_busy = false

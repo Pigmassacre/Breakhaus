@@ -36,7 +36,7 @@ func _ready() -> void:
 	_logo.settled = _quick
 	_logo.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(_logo)
-	var tagline := UI.label("BREAK THE HAUS BEFORE IT BREAKS YOU", 2, UI.DIM)
+	var tagline := UI.label("BRING THE HAUS DOWN", 2, UI.DIM)
 	column.add_child(tagline)
 	column.add_child(_gap(36))
 	# The menu and the modes take turns in one slot, as big as the bigger of them, so that swapping
@@ -73,6 +73,7 @@ func _ready() -> void:
 		_modes.add_child(b)
 		_mode_buttons.append(b)
 	var back := UI.button("BACK", _hide_modes)
+	back.focus_entered.connect(func() -> void: _blurb.text = "")
 	_modes.add_child(back)
 	_mode_buttons.append(back)
 	UI.link_focus(_mode_buttons)

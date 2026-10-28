@@ -255,7 +255,7 @@ func _update_prompt() -> void:
 		_help.text = "TODAY: %s\n%s" % [String(board.twist["name"]).to_upper(), board.twist["blurb"]]
 	# The controls, on the first floor of the game.
 	elif board.level == 0 or not Game.seen_help:
-		_help.text = "%s: MOVE\n%s: SMASH (TIME IT!)\n%s: QUAKE (WHEN CHARGED)" % [
+		_help.text = "%s: MOVE\n%s: SMASH\n%s: QUAKE" % [
 			Inputs.prompt("move").to_upper(), Inputs.prompt("smash").to_upper(), Inputs.prompt("quake").to_upper()]
 	else:
 		_help.text = ""
@@ -485,5 +485,5 @@ func show_message(text: String, color := UI.INK, hold := 0.6, scale := 6) -> voi
 ## A card for a new floor: its number big, its name under it.
 func floor_card(level: int) -> void:
 	var title := Floors.label(level)
-	var sub: String = Floors.theme(level)["name"] if level < Balance.FLOORS else "Deeper..."
+	var sub: String = Floors.theme(level)["name"] if level < Balance.FLOORS else "Basement"
 	show_message("%s\n%s" % [title, sub.to_upper()], UI.INK, 1.4, 5)

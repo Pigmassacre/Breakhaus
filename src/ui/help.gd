@@ -98,9 +98,9 @@ func _gap(h: float) -> Control:
 
 func _rules() -> Control:
 	var box := _page_box("HOW TO PLAY")
-	box.add_child(_text("The wall of blocks comes down a row at a time, like clockwork. If it crosses the red line, the haus wins."))
-	box.add_child(_text("Keep the bottom rows broken to keep it off the line. Let the ball past your paddle and the wall gains on you.", 2, UI.DIM))
-	box.add_child(_text("Clear a floor to crash down to the next. Eight floors to the ground... then the basements.", 2, UI.DIM))
+	box.add_child(_text("The wall drops a row at a time. If it reaches the red line, it's game over."))
+	box.add_child(_text("Keep breaking the bottom rows. Every miss brings the wall closer.", 2, UI.DIM))
+	box.add_child(_text("Clear a floor to drop to the next one. Eight floors, then the basements.", 2, UI.DIM))
 	box.add_child(_gap(16))
 	var grid := GridContainer.new()
 	grid.columns = 5
@@ -120,7 +120,7 @@ func _rules() -> Control:
 			grid.add_child(UI.label(rows[r][c], 2, color, HORIZONTAL_ALIGNMENT_LEFT if c == 0 else HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(grid)
 	box.add_child(_gap(16))
-	box.add_child(_text("Smash just as the ball meets the paddle: it flies off fast and ploughs through three blocks.", 2, UI.GOLD))
+	box.add_child(_text("Smash right as the ball hits your paddle to send it flying through three blocks.", 2, UI.GOLD))
 	return box
 
 
@@ -128,12 +128,12 @@ func _blocks() -> Control:
 	var box := _page_box("BLOCKS")
 	var kinds := [
 		[Block.Kind.NORMAL, 1, "One hit."],
-		[Block.Kind.NORMAL, 3, "Studded: a hit for every stud, and one more."],
-		[Block.Kind.STEEL, Balance.STEEL_HP, "Steel: five hits, and it won't burn."],
-		[Block.Kind.TNT, 1, "TNT: takes its neighbours with it."],
-		[Block.Kind.PRIZE, 1, "Prize: always holds a pickup."],
-		[Block.Kind.GOLD, 1, "Gold: a pile of points."],
-		[Block.Kind.MOSS, 1, "Moss: grows every time the wall comes down."],
+		[Block.Kind.NORMAL, 3, "Studded: one hit per stud, plus one."],
+		[Block.Kind.STEEL, Balance.STEEL_HP, "Steel: five hits. Fireproof."],
+		[Block.Kind.TNT, 1, "TNT: blows up its neighbors."],
+		[Block.Kind.PRIZE, 1, "Prize: always drops a pickup."],
+		[Block.Kind.GOLD, 1, "Gold: lots of points."],
+		[Block.Kind.MOSS, 1, "Moss: spreads every time the wall drops."],
 	]
 	for k: Array in kinds:
 		var row := HBoxContainer.new()
@@ -148,15 +148,15 @@ func _blocks() -> Control:
 		row.add_child(l)
 		box.add_child(row)
 	box.add_child(_gap(10))
-	box.add_child(_text("Combo: break blocks quickly one after another to multiply your points. Hit x8 and Fever sets in: the ball ploughs through everything. Sweep the board clean for a big bonus, and six more rows.", 2, UI.GOLD))
-	box.add_child(_text("Quake: breaking blocks charges it. Set it off to bring down the bottom three rows.", 2, Color("ffb03b")))
+	box.add_child(_text("Break blocks in quick succession to build a combo. Reach x8 to trigger Fever and smash through everything. Clear the whole board for a big bonus (and six new rows).", 2, UI.GOLD))
+	box.add_child(_text("Breaking blocks charges your Quake. Use it to wipe out the bottom three rows.", 2, Color("ffb03b")))
 	return box
 
 
 func _pickups() -> Control:
 	var box := _page_box("PICKUPS")
 	box.add_theme_constant_override("separation", 10)
-	box.add_child(_text("Prize blocks (and once in a while any block) let one go. Catch it with the paddle or hit it with a ball.", 2, UI.DIM))
+	box.add_child(_text("Prize blocks drop pickups, and other blocks sometimes do too. Catch them with your paddle or hit them with the ball.", 2, UI.DIM))
 	box.add_child(_gap(4))
 	for rarity: Pickups.Rarity in [Pickups.Rarity.COMMON, Pickups.Rarity.UNCOMMON]:
 		for kind: Pickups.Kind in Pickups.INFO:
@@ -177,7 +177,7 @@ func _rares() -> Control:
 		total += Pickups.RARITY_WEIGHT[Pickups.rarity(kind)]
 		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
 			rare += Pickups.RARITY_WEIGHT[Pickups.Rarity.RARE]
-	box.add_child(_text("About one pickup in %d is rare: the strongest of them all. When one drops, a gold beam marks it. Don't let it fall!" % roundi(total / rare), 2, UI.DIM))
+	box.add_child(_text("Only about 1 in %d pickups is rare. Look for the gold beam, and don't let it fall!" % roundi(total / rare), 2, UI.DIM))
 	for kind: Pickups.Kind in Pickups.INFO:
 		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
 			box.add_child(PickupCard.new(kind, true))
