@@ -159,8 +159,14 @@ more of the tough kinds.
 **Pickups** hang where they came out for a moment, then drift down; catch
 one with the paddle or hit it with a ball. Each has a rarity
 (`Pickups.RARITY_WEIGHT`): a common one is eight times as likely as a rare
-one, an uncommon one about three times. The rare ones are the strongest,
-and a gold ring pulses round them as well as their own.
+one, an uncommon one about three times. The rarer, the louder: a column
+of light rises out of an uncommon pickup (teal) and a rare one (gold,
+taller, with sparkles going round it and a second ring); a rare drop
+chimes, flashes and shouts RARE DROP!, and catching one is a fanfare. In
+How to play each pickup sits in a frame of its rarity's colour with a tag
+of stars, and the rare ones have a showcase page of their own, a sunburst
+turning behind each. The icons the original had no sprite for are drawn
+in code, row by row of art pixels (`Pickups.ICONS`).
 
 | Pickup | Rarity | |
 | --- | --- | --- |
@@ -170,9 +176,14 @@ and a gold ring pulses round them as well as their own.
 | Multiball | Uncommon | Every ball splits in three. |
 | Zap | Uncommon | Every hit arcs lightning to the two blocks nearest. |
 | Rockets | Uncommon | The paddle fires rockets, two at a time. |
+| Rocket Barrage | Uncommon | Fourteen rockets in a salvo, each swinging off to a column with blocks in it and blowing a hole round where it lands. |
+| Magnet | Uncommon | The paddle catches the ball; aim, then smash to let it go (or it goes by itself after a moment). |
+| Blast Ball | Uncommon | Every block a ball hits goes off, knocking the eight round it. |
+| Hurry Up | Uncommon | The bad one: the wave bar fills twice as fast for a while. |
 | Fireball | Rare | Balls burn straight through blocks and set them alight; fire spreads. |
 | Deep Freeze | Rare | The wall stops coming down, and every block shatters in one hit. |
 | Shield | Rare | A barrier under the paddle: no misses. |
+| Laser | Rare | A beam straight up from the middle of the paddle burns into whatever is over it, steel and all. |
 
 The ones that last show along the top of the board, each with the time it
 has left.
@@ -317,6 +328,8 @@ muffled under the pause menu and the end. Each floor has its track.
   clears the floor after five seconds: for what comes between floors.
   `--sweep-at=5` breaks every block after five seconds, for a Clean Sweep,
   and `--all-effects` sets every timed pickup going at once (the badges).
+  `--drop=laser,shield` hangs those pickups over the board and
+  `--give=laser` catches them at once.
 - `--mouse=1.5:800:400,2:800:460:click` moves the pointer to those window
   coordinates at those seconds (and clicks, with `:click`): for catching
   the menus' hover and press in screenshots.

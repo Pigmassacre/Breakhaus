@@ -99,6 +99,13 @@ var quake := 0.0
 ## Seconds left of each pickup that lasts (Pickups.Kind -> seconds).
 var effects := {}
 var rocket_timer := 0.0
+## Rocket Barrage: rockets still to go, and the time to the next.
+var barrage_left := 0
+var barrage_timer := 0.0
+## Laser: where its beam ends (the bottom of the block it is burning, or the top), -1 when off.
+var laser_end := -1.0
+var _laser_tick := 0.0
+var _laser_hum := 0.0
 var shield_flash := 0.0
 ## The game's own clock, for anything that pulses.
 var clock := 0.0
@@ -275,7 +282,15 @@ func smash() -> void:
 	if state == State.SERVE:
 		launch()
 		return
-	if state != State.PLAY or smash_cooldown > 0.0:
+	if state != State.PLAY:
+		return
+	# A Magnet's catch is let go on a smash.
+	var let_go := false
+	for ball in balls:
+		if ball.held:
+			_release(ball)
+			let_go = true
+	if let_go or smash_cooldown > 0.0:
 		return
 	smash_time = Balance.SMASH_TIME
 	smash_cooldown = Balance.SMASH_COOLDOWN
@@ -303,6 +318,12 @@ func _update_paddle(delta: float) -> void:
 			for side in [-1.0, 1.0]:
 				rockets.append({"pos": Vector2(paddle_x + side * (half - Balance.PX * 3.0), Balance.PADDLE_Y - Balance.PX * 2.0), "t": 0.0})
 			Audio.play("rocket", -6.0, rng.randf_range(0.9, 1.1))
+	if state == State.PLAY:
+		_update_barrage(delta)
+	if effect(Pickups.Kind.LASER) > 0.0 and state == State.PLAY:
+		_update_laser(delta)
+	else:
+		laser_end = -1.0
 	# Pickups it catches.
 	var catch := paddle_rect().grow(Balance.PX * 2.0)
 	for p: Dictionary in pickups.duplicate():
@@ -393,7 +414,7 @@ func _update_blocks(delta: float) -> void:
 func _update_waves(delta: float) -> void:
 	if effect(Pickups.Kind.FROST) > 0.0:
 		return
-	wave_timer += delta
+	wave_timer += delta * (Balance.HASTE_SPEED if effect(Pickups.Kind.HASTE) > 0.0 else 1.0)
 	if wave_timer >= wave_time:
 		wave_timer = 0.0
 		_wave()
@@ -515,6 +536,10 @@ func _effect_ended(kind: Pickups.Kind) -> void:
 				if b.frozen:
 					b.frozen = false
 					b.flash = 0.5
+		Pickups.Kind.MAGNET:
+			for ball in balls:
+				if ball.held and state == State.PLAY:
+					_release(ball)
 		Pickups.Kind.OVERDRIVE:
 			for ball in balls:
 				ball.speed = minf(ball.speed, Balance.BALL_SPEED_MAX)
@@ -531,6 +556,10 @@ func _update_balls(delta: float) -> void:
 			ball.z = maxf(ball.z - delta * 1500.0, 0.0)
 		if ball.held:
 			ball.pos = Vector2(paddle_x + ball.held_offset, Balance.PADDLE_Y - Balance.BALL_R - 1.0)
+			if state == State.PLAY:
+				ball.hold_time -= delta
+				if ball.hold_time <= 0.0:
+					_release(ball)
 			continue
 		_move_ball(ball, delta)
 		if ball.trail.size() == 0 or ball.trail[ball.trail.size() - 1].distance_to(ball.pos) > Balance.PX * 2.0:
@@ -659,6 +688,12 @@ func _collide_paddle(ball: Ball) -> void:
 	paddle_flash = 1.0
 	paddle_squash = 1.0 if smashed else 0.6
 	_ball_hit(ball, ball.direction(), 1.0)
+	# The Magnet catches it (not a smash, which goes straight off).
+	if effect(Pickups.Kind.MAGNET) > 0.0 and not smashed:
+		ball.held = true
+		ball.held_offset = clampf(ball.pos.x - paddle_x, -paddle_w * 0.5, paddle_w * 0.5)
+		ball.hold_time = Balance.MAGNET_HOLD
+		Audio.play("shield_hit", -8.0, 1.4)
 
 
 func _collide_blocks(ball: Ball) -> void:
@@ -727,6 +762,8 @@ func _collide_blocks(ball: Ball) -> void:
 	_ball_hit(ball, best_normal if not through else ball.direction(), 0.8)
 	if effect(Pickups.Kind.ZAP) > 0.0:
 		_zap(best.center())
+	if effect(Pickups.Kind.BLAST) > 0.0:
+		_blast(best.col, best.row)
 
 
 func _collide_pickups(ball: Ball) -> void:
@@ -1053,6 +1090,14 @@ func _drop_pickup(at_pos: Vector2) -> void:
 	var kind := Pickups.pick(rng)
 	pickups.append({"kind": kind, "pos": at_pos, "t": 0.0})
 	Audio.play("release", -6.0)
+	# A rare one is an event: a chime, a gold flash and a shout.
+	if Pickups.rarity(kind) == Pickups.Rarity.RARE:
+		Audio.play("best", -4.0, 1.2)
+		flashed.emit(Pickups.RARITY_COLOR[Pickups.Rarity.RARE], 0.15)
+		message.emit("RARE DROP!", Pickups.RARITY_COLOR[Pickups.Rarity.RARE])
+		particles.spray(at_pos, Vector2.UP, Pickups.RARITY_COLOR[Pickups.Rarity.RARE], 16, 10.0)
+	elif Pickups.rarity(kind) == Pickups.Rarity.UNCOMMON:
+		Audio.play("coin", -10.0, 1.3)
 
 
 func _update_pickups(delta: float) -> void:
@@ -1077,6 +1122,12 @@ func _collect(p: Dictionary) -> void:
 	ripples.append({"pos": p["pos"], "t": 0.0, "strength": 0.8})
 	message.emit(String(info["name"]).to_upper() + ("" if info.get("bad", false) else "!"), info["color"])
 	flashed.emit(info["color"], 0.12)
+	if Pickups.rarity(kind) == Pickups.Rarity.RARE:
+		# Caught a rare one: a fanfare and a burst of gold.
+		Audio.play("fanfare", -4.0)
+		particles.spray(p["pos"], Vector2.UP, Pickups.RARITY_COLOR[Pickups.Rarity.RARE], 24, 12.0)
+		shocked.emit(p["pos"], 0.5)
+		hitstop.emit(Balance.HITSTOP_BIG)
 	match kind:
 		Pickups.Kind.MULTI:
 			_split_balls()
@@ -1107,6 +1158,21 @@ func _collect(p: Dictionary) -> void:
 		Pickups.Kind.SHIELD:
 			effects[kind] = Balance.SHIELD_TIME
 			Audio.play("shield", -2.0)
+		Pickups.Kind.BARRAGE:
+			barrage_left += Balance.BARRAGE_ROCKETS
+			barrage_timer = 0.15
+		Pickups.Kind.LASER:
+			effects[kind] = Balance.LASER_TIME
+			_laser_tick = 0.0
+			Audio.play("charged", -2.0, 0.7)
+		Pickups.Kind.MAGNET:
+			effects[kind] = Balance.MAGNET_TIME
+		Pickups.Kind.BLAST:
+			effects[kind] = Balance.BLAST_TIME
+			Audio.play("boom", -8.0, 1.4)
+		Pickups.Kind.HASTE:
+			effects[kind] = Balance.HASTE_TIME
+			Audio.play("danger", -4.0, 1.2)
 	picked_up.emit(kind)
 
 
@@ -1114,6 +1180,9 @@ func _update_rockets(delta: float) -> void:
 	for rocket: Dictionary in rockets.duplicate():
 		rocket["t"] += delta
 		rocket["pos"].y -= Balance.ROCKET_SPEED * delta * minf(rocket["t"] * 4.0 + 0.3, 1.0)
+		# A barrage's rocket swings over to its own column as it climbs.
+		if rocket.has("to_x"):
+			rocket["pos"].x = lerpf(rocket["from_x"], rocket["to_x"], smoothstep(0.0, 1.0, minf(rocket["t"] * 3.0, 1.0)))
 		if rng.randf() < 0.7:
 			particles.smoke(rocket["pos"] + Vector2(0, Balance.PX * 3.0), 1, 6.0, Color(0.8, 0.75, 0.7, 0.5))
 		var cell := _cell_of(rocket["pos"])
@@ -1132,6 +1201,83 @@ func _update_rockets(delta: float) -> void:
 		particles.smoke(center, 4)
 		Audio.play("boom", -10.0, rng.randf_range(1.2, 1.5))
 		shake.emit(2.0)
+		if rocket.has("to_x") and b:
+			_blast(cell.x, cell.y)
+
+
+## Lets a ball off the Magnet, at the angle its place on the paddle gives it.
+func _release(ball: Ball) -> void:
+	ball.held = false
+	var offset := clampf(ball.held_offset / (paddle_w * 0.5), -1.0, 1.0)
+	ball.set_direction(Vector2.UP.rotated(offset * Balance.PADDLE_MAX_ANGLE))
+	ball.fix_angle()
+	ball.idle = 0.0
+	paddle_squash = 0.6
+	Audio.play("release", -4.0)
+
+
+## A small blast round a block (Blast Ball, a barrage's rockets): every neighbour takes a hit.
+func _blast(col: int, row: int) -> void:
+	var center := Vector2((col + 0.5) * Balance.BLOCK_W, (row + 0.5) * Balance.ROW_H)
+	for r in range(row - 1, row + 2):
+		for c in range(col - 1, col + 2):
+			var b := at(c, r)
+			if b and (c != col or r != row):
+				_hit_block(b, 1)
+	particles.burst(center, Color("ff8a3d"), 10, 1.0, 10.0)
+	particles.smoke(center, 3, 8.0)
+	ripples.append({"pos": center, "t": 0.0, "strength": 0.5})
+	Audio.play("boom", -8.0, rng.randf_range(1.1, 1.4))
+	shake.emit(3.0)
+
+
+## The barrage, a rocket at a time from either end of the paddle, each to a column with blocks in it.
+func _update_barrage(delta: float) -> void:
+	if barrage_left <= 0:
+		return
+	barrage_timer -= delta
+	if barrage_timer > 0.0:
+		return
+	barrage_timer = Balance.BARRAGE_GAP
+	barrage_left -= 1
+	var columns: Array[int] = []
+	for c in COLS:
+		for r in ROWS:
+			if at(c, r) and not at(c, r).raining:
+				columns.append(c)
+				break
+	var to := float(columns[rng.randi() % columns.size()] if not columns.is_empty() else rng.randi() % COLS)
+	var side := -1.0 if barrage_left % 2 == 0 else 1.0
+	var from := paddle_x + side * (paddle_w * 0.5 - Balance.PX * 3.0)
+	rockets.append({"pos": Vector2(from, Balance.PADDLE_Y - Balance.PX * 2.0), "t": 0.0,
+		"from_x": from, "to_x": (to + 0.5) * Balance.BLOCK_W})
+	Audio.play("rocket", -8.0, rng.randf_range(1.0, 1.3))
+	shake.emit(1.0)
+
+
+## The laser: a beam straight up from the middle of the paddle, burning into the first block it meets.
+func _update_laser(delta: float) -> void:
+	var col := clampi(floori(paddle_x / Balance.BLOCK_W), 0, COLS - 1)
+	var target: Block = null
+	for r in range(ROWS - 1, -1, -1):
+		var b := at(col, r)
+		if b and not b.raining:
+			target = b
+			break
+	laser_end = (target.row + 1) * Balance.ROW_H if target else 0.0
+	var hit := Vector2(paddle_x, laser_end)
+	if rng.randf() < 0.5:
+		particles.spray(hit, Vector2.DOWN, Color("ffb0c8"), 1, 6.0)
+	_laser_hum -= delta
+	if _laser_hum <= 0.0:
+		_laser_hum = 0.22
+		Audio.play("zap", -14.0, rng.randf_range(1.4, 1.7))
+	_laser_tick -= delta
+	if _laser_tick > 0.0 or target == null:
+		return
+	_laser_tick = Balance.LASER_TICK
+	_hit_block(target, 1)
+	particles.spray(hit, Vector2.DOWN, Color("ff4f6a"), 3, 6.0)
 
 
 func _cell_of(p: Vector2) -> Vector2i:

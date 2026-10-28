@@ -65,6 +65,7 @@ func _draw() -> void:
 	_draw_blocks()
 	_draw_pickups()
 	_draw_paddle()
+	_draw_laser()
 	_draw_balls()
 	_draw_rockets()
 	board.particles.draw(self)
@@ -173,6 +174,7 @@ func _draw_pickups() -> void:
 		var info := Pickups.info(kind)
 		var at: Vector2 = p["pos"] - Vector2(0, _pickup_z(p))
 		var c: Color = info["color"]
+		_draw_loot_beam(p, at)
 		# A ring pulsing out of it, red for the bad ones.
 		var pulse := fmod(p["t"] * 1.5, 1.0)
 		var ring := c if not info.get("bad", false) else Color("ff2020")
@@ -183,6 +185,53 @@ func _draw_pickups() -> void:
 			var late := fmod(p["t"] * 1.5 + 0.5, 1.0)
 			Pixels.ring(self, at, 5.0 + late * 5.0, 1, Color(UI.GOLD, (1.0 - late) * 0.9))
 		Pickups.draw_icon(self, kind, at, _pickup_scale(p))
+		# Sparkles round a rare one, a pixel each, going round.
+		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
+			for i in 3:
+				var a: float = p["t"] * 3.0 + i * TAU / 3.0
+				var twinkle := 0.5 + 0.5 * sin(p["t"] * 12.0 + i * 2.0)
+				Pixels.square(self, at + Vector2(cos(a) * PX * 8.0, sin(a) * PX * 5.0), 1, Color(Color.WHITE.lerp(UI.GOLD, twinkle), twinkle))
+
+
+## The loot beam: a column of light up out of an uncommon (teal) or rare (gold) pickup, in bands that
+## climb it and fade out at the top; a rare one's is taller, wider and brighter.
+func _draw_loot_beam(p: Dictionary, at: Vector2) -> void:
+	var rarity := Pickups.rarity(p["kind"])
+	if rarity == Pickups.Rarity.COMMON:
+		return
+	var color: Color = Pickups.RARITY_COLOR[rarity]
+	var rare := rarity == Pickups.Rarity.RARE
+	var height := (34 if rare else 20)
+	var grow := clampf(p["t"] * 4.0, 0.0, 1.0)
+	var base := Pixels.snap(at)
+	for i in int(height * grow):
+		var t := float(i) / height
+		var band := 0.6 + 0.4 * sin(p["t"] * 10.0 - i * 0.6)
+		var a := (1.0 - t) * band * (0.95 if rare else 0.75)
+		var y := base.y - (i + 1) * PX
+		draw_rect(Rect2(base.x - PX, y, PX * 3.0, PX), Color(color, a * 0.5))
+		draw_rect(Rect2(base.x, y, PX, PX), Color(color.lerp(Color.WHITE, 0.6), a))
+		if rare:
+			draw_rect(Rect2(base.x - PX * 2.0, y, PX * 5.0, PX), Color(color, a * 0.2))
+
+
+## The laser: a beam of whole pixels straight up from the middle of the paddle to what it is burning,
+## a white core in a red glow, flickering, and a flare where it meets the block.
+func _draw_laser() -> void:
+	if board.laser_end < 0.0:
+		return
+	var x := Pixels.snap(Vector2(board.paddle_x, 0.0)).x
+	var top := snappedf(board.laser_end, PX)
+	var bottom := snappedf(Balance.PADDLE_Y - board.paddle_z - _paddle_hop(), PX)
+	if bottom <= top:
+		return
+	var flicker := 0.75 + 0.25 * sin(board.clock * 70.0)
+	var red := Color("ff4f6a")
+	draw_rect(Rect2(x - PX * 2.0, top, PX * 5.0, bottom - top), Color(red, 0.18 * flicker))
+	draw_rect(Rect2(x - PX, top, PX * 3.0, bottom - top), Color(red, 0.6 * flicker))
+	draw_rect(Rect2(x, top, PX, bottom - top), Color(1.0, 0.94, 0.96))
+	Pixels.ring(self, Vector2(x + PX * 0.5, top), 2.0 + flicker * 1.5, 1, Color(Color.WHITE, 0.8))
+	Pixels.square(self, Vector2(x + PX * 0.5, top), 3, Color(red.lerp(Color.WHITE, 0.6), flicker))
 
 
 # --- the paddle ---------------------------------------------------------------------------------

@@ -4,12 +4,14 @@ class_name Pickups
 ## and how rare it is: the common ones are mixed blessings, the uncommon
 ## ones help, and the rare ones (the strongest) hardly ever turn up.
 
-enum Kind { MULTI, FIRE, FROST, ZAP, WIDE, NARROW, OVERDRIVE, ROCKET, SHIELD }
+enum Kind { MULTI, FIRE, FROST, ZAP, WIDE, NARROW, OVERDRIVE, ROCKET, SHIELD, BARRAGE, LASER, MAGNET, BLAST, HASTE }
 enum Rarity { COMMON, UNCOMMON, RARE }
 
 ## How often a pickup of each rarity turns up, against the others.
 const RARITY_WEIGHT := {Rarity.COMMON: 12.0, Rarity.UNCOMMON: 5.0, Rarity.RARE: 1.5}
 const RARITY_NAME := {Rarity.COMMON: "Common", Rarity.UNCOMMON: "Uncommon", Rarity.RARE: "Rare"}
+## Each rarity's colour: the loot beam over a pickup, its tag and frame in How to play.
+const RARITY_COLOR := {Rarity.COMMON: Color("c9c3d6"), Rarity.UNCOMMON: Color("3dffc8"), Rarity.RARE: Color("ffd23d")}
 
 const INFO := {
 	Kind.MULTI: {"name": "Multiball", "sprite": "multiball", "color": Color("ff3dff"), "rarity": Rarity.UNCOMMON,
@@ -30,6 +32,87 @@ const INFO := {
 		"blurb": "The paddle fires rockets."},
 	Kind.SHIELD: {"name": "Shield", "sprite": "", "color": Color("6ad8ff"), "rarity": Rarity.RARE,
 		"blurb": "A barrier under the paddle: no misses."},
+	Kind.BARRAGE: {"name": "Rocket Barrage", "sprite": "", "color": Color("ff9a3d"), "rarity": Rarity.UNCOMMON,
+		"blurb": "A salvo of fourteen rockets, each blowing a hole in the wall."},
+	Kind.LASER: {"name": "Laser", "sprite": "", "color": Color("ff4f6a"), "rarity": Rarity.RARE,
+		"blurb": "A beam from the paddle burns through whatever is over it, steel and all."},
+	Kind.MAGNET: {"name": "Magnet", "sprite": "", "color": Color("d0d0e0"), "rarity": Rarity.UNCOMMON,
+		"blurb": "The paddle catches the ball: aim, then smash to let it go."},
+	Kind.BLAST: {"name": "Blast Ball", "sprite": "", "color": Color("ffb03b"), "rarity": Rarity.UNCOMMON,
+		"blurb": "Every block the ball hits goes off, knocking the ones round it."},
+	Kind.HASTE: {"name": "Hurry Up", "sprite": "", "color": Color("ff3d6e"), "rarity": Rarity.UNCOMMON, "bad": true,
+		"blurb": "The wall comes down twice as fast for a while. Dodge it!"},
+}
+
+## The pickups with no sprite in the original, drawn in its style: rows of art pixels, each letter a
+## colour from the icon's palette ("." is see-through), 8 by 9 like the sprites.
+const ICONS := {
+	Kind.SHIELD: {"palette": {"d": Color("08304a"), "m": Color("2a9fd6"), "l": Color("9fe8ff")}, "rows": [
+		"dddddddd",
+		"dmmmmmmd",
+		"dmllmmmd",
+		"dmllmmmd",
+		"dmllmmmd",
+		"dmmmmmmd",
+		"ddmmmmdd",
+		".ddmmdd.",
+		"..dddd..",
+	]},
+	Kind.BARRAGE: {"palette": {"k": Color("2b1010"), "r": Color("ff4545"), "w": Color("e8e8f0"), "y": Color("ffd23d")}, "rows": [
+		"...rr...",
+		"rr.ww...",
+		"ww.ww.rr",
+		"ww.ww.ww",
+		"ww.kk.ww",
+		"kk.yy.ww",
+		"yy....kk",
+		"......yy",
+		"........",
+	]},
+	Kind.LASER: {"palette": {"k": Color("1a1420"), "r": Color("ff4f6a"), "w": Color("fff0f4"), "g": Color("9a9ab0"), "d": Color("55556a")}, "rows": [
+		"...ww...",
+		"..rwwr..",
+		"..rwwr..",
+		"..rwwr..",
+		".krwwrk.",
+		"kggggggk",
+		"kgdggdgk",
+		"kkkkkkkk",
+		"........",
+	]},
+	Kind.MAGNET: {"palette": {"k": Color("1a1420"), "r": Color("ff3d4f"), "w": Color("e8e8f0")}, "rows": [
+		"kkkkkkkk",
+		"krrrrrrk",
+		"krkkkkrk",
+		"krk..krk",
+		"krk..krk",
+		"kwk..kwk",
+		"kwk..kwk",
+		"kkk..kkk",
+		"........",
+	]},
+	Kind.BLAST: {"palette": {"k": Color("0d0d14"), "b": Color("3a3a50"), "w": Color("b0b0c8"), "y": Color("ffd23d"), "o": Color("ff7a1a")}, "rows": [
+		".....y.o",
+		"....k.y.",
+		"..kkkk..",
+		".kbbbbk.",
+		"kbwbbbbk",
+		"kbwbbbbk",
+		"kbbbbbbk",
+		".kbbbbk.",
+		"..kkkk..",
+	]},
+	Kind.HASTE: {"palette": {"k": Color("2b1018"), "w": Color("fff4fb"), "r": Color("ff3d6e")}, "rows": [
+		"..kkkk..",
+		".kwwwwk.",
+		"kwwrwwwk",
+		"kwwrwwwk",
+		"kwwrrrwk",
+		"kwwwwwwk",
+		".kwwwwk.",
+		"..kkkk..",
+		"........",
+	]},
 }
 
 static var _textures := {}
@@ -79,10 +162,7 @@ static func draw_shadow(canvas: CanvasItem, kind: Kind, at: Vector2, scale: floa
 	if tex:
 		canvas.draw_texture_rect(tex, Rect2(at - size * 0.5, size), false, Color(0, 0, 0, color.a))
 		return
-	var o := at - size * 0.5
-	canvas.draw_rect(Rect2(o, Vector2(8, 7) * scale), color)
-	canvas.draw_rect(Rect2(o + Vector2(1, 7) * scale, Vector2(6, 1) * scale), color)
-	canvas.draw_rect(Rect2(o + Vector2(2, 8) * scale, Vector2(4, 1) * scale), color)
+	_draw_rows(canvas, kind, at - size * 0.5, scale, color, true)
 
 
 ## Draws the pickup's icon into `canvas`, its footprint's centre at `at`, `scale` art pixels to one of its own.
@@ -92,16 +172,18 @@ static func draw_icon(canvas: CanvasItem, kind: Kind, at: Vector2, scale: float,
 	if tex:
 		canvas.draw_texture_rect(tex, Rect2(at - size * 0.5, size), false, modulate)
 		return
-	# The shield has no sprite in the original: a little blue crest, drawn in the same style.
-	var px := scale
-	var o := at - size * 0.5
-	var dark := Color("08304a") * modulate
-	var mid := Color("2a9fd6") * modulate
-	var light := Color("9fe8ff") * modulate
-	canvas.draw_rect(Rect2(o + Vector2(0, 0), Vector2(8, 7) * px), dark)
-	canvas.draw_rect(Rect2(o + Vector2(1, 7) * px, Vector2(6, 1) * px), dark)
-	canvas.draw_rect(Rect2(o + Vector2(2, 8) * px, Vector2(4, 1) * px), dark)
-	canvas.draw_rect(Rect2(o + Vector2(1, 1) * px, Vector2(6, 5) * px), mid)
-	canvas.draw_rect(Rect2(o + Vector2(2, 6) * px, Vector2(4, 1) * px), mid)
-	canvas.draw_rect(Rect2(o + Vector2(2, 2) * px, Vector2(2, 3) * px), light)
-	canvas.draw_rect(Rect2(o + Vector2(3, 7) * px, Vector2(2, 1) * px), mid)
+	_draw_rows(canvas, kind, at - size * 0.5, scale, modulate, false)
+
+
+## One of ICONS, a pixel at a time from `o`; or, `flat`, every pixel of it in `color` (its shadow).
+static func _draw_rows(canvas: CanvasItem, kind: Kind, o: Vector2, scale: float, color: Color, flat: bool) -> void:
+	var icon: Dictionary = ICONS[kind]
+	var palette: Dictionary = icon["palette"]
+	var rows: Array = icon["rows"]
+	for y in rows.size():
+		var row: String = rows[y]
+		for x in row.length():
+			var ch := row[x]
+			if ch == ".":
+				continue
+			canvas.draw_rect(Rect2(o + Vector2(x, y) * scale, Vector2(scale, scale)), color if flat else palette[ch] * color)

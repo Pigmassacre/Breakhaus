@@ -105,11 +105,24 @@ func _ready() -> void:
 			await get_tree().create_timer(float(arg.trim_prefix("--clear-at="))).timeout
 			board.state = Board.State.CLEARED
 			board.floor_cleared.emit()
+		# `--drop=laser,shield`: those pickups hang over the board (to see them); `--give=` the same,
+		# caught at once (to try them).
+		elif arg.begins_with("--drop=") or arg.begins_with("--give="):
+			await get_tree().create_timer(1.6).timeout
+			var names := arg.substr(7).split(",")
+			for i in names.size():
+				var kind: int = Pickups.Kind.get(names[i].to_upper(), -1)
+				if kind < 0:
+					continue
+				var p := {"kind": kind, "pos": Vector2(Balance.BOARD_W * (i + 1) / (names.size() + 1), Balance.BOARD_H * 0.55), "t": 0.0}
+				board.pickups.append(p)
+				if arg.begins_with("--give="):
+					board._collect(p)
 		# `--all-effects`: every pickup with a timer running at once (for the HUD's badges).
 		elif arg == "--all-effects":
 			await get_tree().create_timer(1.0).timeout
 			for kind: Pickups.Kind in Pickups.INFO:
-				if kind != Pickups.Kind.MULTI and kind != Pickups.Kind.NARROW:
+				if kind not in [Pickups.Kind.MULTI, Pickups.Kind.NARROW, Pickups.Kind.BARRAGE]:
 					board.effects[kind] = 30.0
 		# `--sweep-at=5`: every block is broken after that many seconds, for a clean sweep.
 		elif arg.begins_with("--sweep-at="):

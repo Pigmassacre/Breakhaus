@@ -1,9 +1,11 @@
 extends Control
-## How to play, in three pages: the rules and the controls, the blocks and
-## the tricks, and the pickups (each with its real block or icon beside it).
+## How to play, in four pages: the rules and the controls, the blocks and
+## the tricks, the pickups, and the rare ones on a showcase of their own
+## (each with its real block or icon beside it, the pickups framed in the
+## colours of their rarity).
 ## Left and right (or the arrows on screen) turn the pages.
 
-const PAGES := 3
+const PAGES := 4
 
 var _page := 0
 var _pages: Array[Control] = []
@@ -23,7 +25,7 @@ func _ready() -> void:
 	holder.custom_minimum_size = Vector2(680, 960)
 	holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(holder)
-	for page: Control in [_rules(), _blocks(), _pickups()]:
+	for page: Control in [_rules(), _blocks(), _pickups(), _rares()]:
 		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		holder.add_child(page)
 		_pages.append(page)
@@ -153,33 +155,38 @@ func _blocks() -> Control:
 
 func _pickups() -> Control:
 	var box := _page_box("PICKUPS")
-	box.add_child(_text("Prize blocks (and once in a while any block) let one go. Catch it with the paddle or hit it with a ball. The rare ones, ringed in gold, are the strongest.", 2, UI.DIM))
-	box.add_child(_gap(6))
-	# Common to rare.
-	var kinds: Array = Pickups.INFO.keys()
-	kinds.sort_custom(func(a: Pickups.Kind, b: Pickups.Kind) -> bool: return Pickups.rarity(a) < Pickups.rarity(b))
-	for kind: Pickups.Kind in kinds:
-		var info := Pickups.info(kind)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 20)
-		var sample := _Sample.new()
-		sample.pickup = kind
-		sample.help = self
-		sample.custom_minimum_size = Vector2(60, 44)
-		row.add_child(sample)
-		var l := UI.label("%s (%s): %s" % [String(info["name"]), String(Pickups.RARITY_NAME[Pickups.rarity(kind)]).to_lower(), String(info["blurb"])], 2,
-			Color("ff7a6a") if info.get("bad", false) else UI.INK, HORIZONTAL_ALIGNMENT_LEFT)
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(580, 0)
-		row.add_child(l)
-		box.add_child(row)
+	box.add_theme_constant_override("separation", 10)
+	box.add_child(_text("Prize blocks (and once in a while any block) let one go. Catch it with the paddle or hit it with a ball.", 2, UI.DIM))
+	box.add_child(_gap(4))
+	for rarity: Pickups.Rarity in [Pickups.Rarity.COMMON, Pickups.Rarity.UNCOMMON]:
+		for kind: Pickups.Kind in Pickups.INFO:
+			if Pickups.rarity(kind) == rarity:
+				box.add_child(PickupCard.new(kind))
+		box.add_child(_gap(6))
 	return box
 
 
-## A block or a pickup, drawn as on the board.
+## The rare ones, each on a showcase card, and how rare.
+func _rares() -> Control:
+	var box := _page_box("RARE PICKUPS")
+	(box.get_child(0) as Label).add_theme_color_override("font_color", Pickups.RARITY_COLOR[Pickups.Rarity.RARE])
+	box.add_theme_constant_override("separation", 22)
+	var total := 0.0
+	var rare := 0.0
+	for kind: Pickups.Kind in Pickups.INFO:
+		total += Pickups.RARITY_WEIGHT[Pickups.rarity(kind)]
+		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
+			rare += Pickups.RARITY_WEIGHT[Pickups.Rarity.RARE]
+	box.add_child(_text("About one pickup in %d is rare: the strongest of them all. When one drops, a gold beam marks it. Don't let it fall!" % roundi(total / rare), 2, UI.DIM))
+	for kind: Pickups.Kind in Pickups.INFO:
+		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
+			box.add_child(PickupCard.new(kind, true))
+	return box
+
+
+## A block, drawn as on the board.
 class _Sample extends Control:
 	var block: Block
-	var pickup := -1
 	var help: Control
 
 	func _init() -> void:
@@ -194,5 +201,3 @@ class _Sample extends Control:
 		if block:
 			draw_rect(Rect2(Vector2(6 + Balance.PX * 1.5, 4 + Balance.BLOCK_DEPTH + Balance.PX * 1.5), Vector2(Balance.BLOCK_W, Balance.ROW_H)), Color(0, 0, 0, 0.35))
 			BlockArt.draw(self, block, Vector2(4, 4 + Balance.BLOCK_DEPTH), clock)
-		elif pickup >= 0:
-			Pickups.draw_icon(self, pickup, size * 0.5 - Vector2(0, sin(clock * 5.0) * 3.0), Balance.PX)

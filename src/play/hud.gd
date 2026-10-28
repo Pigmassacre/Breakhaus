@@ -353,6 +353,10 @@ func _draw_bars() -> void:
 		var part := clampf(left / _duration(kind), 0.0, 1.0)
 		var blink := left < 2.0 and fmod(left, 0.3) > 0.18
 		var ring := radius / BADGE * 5.0
+		# A rare one wears a gold ring, glinting.
+		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
+			var glint := 0.6 + 0.4 * sin(board.clock * 4.0)
+			_bars.draw_arc(at, radius + 3.0, 0.0, TAU, 48, Color(Pickups.RARITY_COLOR[Pickups.Rarity.RARE], glint), 3.0, true)
 		_bars.draw_circle(at, radius, Color(UI.SHADOW, 0.8), true, -1.0, true)
 		_bars.draw_circle(at, radius - ring, Color(color.darkened(0.6), 0.9), true, -1.0, true)
 		if not blink:
@@ -404,6 +408,14 @@ static func _duration(kind: Pickups.Kind) -> float:
 			return Balance.ROCKET_TIME
 		Pickups.Kind.SHIELD:
 			return Balance.SHIELD_TIME
+		Pickups.Kind.LASER:
+			return Balance.LASER_TIME
+		Pickups.Kind.MAGNET:
+			return Balance.MAGNET_TIME
+		Pickups.Kind.BLAST:
+			return Balance.BLAST_TIME
+		Pickups.Kind.HASTE:
+			return Balance.HASTE_TIME
 	return 10.0
 
 

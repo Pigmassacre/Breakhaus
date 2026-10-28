@@ -128,6 +128,20 @@ const ROCKET_RATE := 0.42
 const ROCKET_SPEED := 900.0
 const SHIELD_TIME := 15.0
 const MULTI_BALLS := 2
+## Rocket Barrage: this many rockets, one after another, each off to a column of its own.
+const BARRAGE_ROCKETS := 14
+const BARRAGE_GAP := 0.05
+## Laser: how long, and how often it hits the block it is burning into.
+const LASER_TIME := 6.0
+const LASER_TICK := 0.07
+## Magnet: how long; a ball it catches is let go after MAGNET_HOLD, or when you smash.
+const MAGNET_TIME := 12.0
+const MAGNET_HOLD := 1.5
+## Blast Ball: how long every block a ball hits goes off, knocking its neighbours.
+const BLAST_TIME := 8.0
+## Hurry Up (a bad one): how long the wall comes down this many times as fast.
+const HASTE_TIME := 8.0
+const HASTE_SPEED := 2.0
 
 # --- feel ---------------------------------------------------------------------------------------
 ## Freezes the game for a moment on a big hit (seconds).

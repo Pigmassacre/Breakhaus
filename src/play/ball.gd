@@ -10,6 +10,8 @@ var z := 0.0
 ## Riding on the paddle, waiting to be launched, at this offset from its middle.
 var held := false
 var held_offset := 0.0
+## Stuck to a Magnet paddle: let go when this runs out.
+var hold_time := 0.0
 ## Blocks it will still go straight through (a smash, or fire).
 var pierce := 0
 ## A smashed ball glows until it next meets the paddle.
