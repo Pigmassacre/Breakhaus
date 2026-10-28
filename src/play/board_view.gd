@@ -109,7 +109,8 @@ func _draw_shield() -> void:
 	bright.a = a
 	var x := 0.0
 	while x < Balance.BOARD_W:
-		var wobble := sin(board.clock * 8.0 + x * 0.05) * PX * 0.5
+		# A pixel up or down, never part of one.
+		var wobble := roundf(sin(board.clock * 8.0 + x * 0.05) * 0.75) * PX
 		draw_rect(Rect2(x, y + wobble, PX * 3.0, PX), bright)
 		x += PX * 4.0
 
@@ -159,10 +160,9 @@ func _pickup_z(p: Dictionary) -> float:
 	return PX * 3.0 + (sin(p["t"] * 5.0) * 0.5 + 0.5) * PX * 3.0
 
 
-## The pickup's size: popping up as it comes out, then breathing.
-func _pickup_scale(p: Dictionary) -> float:
-	var pop := clampf(p["t"] * 5.0, 0.0, 1.0)
-	return PX * (0.4 + 0.6 * pop) * (1.0 + 0.08 * sin(p["t"] * 10.0))
+## The pickup's size: always one art pixel to one of its own (the ring round it does the pulsing).
+func _pickup_scale(_p: Dictionary) -> float:
+	return PX
 
 
 func _draw_pickups() -> void:
@@ -175,7 +175,7 @@ func _draw_pickups() -> void:
 		var pulse := fmod(p["t"] * 1.5, 1.0)
 		var ring := c if not info.get("bad", false) else Color("ff2020")
 		ring.a = (1.0 - pulse) * 0.8
-		draw_arc(at, PX * (5.0 + pulse * 5.0), 0.0, TAU, 16, ring, PX * 0.75)
+		Pixels.ring(self, at, 5.0 + pulse * 5.0, 1, ring)
 		Pickups.draw_icon(self, kind, at, _pickup_scale(p))
 
 
@@ -253,29 +253,35 @@ func _draw_balls() -> void:
 		var n := ball.trail.size()
 		for i in n:
 			var t := float(i + 1) / (n + 1)
-			var s := Balance.BALL_R * 2.0 * t * 0.8
+			var s := roundi(Balance.BALL_R * 2.0 * t * 0.8 / PX)
 			var tc := c
 			if board.fever > 0.0:
 				# A rainbow streaming out behind.
 				tc = Color.from_hsv(fmod(board.clock * 1.5 + (n - i) * 0.07, 1.0), 0.8, 1.0)
 			tc.a = t * (0.5 if not ball.smashed and board.fever <= 0.0 else 0.8)
-			draw_rect(Rect2(ball.trail[i] - Vector2(0, lift + ball.z) - Vector2(s, s) * 0.5, Vector2(s, s)), tc)
-		var at := ball.pos - Vector2(0, lift + ball.z)
-		# Squashed along the way it was hit, without turning the pixels.
-		var turn := Transform2D(ball.squash_angle, Vector2.ZERO)
-		var squash := turn * Transform2D.IDENTITY.scaled(Vector2(ball.squash, 1.0 / ball.squash)) * turn.affine_inverse()
-		squash.origin = at
-		draw_set_transform_matrix(squash)
-		# The original's ball: six art pixels round, with a dark rim and a shine.
-		var dark := Color("26262e")
-		draw_rect(Rect2(-2 * PX, -3 * PX, 4 * PX, 6 * PX), dark)
-		draw_rect(Rect2(-3 * PX, -2 * PX, 6 * PX, 4 * PX), dark)
-		draw_rect(Rect2(-2 * PX, -2 * PX, 4 * PX, 4 * PX), c)
-		draw_rect(Rect2(-1 * PX, -3 * PX + PX, 2 * PX, PX), c)
-		draw_set_transform(at, 0.0, Vector2.ONE)
-		draw_rect(Rect2(-2 * PX, -2 * PX + PX * 3.0, 4 * PX, PX), c.darkened(0.3))
-		draw_rect(Rect2(-PX, -PX - PX * 0.0, PX, PX), Color.WHITE)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			Pixels.square(self, ball.trail[i] - Vector2(0, lift + ball.z), s, tc)
+		_draw_ball(ball, ball.pos - Vector2(0, lift + ball.z), c)
+
+
+## The original's ball: six art pixels round, with a dark rim, a shine and a shaded bottom. Just hit,
+## it squashes the pixel-art way, into a shape of its own (8 by 4 off a floor or ceiling, 4 by 8 off
+## a wall) rather than by stretching its pixels.
+func _draw_ball(ball: Ball, at: Vector2, c: Color) -> void:
+	var dark := Color("26262e")
+	var shape := 0
+	if ball.squash < 0.85:
+		var n := Vector2.from_angle(ball.squash_angle)
+		shape = 1 if absf(n.y) >= absf(n.x) else 2
+	# Each: the rim as two crossed rects, the inside, the shaded row and the shine, in pixels from the middle.
+	var parts: Array = [
+		[Rect2(-2, -3, 4, 6), Rect2(-3, -2, 6, 4), Rect2(-2, -2, 4, 4), Rect2(-2, 1, 4, 1), Rect2(-1, -1, 1, 1)],
+		[Rect2(-3, -2, 6, 4), Rect2(-4, -1, 8, 2), Rect2(-3, -1, 6, 2), Rect2(-3, 0, 6, 1), Rect2(-2, -1, 1, 1)],
+		[Rect2(-2, -3, 4, 6), Rect2(-1, -4, 2, 8), Rect2(-1, -3, 2, 6), Rect2(-1, 2, 2, 1), Rect2(-1, -2, 1, 1)],
+	][shape]
+	var colors := [dark, dark, c, c.darkened(0.3), Color.WHITE]
+	for i in parts.size():
+		var r: Rect2 = parts[i]
+		draw_rect(Rect2(at + r.position * PX, r.size * PX), colors[i])
 
 
 func _draw_rockets() -> void:
@@ -298,5 +304,9 @@ func _draw_bolts() -> void:
 		var lifted := PackedVector2Array()
 		for p in points:
 			lifted.append(p - Vector2(0, Balance.BLOCK_DEPTH))
-		draw_polyline(lifted, glow, PX * 2.5)
-		draw_polyline(lifted, core, PX * 0.75)
+		var glow_drawn := {}
+		var core_drawn := {}
+		for i in lifted.size() - 1:
+			Pixels.line(self, lifted[i], lifted[i + 1], glow, 3, glow_drawn)
+		for i in lifted.size() - 1:
+			Pixels.line(self, lifted[i], lifted[i + 1], core, 1, core_drawn)

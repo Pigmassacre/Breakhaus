@@ -242,7 +242,12 @@ pixels (4 units each, as the original drew its sprites at 4x): the walls,
 every shadow (down and to the right, further the higher the thing is),
 the blocks back to front (so a block hides the front face of the one
 behind it), the pickups, the paddle, the balls and their trails, and a
-thousand particles kept in packed arrays (`Particles`).
+thousand particles kept in packed arrays (`Particles`). Effects are drawn in whole
+art pixels on the board's grid (`Pixels`: squares, rings and stepped
+lines), so a pickup's ring, a spark or a bolt of lightning is made of the
+same size of pixel as the sprites; the sprites themselves still move
+smoothly, and the ball squashes into shapes of its own rather than
+stretching its pixels.
 
 **Pixels for the game, HD for the UI.** Everything on the board is pixel
 art; the menus and the HUD around it are flat and smooth: big words in

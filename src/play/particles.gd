@@ -166,9 +166,13 @@ func draw_shadows(canvas: CanvasItem, shadow: Color) -> void:
 		var k := kind[i]
 		if k == Kind.SPARK or k == Kind.SMOKE or k == Kind.EMBER:
 			continue
-		var s := size[i]
 		var off := Vector2(1.0, 1.0) * (Balance.PX + z[i] * 0.35)
-		canvas.draw_rect(Rect2(pos[i] + off - Vector2(s, s) * 0.5, Vector2(s, s)), shadow)
+		Pixels.square(canvas, pos[i] + off, _px(size[i]), shadow)
+
+
+## A size in board units as whole art pixels, one at least.
+static func _px(s: float) -> int:
+	return maxi(roundi(s / Balance.PX), 1)
 
 
 func draw(canvas: CanvasItem) -> void:
@@ -181,18 +185,18 @@ func draw(canvas: CanvasItem) -> void:
 			Kind.CHUNK:
 				if t < 0.25:
 					s *= t / 0.25
-				canvas.draw_rect(Rect2(p - Vector2(s, s) * 0.5, Vector2(s, s)), c)
+				if s >= Balance.PX * 0.5:
+					Pixels.square(canvas, p, _px(s), c)
 			Kind.SHARD:
 				var glint := c.lerp(Color.WHITE, 0.5 + 0.5 * sin(life[i] * 30.0 + i))
-				canvas.draw_rect(Rect2(p - Vector2(s, s * 0.5) * 0.5, Vector2(s, s * 0.5)), glint)
+				Pixels.rect(canvas, p, _px(s), _px(s * 0.5), glint)
 			Kind.SPARK:
 				c.a *= minf(t * 2.0, 1.0)
 				var tail := vel[i] * 0.02
-				canvas.draw_line(p, p - tail, c, s)
+				Pixels.line(canvas, p, p - tail, c, 1, {})
 			Kind.EMBER:
 				c.a *= t
-				var flick := s * (0.7 + 0.3 * sin(life[i] * 40.0 + i))
-				canvas.draw_rect(Rect2(p - Vector2(flick, flick) * 0.5, Vector2(flick, flick)), c)
+				Pixels.square(canvas, p, _px(s * (0.7 + 0.3 * sin(life[i] * 40.0 + i))), c)
 			Kind.SMOKE:
 				c.a *= t * t
-				canvas.draw_rect(Rect2(p - Vector2(s, s) * 0.5, Vector2(s, s)), c)
+				Pixels.square(canvas, p, _px(s), c)
