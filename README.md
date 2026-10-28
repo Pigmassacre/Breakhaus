@@ -50,13 +50,17 @@ editor in `../Godot/` and its installed 4.7.2 export templates.
 - **Web** is the single-threaded build (`web_nothreads_release.zip`), so it
   runs on itch.io and anywhere else without the cross-origin isolation
   headers threads need. `builds/Web/index.html` is the page.
-- **Android** needs the Android export template, and the Android SDK and a
-  JDK set in the editor's settings (Editor Settings > Export > Android). A
-  release build is signed with the keystore in
+- **Android** needs the Android release export template (the debug one
+  isn't used), and the Android SDK (platform-tools and build-tools) and a
+  JDK 17 set in the editor's settings (Editor Settings > Export > Android).
+  It is signed with the keystore in
   `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER`
   and `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`; without them the script
-  builds it signed with the debug key, which is fine for trying it on a
-  phone but not for a store. The APK is for arm64 and 32-bit arm, portrait,
+  signs it with the editor's debug keystore, which is fine for trying it on a
+  phone but not for a store.
+- **iOS** isn't built: Godot can only make the Xcode project away from a
+  Mac, and an iPhone won't install an app from itch.io anyway. iPhones
+  play the web build. The APK is for arm64 and 32-bit arm, portrait,
   full screen (immersive), and asks for nothing but the vibrator.
 
 ### Releasing to itch.io

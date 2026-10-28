@@ -10,9 +10,11 @@ beside it.
 Uses the stock editor in the Godot folder next to the repository, which
 exports with its own installed templates (Editor > Manage Export
 Templates). Android also needs the Android SDK and a JDK set in the
-editor's settings, and for a release build the keystore in
-GODOT_ANDROID_KEYSTORE_RELEASE_PATH, _USER and _PASSWORD; without those it
-is built signed with the debug key, to try out but not to publish.
+editor's settings (Editor Settings > Export > Android), and the keystore
+to sign it with in GODOT_ANDROID_KEYSTORE_RELEASE_PATH, _USER and
+_PASSWORD; without those it is signed with the editor's debug key
+(DEBUG_KEYSTORE), to try out but not to publish. Either way it is the
+release template, the only one this needs.
 """
 import os
 import re
@@ -24,12 +26,15 @@ GODOT_VERSION = "4.7.2.stable"
 if sys.platform == "win32":
     GODOT_EXE = "Godot_v4.7.2-stable_win64.exe"
     TEMPLATES = os.path.join(os.environ.get("APPDATA", ""), "Godot", "export_templates", GODOT_VERSION)
+    DEBUG_KEYSTORE = os.path.join(os.environ.get("APPDATA", ""), "Godot", "keystores", "debug.keystore")
 elif sys.platform == "darwin":
     GODOT_EXE = "Godot.app/Contents/MacOS/Godot"
     TEMPLATES = os.path.expanduser(f"~/Library/Application Support/Godot/export_templates/{GODOT_VERSION}")
+    DEBUG_KEYSTORE = os.path.expanduser("~/Library/Application Support/Godot/keystores/debug.keystore")
 else:
     GODOT_EXE = "Godot_v4.7.2-stable_linux.x86_64"
     TEMPLATES = os.path.expanduser(f"~/.local/share/godot/export_templates/{GODOT_VERSION}")
+    DEBUG_KEYSTORE = os.path.expanduser("~/.local/share/godot/keystores/debug.keystore")
 
 # The template file each platform's release export needs.
 TEMPLATE_FOR = {
@@ -108,17 +113,21 @@ for preset in presets:
     if os.path.isdir(build_dir):
         shutil.rmtree(build_dir)
     os.makedirs(build_dir, exist_ok=True)
-    mode = "--export-release"
+    env = None
     if platforms[preset] == "Android" and not os.environ.get("GODOT_ANDROID_KEYSTORE_RELEASE_PATH"):
-        print("No release keystore (GODOT_ANDROID_KEYSTORE_RELEASE_PATH): Android is built signed with the debug key.")
-        mode = "--export-debug"
+        print("No release keystore (GODOT_ANDROID_KEYSTORE_RELEASE_PATH): Android is signed with the debug key.")
+        if not os.path.isfile(DEBUG_KEYSTORE):
+            print(f"Error: no debug keystore at {DEBUG_KEYSTORE} (the editor makes one once it has a JDK)", file=sys.stderr)
+            sys.exit(1)
+        env = dict(os.environ, GODOT_ANDROID_KEYSTORE_RELEASE_PATH=DEBUG_KEYSTORE,
+            GODOT_ANDROID_KEYSTORE_RELEASE_USER="androiddebugkey", GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="android")
     print(f"Exporting {preset}...")
     # The commit, for the title's version (Game.version_text): a build has no
     # git to ask. The presets' include filters take it in.
     with open(commit_file, "w", encoding="utf-8") as f:
         f.write(commit + "\n")
     try:
-        run([godot_path, "--headless", "--path", ".", mode, preset], f"Export for {preset}")
+        run([godot_path, "--headless", "--path", ".", "--export-release", preset], f"Export for {preset}", env)
     finally:
         os.remove(commit_file)
     if not os.path.isfile(os.path.join(script_dir, export_paths[preset])):
