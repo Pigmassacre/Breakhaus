@@ -153,9 +153,12 @@ func _blocks() -> Control:
 
 func _pickups() -> Control:
 	var box := _page_box("PICKUPS")
-	box.add_child(_text("Prize blocks (and now and then any block) let one go. Catch it with the paddle or hit it with a ball.", 2, UI.DIM))
+	box.add_child(_text("Prize blocks (and once in a while any block) let one go. Catch it with the paddle or hit it with a ball. The rare ones, ringed in gold, are the strongest.", 2, UI.DIM))
 	box.add_child(_gap(6))
-	for kind: Pickups.Kind in Pickups.INFO:
+	# Common to rare.
+	var kinds: Array = Pickups.INFO.keys()
+	kinds.sort_custom(func(a: Pickups.Kind, b: Pickups.Kind) -> bool: return Pickups.rarity(a) < Pickups.rarity(b))
+	for kind: Pickups.Kind in kinds:
 		var info := Pickups.info(kind)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 20)
@@ -164,7 +167,7 @@ func _pickups() -> Control:
 		sample.help = self
 		sample.custom_minimum_size = Vector2(60, 44)
 		row.add_child(sample)
-		var l := UI.label("%s: %s" % [String(info["name"]), String(info["blurb"])], 2,
+		var l := UI.label("%s (%s): %s" % [String(info["name"]), String(Pickups.RARITY_NAME[Pickups.rarity(kind)]).to_lower(), String(info["blurb"])], 2,
 			Color("ff7a6a") if info.get("bad", false) else UI.INK, HORIZONTAL_ALIGNMENT_LEFT)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size = Vector2(580, 0)

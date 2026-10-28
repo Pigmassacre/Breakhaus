@@ -137,6 +137,8 @@ func _draw_shadows() -> void:
 	var pz := board.paddle_z + _paddle_hop() + Balance.PADDLE_DEPTH
 	draw_rect(Rect2(pr.position + _shadow_offset(pz), pr.size), SHADOW)
 	for ball in board.balls:
+		if board.arriving:
+			break
 		var s := Balance.BALL_R * 2.0
 		var at := ball.pos + _shadow_offset(ball.z + PX * 3.0) - Vector2(s, s) * 0.5
 		draw_rect(Rect2(at + Vector2(PX, 0), Vector2(s - PX * 2.0, s)), SHADOW)
@@ -150,7 +152,7 @@ func _draw_shadows() -> void:
 
 func _draw_blocks() -> void:
 	for b: Block in board.grid:
-		if b:
+		if b and not (board.arriving and b.raining):
 			BlockArt.draw(self, b, b.position() + Vector2(b.shake, -b.z), board.clock)
 
 
@@ -176,6 +178,10 @@ func _draw_pickups() -> void:
 		var ring := c if not info.get("bad", false) else Color("ff2020")
 		ring.a = (1.0 - pulse) * 0.8
 		Pixels.ring(self, at, 5.0 + pulse * 5.0, 1, ring)
+		# A rare one has a gold ring as well, out of step with the first.
+		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
+			var late := fmod(p["t"] * 1.5 + 0.5, 1.0)
+			Pixels.ring(self, at, 5.0 + late * 5.0, 1, Color(UI.GOLD, (1.0 - late) * 0.9))
 		Pickups.draw_icon(self, kind, at, _pickup_scale(p))
 
 
@@ -189,6 +195,8 @@ func _paddle_hop() -> float:
 
 
 func _draw_paddle() -> void:
+	if board.arriving:
+		return
 	var r := board.paddle_rect()
 	var squash := board.paddle_squash
 	var w := r.size.x * (1.0 + squash * 0.08)
@@ -248,6 +256,8 @@ func _ball_color(ball: Ball) -> Color:
 func _draw_balls() -> void:
 	var lift := PX * 3.0
 	for ball in board.balls:
+		if board.arriving:
+			break
 		var c := _ball_color(ball)
 		# The trail: squares shrinking and fading behind it.
 		var n := ball.trail.size()

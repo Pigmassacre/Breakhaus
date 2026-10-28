@@ -96,7 +96,7 @@ breaking its bottom rows.
 
 **The ball never dies.** It bounces off the bottom of the board as off any
 wall, as in the original. But that's a miss: the ball is back to its
-slowest, your combo is gone, the wall jumps a third of the way to coming
+slowest, your combo is gone, the wall jumps half the way to coming
 down, and the screen flashes red. With more than one ball in play, those
 that go past the paddle are simply gone, until there is one left.
 
@@ -131,8 +131,11 @@ bar back to empty. It is the way out when the wall is at the line.
 
 **The floors.** Clearing a floor's last block clears it: a bonus, a burst
 of light, the glass cracking from the middle out and falling away into
-the dark, and you are on the floor below, faster (the wall comes down
-half a second sooner each floor, to 4.2 seconds at the quickest) and with
+the dark, and you fall after it, the dust rushing up past you: the floor
+below comes up out of the dark, small and dim, nearer and nearer, until
+you land on it with a thump, a shock wave and a puff of dust round the
+walls, and its blocks rain in. It is faster (the wall comes down half a
+second sooner each floor, from 8 seconds to 4 at the quickest) and has
 more rows to break. The floors are themed: the Penthouse (the original's
 pink glass), the Offices (a glowing grid), the Disco (lit tiles), the
 Library (planks), the Kitchen (tiles), the Greenhouse (green glass), the
@@ -141,31 +144,35 @@ demolishes the haus, and the basements go on down for as long as you
 last. On a wide screen the board is as tall as the screen, the floor and
 the haus (the floor you are on lit up) to its left and the score and the
 pickups running to its right; on a tall one (a phone) they are over it. A wall that is swept clean while the floor still has
-rows to send is a Clean Sweep: a big bonus (`SCORE_SWEEP`), and the next
-six rows (`SWEEP_ROWS`) rain in all at once.
+rows to send is a Clean Sweep: a big bonus (`SCORE_SWEEP`), and six rows
+(`SWEEP_ROWS`) rain in all at once, the floor's next six or, if it has
+fewer left, those and new ones to make up six.
 
 **Blocks.** Plain ones take one hit; studded ones a hit per stud and one
 more. Steel takes five and won't burn. TNT goes off when it breaks, a
 moment later, hitting everything round it (and other TNT, in a chain).
 Prize blocks (a rainbow inside) always hold a pickup, and any block has a
-small chance to. Gold is worth a pile of points. Moss grows into an empty
+small chance to (1.5%). Gold is worth a pile of points. Moss grows into an empty
 cell beside it every time the wall comes down. The deeper floors bring
 more of the tough kinds.
 
 **Pickups** hang where they came out for a moment, then drift down; catch
-one with the paddle or hit it with a ball.
+one with the paddle or hit it with a ball. Each has a rarity
+(`Pickups.RARITY_WEIGHT`): a common one is eight times as likely as a rare
+one, an uncommon one about three times. The rare ones are the strongest,
+and a gold ring pulses round them as well as their own.
 
-| Pickup | |
-| --- | --- |
-| Multiball | Every ball splits in three. |
-| Fireball | Balls burn straight through blocks and set them alight; fire spreads. |
-| Deep Freeze | The wall stops coming down, and every block shatters in one hit. |
-| Zap | Every hit arcs lightning to the two blocks nearest. |
-| Wide Paddle | A bigger paddle. |
-| Shrink | A smaller paddle: the one to dodge (a red ring pulses round it). |
-| Overdrive | Faster balls, double points. |
-| Rockets | The paddle fires rockets, two at a time. |
-| Shield | A barrier under the paddle: no misses. |
+| Pickup | Rarity | |
+| --- | --- | --- |
+| Wide Paddle | Common | A bigger paddle. |
+| Shrink | Common | A smaller paddle: the one to dodge (a red ring pulses round it). |
+| Overdrive | Common | Faster balls, double points. |
+| Multiball | Uncommon | Every ball splits in three. |
+| Zap | Uncommon | Every hit arcs lightning to the two blocks nearest. |
+| Rockets | Uncommon | The paddle fires rockets, two at a time. |
+| Fireball | Rare | Balls burn straight through blocks and set them alight; fire spreads. |
+| Deep Freeze | Rare | The wall stops coming down, and every block shatters in one hit. |
+| Shield | Rare | A barrier under the paddle: no misses. |
 
 The ones that last show along the top of the board, each with the time it
 has left.
@@ -272,7 +279,10 @@ stay crisp however they move.
   the edges and fire flickers over it; and when a floor is cleared it
   cracks into Voronoi pieces from the middle out, and they drop away.
 - `src/fx/sunrays.gdshader` is the backdrop: rays turning slowly round the
-  board, darker in steps away from it, with motes of dust, red in danger.
+  board, darker in steps away from it, red in danger, with dust drifting
+  up in three layers of parallax (the near one in bigger pixels, faster
+  and brighter), each mote an art pixel or two but gliding smoothly, and
+  rushing past as you fall between floors.
 - `src/fx/post.gdshader` is over the whole game, under the HUD: a shock
   wave rippling out from a big hit, colour fringes with the shake, a flash
   for a pickup or a miss, a red vignette when the wall is close, and the

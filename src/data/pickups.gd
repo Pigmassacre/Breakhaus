@@ -1,28 +1,34 @@
 class_name Pickups
 ## What a pickup can be: its icon (from the original game's sprites, or
 ## drawn for the new ones), its name and blurb for the HUD and How to play,
-## and how often it turns up.
+## and how rare it is: the common ones are mixed blessings, the uncommon
+## ones help, and the rare ones (the strongest) hardly ever turn up.
 
 enum Kind { MULTI, FIRE, FROST, ZAP, WIDE, NARROW, OVERDRIVE, ROCKET, SHIELD }
+enum Rarity { COMMON, UNCOMMON, RARE }
+
+## How often a pickup of each rarity turns up, against the others.
+const RARITY_WEIGHT := {Rarity.COMMON: 12.0, Rarity.UNCOMMON: 5.0, Rarity.RARE: 1.5}
+const RARITY_NAME := {Rarity.COMMON: "Common", Rarity.UNCOMMON: "Uncommon", Rarity.RARE: "Rare"}
 
 const INFO := {
-	Kind.MULTI: {"name": "Multiball", "sprite": "multiball", "color": Color("ff3dff"), "weight": 14,
+	Kind.MULTI: {"name": "Multiball", "sprite": "multiball", "color": Color("ff3dff"), "rarity": Rarity.UNCOMMON,
 		"blurb": "Every ball splits in three."},
-	Kind.FIRE: {"name": "Fireball", "sprite": "fire", "color": Color("ff7a1a"), "weight": 10,
+	Kind.FIRE: {"name": "Fireball", "sprite": "fire", "color": Color("ff7a1a"), "rarity": Rarity.RARE,
 		"blurb": "Balls burn straight through blocks and set them alight."},
-	Kind.FROST: {"name": "Deep Freeze", "sprite": "frost", "color": Color("3dc8ff"), "weight": 9,
+	Kind.FROST: {"name": "Deep Freeze", "sprite": "frost", "color": Color("3dc8ff"), "rarity": Rarity.RARE,
 		"blurb": "Stops the wall coming down, and every block shatters in one hit."},
-	Kind.ZAP: {"name": "Zap", "sprite": "electricity", "color": Color("fff23d"), "weight": 9,
+	Kind.ZAP: {"name": "Zap", "sprite": "electricity", "color": Color("fff23d"), "rarity": Rarity.UNCOMMON,
 		"blurb": "Every hit arcs lightning to the blocks nearby."},
-	Kind.WIDE: {"name": "Wide Paddle", "sprite": "enlarger", "color": Color("3dff6e"), "weight": 9,
+	Kind.WIDE: {"name": "Wide Paddle", "sprite": "enlarger", "color": Color("3dff6e"), "rarity": Rarity.COMMON,
 		"blurb": "A bigger paddle for a while."},
-	Kind.NARROW: {"name": "Shrink", "sprite": "reducer", "color": Color("ff5a3d"), "weight": 5, "bad": true,
+	Kind.NARROW: {"name": "Shrink", "sprite": "reducer", "color": Color("ff5a3d"), "rarity": Rarity.COMMON, "bad": true,
 		"blurb": "A smaller paddle for a while. Dodge it!"},
-	Kind.OVERDRIVE: {"name": "Overdrive", "sprite": "doublespeed", "color": Color("3dffb1"), "weight": 7,
+	Kind.OVERDRIVE: {"name": "Overdrive", "sprite": "doublespeed", "color": Color("3dffb1"), "rarity": Rarity.COMMON,
 		"blurb": "Faster balls, double points."},
-	Kind.ROCKET: {"name": "Rockets", "sprite": "rocket", "color": Color("ff4545"), "weight": 7,
+	Kind.ROCKET: {"name": "Rockets", "sprite": "rocket", "color": Color("ff4545"), "rarity": Rarity.UNCOMMON,
 		"blurb": "The paddle fires rockets."},
-	Kind.SHIELD: {"name": "Shield", "sprite": "", "color": Color("6ad8ff"), "weight": 7,
+	Kind.SHIELD: {"name": "Shield", "sprite": "", "color": Color("6ad8ff"), "rarity": Rarity.RARE,
 		"blurb": "A barrier under the paddle: no misses."},
 }
 
@@ -49,16 +55,20 @@ static func texture(kind: Kind) -> Texture2D:
 	return _textures[sprite]
 
 
+static func rarity(kind: Kind) -> Rarity:
+	return INFO[kind]["rarity"]
+
+
 static func pick(rng: RandomNumberGenerator) -> Kind:
-	var total := 0
+	var total := 0.0
 	for kind: Kind in INFO:
-		total += INFO[kind]["weight"]
-	var roll := rng.randi() % total
+		total += RARITY_WEIGHT[rarity(kind)]
+	var roll := rng.randf() * total
 	for kind: Kind in INFO:
-		roll -= INFO[kind]["weight"]
-		if roll < 0:
+		roll -= RARITY_WEIGHT[rarity(kind)]
+		if roll < 0.0:
 			return kind
-	return Kind.MULTI
+	return Kind.WIDE
 
 
 ## The icon's shadow: its own outline filled with `color` (one flat layer, so it doesn't darken where

@@ -16,6 +16,9 @@ uniform float clock = 0.0;
 uniform float danger = 0.0;
 // Brightens it all for a moment (a floor cleared).
 uniform float bloom = 0.0;
+// How far the dust has drifted up, in art pixels (the backdrop runs it on, faster as you fall
+// between floors); the nearer layers move further.
+uniform float rise = 0.0;
 // Fever: a rainbow running smoothly round behind the rays.
 uniform float fever = 0.0;
 
@@ -46,10 +49,22 @@ void fragment() {
 	// Darker the further out, in flat steps.
 	float fall = floor(clamp(dist / (max(size.x, size.y) * 0.75), 0.0, 1.0) * 4.0) / 4.0;
 	col *= 1.0 - fall * 0.45;
-	// Dust: the odd pixel drifting up and blinking.
-	vec2 drift = cell + vec2(0.0, mod(floor(clock * 6.0), 4096.0));
-	float mote = step(0.9985, hash(drift));
-	col += mote * ray_b.rgb * 0.8 * (0.5 + 0.5 * sin(clock * 3.0 + cell.x));
+	// Dust in three layers, far to near: the nearer, the bigger its pixels, the faster it drifts up
+	// and the brighter it is; each its own scatter, blinking.
+	for (int layer = 0; layer < 3; layer++) {
+		float l = float(layer);
+		float big = layer == 2 ? 2.0 : 1.0;
+		float speed = l == 0.0 ? 0.35 : (l == 1.0 ? 1.0 : 2.4);
+		// Its grid slides up smoothly (not a whole pixel at a time): the motes keep their art-pixel
+		// size but move like everything else does.
+		float lift = mod(rise * speed * px, 4096.0 * px * big);
+		vec2 dust_cell = floor((UV * size + vec2(0.0, lift)) / (px * big));
+		vec2 drift = dust_cell + vec2(l * 1013.0, 0.0);
+		float density = l == 0.0 ? 0.9985 : (l == 1.0 ? 0.9992 : 0.9988);
+		float mote = step(density, hash(drift));
+		float twinkle = 0.5 + 0.5 * sin(clock * (2.0 + l) + dust_cell.x * 1.7 + l);
+		col += mote * ray_b.rgb * (0.35 + l * 0.4) * twinkle;
+	}
 	float pulse = 0.5 + 0.5 * sin(clock * 6.0);
 	col = mix(col, vec3(0.35, 0.03, 0.06) * (0.7 + 0.3 * on), danger * (0.35 + 0.25 * pulse));
 	col += ray_b.rgb * bloom * 1.5;

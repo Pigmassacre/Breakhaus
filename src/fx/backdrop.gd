@@ -9,6 +9,9 @@ var danger := 0.0
 var speed := 0.08
 ## 0 to 1: the rays gone rainbow (Fever).
 var fever := 0.0
+## How fast the dust drifts up, in art pixels a second (fast while falling between floors).
+var rise_speed := 6.0
+var _rise := 0.0
 var _turn := 0.0
 var _clock := 0.0
 var _material := ShaderMaterial.new()
@@ -26,12 +29,14 @@ func _init() -> void:
 func _process(delta: float) -> void:
 	_clock += delta
 	_turn += delta * speed
+	_rise = fmod(_rise + delta * rise_speed, 4096.0 * 64.0)
 	_material.set_shader_parameter("size", size)
 	_material.set_shader_parameter("center", center if center.x >= 0.0 else size * 0.5)
 	_material.set_shader_parameter("turn", _turn)
 	_material.set_shader_parameter("clock", _clock)
 	_material.set_shader_parameter("danger", danger)
 	_material.set_shader_parameter("fever", fever)
+	_material.set_shader_parameter("rise", _rise)
 
 
 ## Fades over to a floor's colours.

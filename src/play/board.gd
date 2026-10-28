@@ -106,6 +106,9 @@ var clock := 0.0
 var demo := false
 ## The floor breaking up under it all after it is cleared, 0 to 1 (the floor shader's).
 var shatter := 0.0
+## Falling into place on a new floor: what is still up in the air (blocks to rain in, the paddle and
+## ball to drop) isn't drawn until it has landed.
+var arriving := false
 
 var _view: Node2D
 
@@ -116,6 +119,8 @@ func _ready() -> void:
 	grid.resize(COLS * ROWS)
 	_view = preload("res://src/play/board_view.gd").new()
 	_view.board = self
+	# Drawn even while the board is held still (a hitstop, a fall between floors).
+	_view.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_view)
 
 
@@ -903,9 +908,8 @@ func _check_cleared() -> void:
 		Audio.play("fanfare", -2.0)
 		hitstop.emit(Balance.HITSTOP_BIG)
 		shake.emit(6.0)
-		var count := mini(Balance.SWEEP_ROWS, rows_queued)
-		rows_queued -= count
-		_rain_rows(count, 0, 700.0)
+		rows_queued = maxi(rows_queued - Balance.SWEEP_ROWS, 0)
+		_rain_rows(Balance.SWEEP_ROWS, 0, 700.0)
 		wave_timer = 0.0
 		_find_lowest()
 		return

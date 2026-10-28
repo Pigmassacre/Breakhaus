@@ -156,7 +156,7 @@ static func _block(rng: RandomNumberGenerator, level: int, color: Color, twist :
 		steel = 0.03
 	var tnt := (0.03 if level < 1 else 0.045) * float(twist.get("tnt", 0.0 if level < 1 else 1.0))
 	var moss := maxf(0.0 if level < 4 else minf(0.025 + (level - 4) * 0.01, 0.07), 0.025 if twist.has("moss") else 0.0) * float(twist.get("moss", 1.0))
-	var prize := 0.05
+	var prize := 0.02
 	var gold := 0.02 * float(twist.get("gold", 1.0))
 	var tough := minf((0.06 + level * 0.045) * float(twist.get("tough", 1.0)), 0.6)
 	var acc := 0.0

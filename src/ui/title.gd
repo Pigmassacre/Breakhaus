@@ -39,10 +39,13 @@ func _ready() -> void:
 	var tagline := UI.label("BREAK THE HAUS BEFORE IT BREAKS YOU", 2, UI.DIM)
 	column.add_child(tagline)
 	column.add_child(_gap(36))
+	# The menu and the modes take turns in one slot, as big as the bigger of them, so that swapping
+	# them (or anything changing under them) never moves a button.
+	var menu_slot := CenterContainer.new()
+	column.add_child(menu_slot)
 	_menu = VBoxContainer.new()
 	_menu.add_theme_constant_override("separation", 16)
-	_menu.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	column.add_child(_menu)
+	menu_slot.add_child(_menu)
 	_buttons = [
 		UI.button("PLAY", _show_modes),
 		UI.button("HOW TO PLAY", func() -> void: _go("help")),
@@ -58,9 +61,8 @@ func _ready() -> void:
 	UI.link_focus(_buttons)
 	_modes = VBoxContainer.new()
 	_modes.add_theme_constant_override("separation", 16)
-	_modes.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_modes.visible = false
-	column.add_child(_modes)
+	menu_slot.add_child(_modes)
 	for mode: String in Modes.ALL:
 		var b := UI.button(Modes.name_of(mode).to_upper(), func() -> void:
 			Game.mode = mode
@@ -79,15 +81,21 @@ func _ready() -> void:
 	var stats := ("BEST %s" % Hud._format(best)) if best > 0 else ""
 	if Game.demolished > 0:
 		stats += "    HAUS DEMOLISHED x%d" % Game.demolished
+	# The stats and a mode's description share a slot of a fixed size too, room for five lines.
+	var text_slot := Control.new()
+	text_slot.custom_minimum_size = Vector2(640, 130)
+	text_slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	text_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(text_slot)
 	_stats = UI.label(stats, 2, UI.GOLD)
-	column.add_child(_stats)
 	_blurb = UI.label("", 2, UI.INK)
 	_blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_blurb.custom_minimum_size = Vector2(620, 80)
-	_blurb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_blurb.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_blurb.visible = false
-	column.add_child(_blurb)
+	for l: Label in [_stats, _blurb]:
+		l.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		text_slot.add_child(l)
+	_fit_slot.call_deferred(menu_slot)
 	var version := UI.label(Game.version_text().to_upper(), 1, UI.DIM, HORIZONTAL_ALIGNMENT_LEFT)
 	version.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	version.position += Vector2(20, -36)
@@ -119,6 +127,13 @@ func _place_rays() -> void:
 func _go(screen: String) -> void:
 	_logo.ripple(_logo.size * 0.5, 1.2)
 	Game.goto(screen)
+
+
+## The menu slot as big as the bigger of the menu and the modes.
+func _fit_slot(slot: Control) -> void:
+	var a := _menu.get_combined_minimum_size()
+	var b := _modes.get_combined_minimum_size()
+	slot.custom_minimum_size = Vector2(maxf(a.x, b.x), maxf(a.y, b.y))
 
 
 func _show_modes() -> void:

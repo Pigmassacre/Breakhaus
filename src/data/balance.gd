@@ -58,12 +58,12 @@ const MAX_BALLS := 24
 
 # --- waves --------------------------------------------------------------------------------------
 ## Seconds between the wall coming down a row: on the first floor, and the fastest it gets.
-const WAVE_TIME := 10.0
-const WAVE_TIME_MIN := 5.0
+const WAVE_TIME := 8.0
+const WAVE_TIME_MIN := 4.0
 ## Taken off WAVE_TIME for every floor down.
 const WAVE_TIME_STEP := 0.5
 ## A miss lets the wall come on: this much of a wave at once.
-const MISS_PUSH := 0.3
+const MISS_PUSH := 0.5
 ## The blocks shake for this long before they come down.
 const WAVE_RUMBLE := 1.2
 ## Rows a floor starts with, and rows still to come on it (more on each floor).
@@ -80,7 +80,7 @@ const CRITICAL_ROWS := 1
 # --- blocks -------------------------------------------------------------------------------------
 const STEEL_HP := 5
 ## Every block has this chance of carrying a pickup, prize blocks aside (they always do).
-const DROP_CHANCE := 0.035
+const DROP_CHANCE := 0.015
 ## A burning block takes a hit this often, and passes the fire on to a neighbour this often.
 const BURN_TICK := 0.9
 const BURN_SPREAD := 0.35
@@ -91,7 +91,8 @@ const TNT_RADIUS := 1
 const SCORE_BLOCK := 10
 const SCORE_GOLD := 250
 const SCORE_FLOOR := 2500
-## Sweeping the board clean with rows still to come: this, and SWEEP_ROWS of them rain in at once.
+## Sweeping the board clean with rows still to come: this, and SWEEP_ROWS rows rain in at once
+## (taken off the rows to come, and made up with new ones if fewer are left).
 const SCORE_SWEEP := 2000
 const SWEEP_ROWS := 6
 ## Each floor down is worth this much more, on everything.

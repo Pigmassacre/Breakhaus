@@ -31,6 +31,11 @@ var _over := false
 var _paused := false
 ## Rush: the time left on the clock, and the last whole second of it (for the tick in the last ten).
 var rush_left := 0.0
+## Falling on to a new floor: 0 while it is far below (small, dark, not yet there), 1 landed.
+var _arrive := 1.0
+## Where the board goes, and its zoom, once it has landed (set by the layout).
+var _board_at := Vector2.ZERO
+var _board_zoom := 1.0
 var _rush_second := 0
 
 
@@ -124,6 +129,62 @@ func _start_floor(n: int) -> void:
 	hud.refresh()
 
 
+## The fall on to floor `n`: it comes up out of the dark below, small and dim, growing faster and
+## faster as it nears, the dust streaming up past it; then it lands with a thump, a shock and a
+## puff of dust round the walls, and its blocks rain in.
+func _fall_to_floor(n: int) -> void:
+	level = n
+	board.start_floor(n)
+	# Held still (its blocks up out of sight, the paddle too) until it has landed.
+	board.process_mode = Node.PROCESS_MODE_DISABLED
+	board.arriving = true
+	var t := Floors.theme(n)
+	backdrop.set_theme_colors(t, 1.2)
+	Audio.play_music(t["music"], 1.5)
+	Audio.muffle(0.0)
+	Audio.play("collapse", -6.0, 0.6)
+	var fall := create_tween()
+	fall.tween_method(_set_arrive, 0.0, 1.0, 1.1).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fall.parallel().tween_property(backdrop, "rise_speed", 6.0, 1.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await fall.finished
+	if _over or not is_inside_tree():
+		return
+	# Landed.
+	add_shake(14.0)
+	shock(Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.6), 0.8)
+	flash(t["light"], 0.2)
+	Audio.play("boom", -2.0, 0.55)
+	Audio.play("drop", 0.0, 0.7)
+	Game.buzz(80)
+	for i in 28:
+		# Dust puffing out along the walls and the bottom.
+		var side := i % 3
+		var at := Vector2(randf() * Balance.BOARD_W, Balance.BOARD_H - Balance.PX * 2.0)
+		if side < 2:
+			at = Vector2(Balance.PX * 2.0 if side == 0 else Balance.BOARD_W - Balance.PX * 2.0, randf() * Balance.BOARD_H)
+		board.particles.smoke(at, 1, 4.0, Color(t["light"], 0.5))
+	board.arriving = false
+	board.process_mode = Node.PROCESS_MODE_INHERIT
+	hud.floor_card(n)
+	hud.refresh()
+
+
+func _set_arrive(v: float) -> void:
+	_arrive = v
+	_place_board()
+
+
+## The board where the layout put it, or, while it is falling into place, smaller, lower and darker.
+func _place_board() -> void:
+	var size := Vector2(Balance.BOARD_W, Balance.BOARD_H) * _board_zoom
+	var grow := lerpf(0.3, 1.0, _arrive)
+	var center := _board_at + size * 0.5 + Vector2(0, (1.0 - _arrive) * size.y * 0.25)
+	board.scale = Vector2.ONE * _board_zoom * grow
+	board.position = center - size * 0.5 * grow
+	var light := lerpf(0.2, 1.0, _arrive)
+	board.modulate = Color(light, light, light, clampf(_arrive * 3.0, 0.0, 1.0)) if _arrive < 1.0 else Color.WHITE
+
+
 func _layout() -> void:
 	var view := get_viewport().get_visible_rect().size
 	var frame := Vector2(Balance.BOARD_W + Balance.WALL * 2.0, Balance.BOARD_H + Balance.WALL + Balance.BLOCK_DEPTH)
@@ -142,8 +203,9 @@ func _layout() -> void:
 		zoom = clampf(minf((view.x - 24.0) / frame.x, (view.y - above - below) / Balance.BOARD_H), 0.6, 1.4)
 		var spare := maxf(view.y - above - below - Balance.BOARD_H * zoom, 0.0)
 		at = Vector2(roundf((view.x - Balance.BOARD_W * zoom) * 0.5), roundf(above + spare * 0.5))
-	board.position = at
-	board.scale = Vector2(zoom, zoom)
+	_board_at = at
+	_board_zoom = zoom
+	_place_board()
 	backdrop.center = at + Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.4) * zoom
 	hud.layout(Rect2(at, Vector2(Balance.BOARD_W, Balance.BOARD_H) * zoom), zoom)
 
@@ -317,11 +379,13 @@ func _on_floor_cleared() -> void:
 		shock(Vector2(Balance.BOARD_W * 0.5, Balance.BOARD_H * 0.5), 1.0)
 		Audio.play("boom", 0.0, 0.6))
 	crack.tween_property(board, "shatter", 1.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# What is left of it fades as it falls, and the dust starts rushing past: you are falling too.
+	crack.parallel().tween_property(board, "modulate:a", 0.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	crack.parallel().tween_property(backdrop, "rise_speed", 240.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await crack.finished
 	if _over:
 		return
-	flash(Color.BLACK, 0.6)
-	_start_floor(level + 1)
+	_fall_to_floor(level + 1)
 
 
 # --- rush ---------------------------------------------------------------------------------------
