@@ -256,7 +256,8 @@ muffled under the pause menu and the end. Each floor has its track.
   scores, options); `--floor=3` starts the game on that floor (0 is the
   top).
 - `--autoplay` has the game play itself: the paddle follows the lowest ball
-  down, smashes now and then and quakes when it is in trouble.
+  down, smashes now and then and quakes when it is in trouble;
+  `--autoplay=lazy` only launches the ball, and the wall wins.
 - `--short-floors` makes every floor a single row, and `--clear-at=5`
   clears the floor after five seconds: for what comes between floors.
 - `--shots=1.5,4,9` saves a screenshot to `shots/` at each of those seconds

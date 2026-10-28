@@ -4,7 +4,8 @@ extends Node
 ##
 ## Run with `-- --screen=play` (or any screen's name) to start there, and
 ## `-- --floor=3` to start the game on that floor (from 0, the top). For
-## testing without playing: `--autoplay` has the game play itself,
+## testing without playing: `--autoplay` has the game play itself (and
+## `--autoplay=lazy` just launches the ball and lets the wall win),
 ## `--short-floors` makes every floor one row, `--clear-at=5` clears the
 ## floor after five seconds, and
 ## `--shots=1.5,4,9` saves a screenshot to shots/ at each of those seconds
@@ -49,6 +50,8 @@ func _ready() -> void:
 			args["floor"] = int(arg.trim_prefix("--floor="))
 		elif arg == "--autoplay":
 			Game.autoplay = true
+		elif arg == "--autoplay=lazy":
+			Game.autoplay_lazy = true
 		elif arg == "--short-floors":
 			Game.short_floors = true
 		elif arg.begins_with("--size="):

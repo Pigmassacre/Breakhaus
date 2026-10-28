@@ -606,7 +606,8 @@ func _collide_paddle(ball: Ball) -> void:
 		return
 	# Where on the paddle it landed decides the angle, and the paddle's own speed bends it.
 	var offset := clampf((ball.pos.x - paddle_x) / (paddle_w * 0.5), -1.0, 1.0)
-	var angle := offset * Balance.PADDLE_MAX_ANGLE + paddle_vx * Balance.PADDLE_ENGLISH
+	# A touch of chance, so a ball can't settle into the same path for ever.
+	var angle := offset * Balance.PADDLE_MAX_ANGLE + paddle_vx * Balance.PADDLE_ENGLISH + rng.randf_range(-0.05, 0.05)
 	angle = clampf(angle, -Balance.PADDLE_MAX_ANGLE * 1.1, Balance.PADDLE_MAX_ANGLE * 1.1)
 	ball.pos.y = rect.position.y - r - 0.5
 	ball.idle = 0.0

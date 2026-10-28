@@ -144,6 +144,9 @@ func _quake() -> void:
 
 func _process(delta: float) -> void:
 	_drive_paddle(delta)
+	if Game.autoplay_lazy:
+		board.launch()
+		board.paddle_target = 0.0
 	if Game.autoplay and not _over:
 		board.autopilot()
 		if randf() < 0.02:
@@ -275,8 +278,8 @@ func _on_overrun(_block: Block) -> void:
 	flash(Color("ff2a2a"), 0.5)
 	# Slow motion, the colour draining out (the original's grayscale), and the wall crumbles.
 	Engine.time_scale = 0.3
-	var gray := create_tween()
-	gray.tween_method(func(v: float) -> void: post.set_shader_parameter("gray", v), 0.0, 1.0, 1.2).set_ignore_time_scale()
+	var gray := create_tween().set_ignore_time_scale()
+	gray.tween_method(func(v: float) -> void: post.set_shader_parameter("gray", v), 0.0, 1.0, 1.2)
 	var bricks := board.blocks()
 	bricks.sort_custom(func(a: Block, b: Block) -> bool: return a.row > b.row)
 	await get_tree().create_timer(0.6, true, false, true).timeout
@@ -335,7 +338,7 @@ func go_back() -> void:
 func _notification(what: int) -> void:
 	# The window losing focus (another app on the phone, alt-tab) pauses the game.
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
-		if board and board.state == Board.State.PLAY and not Game.autoplay:
+		if board and board.state == Board.State.PLAY and not Game.autoplay and not Game.autoplay_lazy:
 			pause()
 
 

@@ -27,6 +27,8 @@ var demolished := 0
 
 ## The game plays itself (`--autoplay`, for testing).
 var autoplay := false
+## Or launches and does nothing else (`--autoplay=lazy`): the wall wins, for testing the end.
+var autoplay_lazy := false
 ## Every floor a single row (`--short-floors`, for testing what happens between them).
 var short_floors := false
 ## The screen being shown (main.gd swaps them).
@@ -95,6 +97,9 @@ func best_score() -> int:
 
 ## Files a finished run's score; its place in the table (from 0), or -1 if it didn't make it.
 func add_score(score: int, level: int, combo: int) -> int:
+	# A game that played itself isn't kept.
+	if autoplay or autoplay_lazy:
+		return -1
 	games_played += 1
 	var entry := {"score": score, "level": level, "combo": combo, "date": Time.get_date_string_from_system()}
 	var place := high_scores.size()
