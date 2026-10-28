@@ -107,7 +107,10 @@ that go past the paddle are simply gone, until there is one left.
 **The paddle** sends the ball off at an angle by where on it the ball
 lands (straight up from the middle, up to 64 degrees off at the edges),
 bent a little by how fast the paddle is moving. Every hit makes the ball a
-little faster, up to its top speed.
+little faster, up to its top speed. The paddle's speed also puts spin on
+the ball (`SPIN_FROM_PADDLE`): it curves the way the paddle went, less and
+less, two pixels going round it as it spins, and a bounce mirrors the
+curve.
 
 **Smash.** Press smash (or click, or tap) and the paddle hops for a fifth
 of a second. A ball that meets it then is smashed: it flies off at more
@@ -153,14 +156,51 @@ the haus (the floor you are on lit up) to its left and the score and the
 pickups running to its right; on a tall one (a phone) they are over it. A wall that is swept clean while the floor still has
 rows to send is a Clean Sweep: a big bonus (`SCORE_SWEEP`), and six rows
 (`SWEEP_ROWS`) rain in all at once, the floor's next six or, if it has
-fewer left, those and new ones to make up six.
+fewer left, those and new ones to make up six. The block that clears the
+board stops time: the camera leans in on it in slow motion for a moment
+(a floor's last block for longer than a sweep's), then it all comes back
+up to speed.
+
+**Perks.** Between floors you pick one of three perks (`Perks.INFO`), and
+it lasts the rest of the run; most stack a few times. Long Fuse (combos
+last longer), Sweet Spot (a longer smash), Lucky (more pickups), Rare
+Taste (more rare ones), Big Bang (TNT and fuses hit further), Safety Net
+(the first miss on each floor is free), Heavy Ball (a hit does one more),
+Wide Load (a wider paddle), Quick Quake, Slow Wall, Gold Digger (gold and
+coins pay double), Extra Ball (a spare on every serve), Hot Streak
+(longer Fever) and Long Haul (pickups last longer). The pause menu lists
+the ones you have.
+
+**Bosses.** The Lobby ends with a boss, and so does every fourth basement
+(`Floors.boss_of`): once the floor's rows are gone it drops in at the top,
+with its health along the top of the board, and the wall keeps coming
+down under it (a new row every wave, half empty, so there is a way
+through) until it is beaten. The Vault is a steel door with three bolts
+along its foot, two of them open at a time, and only an open one can be
+hurt; now and then it slams and the wall comes down a row. The Crane
+swings a wrecking ball across the top, hurt by every hit and swinging
+faster as it weakens; now and then it dips and shakes blocks loose into
+the wall. The Heart beats in a nest of moss that grows back; break
+through to hit it, and watch for its spores, which turn blocks in the
+wall to moss. A smash hurts three times as much, fire and Fever twice,
+and rockets hit it too. Beaten, it goes up in a string of blasts, the
+whole wall comes down after it, and the floor is cleared.
 
 **Blocks.** Plain ones take one hit; studded ones a hit per stud and one
 more. Steel takes five and won't burn. TNT goes off when it breaks, a
 moment later, hitting everything round it (and other TNT, in a chain).
 Prize blocks (a rainbow inside) always hold a pickup, and any block has a
 small chance to (1.5%). Gold is worth a pile of points. Moss grows into an empty
-cell beside it every time the wall comes down. The deeper floors bring
+cell beside it every time the wall comes down. A bumper (from the second
+floor) kicks the ball back off its middle, faster, and scores for every
+kick; it takes three. Portals come in pairs on a row (from the fourth
+floor), a ring in the pair's colour: a ball going into one comes out of
+the other going the same way, and each trip wears both. Ice comes in
+stretches; the ball goes straight through it, and the crack runs into all
+the ice touching it. A fuse (from the third floor) lights when hit and,
+two seconds later, blasts its whole row; hit it again while it burns and
+it goes at once. A coin block is worth 800 as it lands and less every
+second after, down to 40, tarnishing as it goes. The deeper floors bring
 more of the tough kinds.
 
 **Pickups** hang where they came out for a moment, then drift down; catch
@@ -195,11 +235,32 @@ in code, row by row of art pixels (`Pickups.ICONS`).
 The ones that last show along the top of the board, each with the time it
 has left.
 
+Two pickups at once can make something more (`Pickups.SYNERGIES`): its
+name goes up with a fanfare, and a band in its colour links their badges.
+
+| Synergy | Of | |
+| --- | --- | --- |
+| Plasma | Fireball and Zap | Twice the lightning, pink, setting what it hits on fire. |
+| Mega Laser | Laser and Magnet | The laser burns three columns wide. |
+| Cluster Bombs | Blast Ball and three balls or more | Every blast reaches twice as far. |
+| Ice Shards | Deep Freeze and Rockets | Every rocket shatters three blocks either side of where it hits. |
+| Napalm | Rockets and Fireball | Rockets set fire to what they hit. |
+| Tesla Fence | Shield and Zap | Every bounce off the shield zaps three of the lowest blocks. |
+
 **Scoring.** A block is worth 10 a hit it takes, gold 250, a floor 2,500;
 everything is multiplied by the combo and by how deep you are (a quarter
 more a floor), and doubled in Overdrive. The points fly off each block to
 the score (the original's), which counts up to them. The ten best runs
 are kept, with how deep each got.
+
+### Challenges and the Locker
+
+Fourteen challenges (`Challenges.LIST`), from clearing a floor or
+reaching a 20 combo to beating a boss or reaching basement B3, each unlock
+a paddle skin or a ball trail (`Cosmetics`). A challenge done slides down
+from the top of the screen, and the Locker (on the title) has every skin
+and trail on a tile, locked ones with what unlocks them, and puts on the
+one you press. None of it counts while the game plays itself.
 
 ### Modes
 
@@ -250,10 +311,12 @@ full screen.
 ```
 src/main.gd            the root: one screen at a time, a curtain between them
 src/autoload/          Inputs (actions, which device), Audio (sounds, layered music), Game (settings, scores)
-src/data/              balance.gd (every number), floors.gd (themes, rows), pickups.gd, modes.gd
+src/data/              balance.gd (every number), floors.gd (themes, rows), pickups.gd, modes.gd,
+                       perks.gd, challenges.gd, cosmetics.gd (paddle skins and trails)
 src/play/              the game: play.gd (the screen), board.gd (the rules), board_view.gd (drawing),
-                       block.gd, ball.gd, block_art.gd, particles.gd, hud.gd, tower.gd, pause and game over
-src/ui/                splash, title (logo.gd), how to play, high scores, options, ui_kit.gd, spring.gd
+                       block.gd, ball.gd, block_art.gd, boss.gd, particles.gd, hud.gd, tower.gd,
+                       perk_pick.gd, pause and game over
+src/ui/                splash, title (logo.gd), how to play, high scores, locker, options, ui_kit.gd, spring.gd
 src/fx/                backdrop.gd and the screen-wide shaders
 tools/                 import_audio.py, check_gdscript.gd, make_icon.gd, write_godot_copyright.gd
 ```
@@ -340,7 +403,10 @@ muffled under the pause menu and the end. Each floor has its track.
   `--sweep-at=5` breaks every block after five seconds, for a Clean Sweep,
   and `--all-effects` sets every timed pickup going at once (the badges).
   `--drop=laser,shield` hangs those pickups over the board and
-  `--give=laser` catches them at once.
+  `--give=laser` catches them at once (two at once for a synergy).
+  `--test-blocks` swaps the first rows for a row of each newer kind of
+  block, and `--boss=crane` (or `vault`, or `heart`) brings that boss once
+  the floor's rows are gone (with `--short-floors --sweep-at=3`, at once).
 - `--mouse=1.5:800:400,2:800:460:click` moves the pointer to those window
   coordinates at those seconds (and clicks, with `:click`): for catching
   the menus' hover and press in screenshots. `--touch=2:80:1240,2.5:600:1240,3:0:0:up`

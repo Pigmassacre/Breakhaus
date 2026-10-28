@@ -5,7 +5,7 @@ extends Control
 ## of their rarity).
 ## Left and right (or the arrows on screen) turn the pages.
 
-const PAGES := 5
+const PAGES := 6
 
 var _page := 0
 var _pages: Array[Control] = []
@@ -25,7 +25,7 @@ func _ready() -> void:
 	holder.custom_minimum_size = Vector2(680, 960)
 	holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(holder)
-	for page: Control in [_rules(), _blocks(), _tricks(), _pickups(), _rares()]:
+	for page: Control in [_rules(), _blocks(), _tricks(), _pickups(), _rares(), _synergies()]:
 		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		holder.add_child(page)
 		_pages.append(page)
@@ -100,7 +100,7 @@ func _rules() -> Control:
 	var box := _page_box("HOW TO PLAY")
 	box.add_child(_text("The wall drops a row at a time. If it reaches the red line, it's game over."))
 	box.add_child(_text("Keep breaking the bottom rows. Every miss brings the wall closer.", 2, UI.DIM))
-	box.add_child(_text("Clear a floor to drop to the next one. Eight floors, then the basements.", 2, UI.DIM))
+	box.add_child(_text("Clear a floor to drop to the next one and pick a perk. Eight floors, then the basements. Bosses wait at the bottom of the Lobby and every fourth basement.", 2, UI.DIM))
 	box.add_child(_gap(16))
 	var grid := GridContainer.new()
 	grid.columns = 5
@@ -193,6 +193,36 @@ func _rares() -> Control:
 	for kind: Pickups.Kind in Pickups.INFO:
 		if Pickups.rarity(kind) == Pickups.Rarity.RARE:
 			box.add_child(PickupCard.new(kind, true))
+	return box
+
+
+## Two pickups at once that make something more, each with both icons.
+func _synergies() -> Control:
+	var box := _page_box("SYNERGIES")
+	box.add_theme_constant_override("separation", 18)
+	box.add_child(_text("Some pickups work together. Get both going at once:", 2, UI.DIM))
+	for s: Dictionary in Pickups.SYNERGIES:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 16)
+		var icons := Control.new()
+		icons.custom_minimum_size = Vector2(130, 56)
+		icons.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		icons.draw.connect(func() -> void:
+			Pickups.draw_icon(icons, s["a"], Vector2(28, 28), 4.0)
+			Pickups.draw_icon(icons, s["b"], Vector2(100, 28), 4.0)
+			icons.draw_rect(Rect2(56, 26, 16, 4), UI.DIM)
+			icons.draw_rect(Rect2(62, 20, 4, 16), UI.DIM))
+		row.add_child(icons)
+		var words := VBoxContainer.new()
+		words.add_theme_constant_override("separation", 0)
+		words.add_child(UI.label(String(s["name"]).to_upper(), 3, s["color"], HORIZONTAL_ALIGNMENT_LEFT))
+		var blurb := UI.label(s["blurb"], 1, UI.INK, HORIZONTAL_ALIGNMENT_LEFT)
+		blurb.add_theme_font_size_override("font_size", 17)
+		blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		blurb.custom_minimum_size = Vector2(500, 0)
+		words.add_child(blurb)
+		row.add_child(words)
+		box.add_child(row)
 	return box
 
 
