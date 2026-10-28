@@ -24,7 +24,11 @@ vec3 hue(float h) {
 }
 
 float hash(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+	// Dave Hoskins' hash without sine: sin() of big numbers loses its precision on a GPU, and the
+	// sine hash goes flat away from the top-left corner.
+	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+	p3 += dot(p3, p3.yzx + 33.33);
+	return fract((p3.x + p3.y) * p3.z);
 }
 
 void fragment() {
@@ -43,8 +47,8 @@ void fragment() {
 	float fall = floor(clamp(dist / (max(size.x, size.y) * 0.75), 0.0, 1.0) * 4.0) / 4.0;
 	col *= 1.0 - fall * 0.45;
 	// Dust: the odd pixel drifting up and blinking.
-	vec2 drift = cell + vec2(0.0, floor(clock * 6.0));
-	float mote = step(0.9985, hash(floor(drift / vec2(1.0, 1.0))));
+	vec2 drift = cell + vec2(0.0, mod(floor(clock * 6.0), 4096.0));
+	float mote = step(0.9985, hash(drift));
 	col += mote * ray_b.rgb * 0.8 * (0.5 + 0.5 * sin(clock * 3.0 + cell.x));
 	float pulse = 0.5 + 0.5 * sin(clock * 6.0);
 	col = mix(col, vec3(0.35, 0.03, 0.06) * (0.7 + 0.3 * on), danger * (0.35 + 0.25 * pulse));
