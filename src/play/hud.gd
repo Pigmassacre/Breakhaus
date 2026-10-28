@@ -29,6 +29,9 @@ var _rows_label: Label
 var _score_label: Label
 var _best_label: Label
 var _combo_label: Label
+## Where the combo goes over the board (its top), and how far down it has moved to clear a boss.
+var _combo_top := 0.0
+var _combo_drop := 0.0
 var _combo_mult: Label
 var _message: Label
 var _prompt: Label
@@ -201,6 +204,7 @@ func layout(rect: Rect2, zoom: float) -> void:
 	var at := func(board_y: float) -> float: return rect.position.y + board_y * zoom
 	_place(_combo_label, Rect2(rect.get_center().x - 120, at.call(30.0), 240, 40))
 	_place(_combo_mult, Rect2(rect.get_center().x - 120, at.call(72.0), 240, 24))
+	_combo_top = at.call(30.0)
 	_place(_message, Rect2(rect.position.x - 60, at.call(Balance.BOARD_H * 0.36), rect.size.x + 120, 70))
 	_place(_prompt, Rect2(rect.position.x - 60, at.call(Balance.PADDLE_Y - 130), rect.size.x + 120, 40))
 	_place(_help, Rect2(rect.position.x - 60, at.call(Balance.PADDLE_Y - 330), rect.size.x + 120, 130))
@@ -234,6 +238,11 @@ func _process(delta: float) -> void:
 	_best_label.text = ("BEST " + _format(best)) if best > 0 else ""
 	_floor_label.text = Floors.label(board.level)
 	_mode_label.text = _mode_text()
+	# Under a boss, the combo moves down out of its way.
+	var boss_up := board.boss != null and not board.boss.dead
+	_combo_drop = move_toward(_combo_drop, (Balance.ROW_H * 6.0 + 10.0) * zoom if boss_up else 0.0, delta * 600.0)
+	_combo_label.position.y = _combo_top + _combo_drop
+	_combo_mult.position.y = _combo_top + 42.0 * zoom + _combo_drop
 	if _clock.visible:
 		_clock.text = "%d:%02d" % [ceili(rush_left) / 60, ceili(rush_left) % 60]
 		var hurry := rush_left <= 10.0
@@ -242,6 +251,10 @@ func _process(delta: float) -> void:
 	_floor_name.text = String(board.theme.get("name", "")).to_upper()
 	var rows := board.rows_queued
 	_rows_label.text = ("%d ROW%s TO GO" % [rows, "" if rows == 1 else "S"]) if rows > 0 else "LAST ROWS!"
+	if board.boss and not board.boss.dead:
+		_rows_label.text = "BOSS FIGHT!"
+	elif board.boss_due != "" and rows == 0:
+		_rows_label.text = "BOSS AHEAD!"
 	_rows_label.add_theme_color_override("font_color", UI.DIM if rows > 0 else UI.GOLD)
 	var touch := Inputs.device == Inputs.Device.TOUCH
 	_pause_button.visible = touch
@@ -372,6 +385,19 @@ func _draw_bars() -> void:
 	for i in range(1, int(board.wave_time)):
 		var nx := bar.position.x + bar.size.x * i / board.wave_time
 		_bars.draw_circle(Vector2(nx, bar.get_center().y), h * 0.14, Color(UI.SHADOW, 0.5), true, -1.0, true)
+	# A boss's health, across the top of the board: its name on a bar that empties.
+	if board.boss and not board.boss.dead and board.boss.enter <= 0.0:
+		var bh := 26.0
+		var b := Rect2(r.position.x + 20.0, r.position.y + 8.0 * zoom, r.size.x - 40.0, bh)
+		var part := float(board.boss.hp) / board.boss.max_hp
+		var hurt := board.boss.flash
+		UI.draw_round(_bars, b.grow(3.0), Color(UI.SHADOW, 0.85))
+		UI.draw_round(_bars, Rect2(b.position, Vector2(maxf(b.size.x * part, bh), bh)), Color("ff3d3d").lerp(Color.WHITE, hurt))
+		var font := UI.display_font()
+		var text := board.boss.title().to_upper()
+		var fs := 18
+		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		_bars.draw_string(font, Vector2(b.get_center().x - tw * 0.5, b.position.y + bh * 0.5 + fs * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UI.INK)
 	# The quake meter, under the board.
 	var qh := maxf(px * 4.0 * zoom, 12.0)
 	var q := Rect2(r.position.x, r.end.y + (Balance.BLOCK_DEPTH + px * 4.0) * zoom, r.size.x, qh)

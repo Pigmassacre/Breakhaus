@@ -30,6 +30,8 @@ signal quake_ready
 signal quake_drained(amount: float)
 signal floor_cleared
 signal saved
+signal boss_arrived(title: String)
+signal boss_beaten
 signal smash_landed
 ## The block that cleared the board just broke, at `at`: the floor's last (`big`), or a clean sweep's.
 signal final_blow(at: Vector2, big: bool)
@@ -113,6 +115,11 @@ var smashes := 0
 var effects := {}
 ## The synergies running now (Pickups.SYNERGIES' ids), to tell when a new one starts.
 var _synergies_on := {}
+## The floor's boss once it has come (Boss), the one still to come when the floor's rows are gone (its
+## kind, or ""), and the top row of the wall (below the boss's rows while it is there).
+var boss: Boss
+var boss_due := ""
+var top_row := 0
 ## The run's perks (Perks.INFO's ids -> how many), and whether this floor's Safety Net has gone.
 var perks := {}
 var _net_used := false
@@ -231,6 +238,9 @@ func start_floor(n: int) -> void:
 	theme = Floors.theme(n)
 	wave_time = Floors.wave_time(n) * wave_scale * float(twist.get("wave", 1.0)) * (1.0 + 0.12 * perk("slow_wall"))
 	_net_used = false
+	boss = null
+	boss_due = "" if demo else Floors.boss_of(n)
+	top_row = 0
 	misses = 0
 	smashes = 0
 	wave_timer = 0.0
@@ -397,6 +407,8 @@ func _process(delta: float) -> void:
 		combo_timer -= delta
 		if combo > 0 and combo_timer <= 0.0:
 			_end_combo()
+		if boss:
+			boss.update(delta)
 		fever = maxf(fever - delta, 0.0)
 	if state == State.PLAY or state == State.SERVE or state == State.INTRO:
 		_update_balls(delta)
@@ -486,7 +498,7 @@ func _update_waves(delta: float) -> void:
 ## The wall comes down a row, and a new row (if the floor has any left) drops in at the top.
 func _wave() -> void:
 	_grow_moss()
-	for r in range(ROWS - 1, -1, -1):
+	for r in range(ROWS - 1, top_row - 1, -1):
 		for c in COLS:
 			var b := at(c, r)
 			if b == null:
@@ -497,7 +509,7 @@ func _wave() -> void:
 			b.row = r + 1
 			b.slide = Balance.ROW_H
 			put(c, r + 1, b)
-	if rows_queued > 0:
+	if rows_queued > 0 or (boss and not boss.dead):
 		_new_row()
 	_find_lowest()
 	# A ball the wall came down on is pushed out under it.
@@ -528,17 +540,19 @@ func _wave() -> void:
 func _new_row() -> void:
 	var row := Floors.make_row(row_rng, level, rows_made, twist)
 	rows_made += 1
-	rows_queued -= 1
+	rows_queued = maxi(rows_queued - 1, 0)
+	# Under a boss the rows come in half empty, so that there's a way through to it.
+	var boss_up := boss != null and not boss.dead
 	for c in COLS:
-		if row[c] == null:
+		if row[c] == null or (boss_up and rng.randf() < 0.5):
 			continue
-		var b := Block.new().setup(row[c], c, 0)
+		var b := Block.new().setup(row[c], c, top_row)
 		b.z = 600.0 + rng.randf() * 120.0
 		b.raining = true
 		b.hop_delay = rng.randf() * 0.15
 		if effect(Pickups.Kind.FROST) > 0.0:
 			b.frozen = true
-		put(c, 0, b)
+		put(c, top_row, b)
 
 
 func _grow_moss() -> void:
@@ -689,6 +703,8 @@ func _move_ball(ball: Ball, delta: float) -> void:
 			return
 		_collide_paddle(ball)
 		_collide_blocks(ball)
+		if boss and not boss.dead:
+			_collide_boss(ball)
 		_collide_pickups(ball)
 		_collide_balls(ball)
 	# A ball that has gone a long while without meeting anything is nudged off its line.
@@ -1137,7 +1153,18 @@ func _start_fever() -> void:
 
 
 func _check_cleared(at_pos := Vector2(W * 0.5, H * 0.35)) -> void:
-	if state != State.PLAY or block_count() > 0:
+	if state != State.PLAY:
+		return
+	# The boss still standing: an empty wall just brings the next row on sooner.
+	if boss and not boss.dead:
+		if lowest_row < top_row:
+			wave_timer = maxf(wave_timer, wave_time - 1.0)
+		return
+	if block_count() > 0:
+		return
+	# The floor's rows gone, and its boss to come.
+	if boss_due != "" and rows_queued <= 0 and not demo:
+		_spawn_boss()
 		return
 	if not demo:
 		final_blow.emit(at_pos, rows_queued <= 0)
@@ -1326,6 +1353,114 @@ func _bolt_points(a: Vector2, b: Vector2) -> PackedVector2Array:
 	return points
 
 
+# --- bosses -------------------------------------------------------------------------------------
+
+func _spawn_boss() -> void:
+	boss = Boss.new(boss_due, self, level)
+	boss_due = ""
+	top_row = boss.rows()
+	boss.setup_board()
+	_rain_rows(2, top_row, 900.0)
+	_find_lowest()
+	wave_timer = 0.0
+	Audio.play("danger", 0.0, 0.8)
+	Audio.play("collapse", -2.0, 0.7)
+	shake.emit(14.0)
+	flashed.emit(Color("ff2a2a"), 0.3)
+	boss_arrived.emit(boss.title())
+
+
+## A ball against the boss: off it, and a hit if it met it where it can be hurt.
+func _collide_boss(ball: Ball) -> void:
+	var hit := boss.collide(ball.pos, Balance.BALL_R)
+	if hit.is_empty():
+		return
+	var normal: Vector2 = hit["normal"]
+	ball.pos += normal * (float(hit["depth"]) + 0.5)
+	if ball.vel.dot(normal) < 0.0:
+		ball.vel = ball.vel.bounce(normal)
+		ball.spin *= -0.7
+	ball.fix_angle()
+	ball.idle = 0.0
+	ball.pierce = 0
+	_ball_hit(ball, normal, 1.0)
+	if not hit["weak"]:
+		Audio.play("clang", -2.0, rng.randf_range(0.7, 0.85))
+		particles.spray(ball.pos, normal, Color("c8d4e4"), 4, 6.0)
+		return
+	var damage := (3 if ball.smashed else (2 if effect(Pickups.Kind.FIRE) > 0.0 or fever > 0.0 else 1)) + perk("heavy_ball")
+	_hurt_boss(damage, ball.pos)
+
+
+func _hurt_boss(damage: int, at_pos: Vector2) -> void:
+	boss.hurt(damage)
+	_add_score(Balance.SCORE_BOSS_HIT * damage, at_pos)
+	particles.burst(at_pos, Color("ff6a7a") if boss.kind == "heart" else Color("ffd23d"), 12, 1.2)
+	ripples.append({"pos": at_pos, "t": 0.0, "strength": 0.6})
+	Audio.play("boom", -4.0, rng.randf_range(1.1, 1.3))
+	Audio.play("break", -4.0, 0.7)
+	shake.emit(5.0)
+	hitstop.emit(Balance.HITSTOP_BIG * 0.6)
+	if boss.hp <= 0:
+		_boss_down(at_pos)
+
+
+## Beaten: it goes up in a string of blasts, and the whole wall comes down after it.
+func _boss_down(at_pos: Vector2) -> void:
+	boss.dead = true
+	top_row = 0
+	_add_score(Balance.SCORE_BOSS, at_pos)
+	boss_beaten.emit()
+	message.emit("BOSS DOWN!", UI.GOLD)
+	Audio.play("fanfare", 0.0)
+	Audio.play("collapse", 0.0)
+	final_blow.emit(at_pos, true)
+	shocked.emit(at_pos, 1.0)
+	flashed.emit(Color.WHITE, 0.5)
+	shake.emit(20.0)
+	for i in 10:
+		var p := Vector2(rng.randf_range(80.0, W - 80.0), rng.randf_range(20.0, boss.rows() * Balance.ROW_H))
+		particles.burst(p, Color("ffb03b"), 16, 1.6, 12.0)
+		particles.smoke(p, 4, 10.0)
+	var rest := blocks()
+	if rest.is_empty():
+		_check_cleared(at_pos)
+		return
+	for b in rest:
+		b.frozen = true
+		_quake_blocks.append({"block": b, "t": 0.4 + b.center().distance_to(at_pos) / 1400.0})
+
+
+## The boss's blocks dropped into the wall under it: `count` of `kind`, in empty cells of its top rows.
+func boss_drop(count: int, kind: Block.Kind) -> void:
+	var cells: Array[Vector2i] = []
+	for r in range(top_row, top_row + 2):
+		for c in COLS:
+			if at(c, r) == null:
+				cells.append(Vector2i(c, r))
+	for i in mini(count, cells.size()):
+		var cell: Vector2i = cells.pop_at(rng.randi() % cells.size())
+		var data := {"kind": kind, "hp": Balance.STEEL_HP if kind == Block.Kind.STEEL else 1, "color": Block.kind_color(kind, theme["blocks"][rng.randi() % 5])}
+		var b := Block.new().setup(data, cell.x, cell.y)
+		b.z = 400.0
+		b.raining = true
+		put(cell.x, cell.y, b)
+	_find_lowest()
+
+
+## The vault's slam: the wall comes down a row there and then.
+func boss_slam() -> void:
+	wave_timer = 0.0
+	_wave()
+
+
+func boss_moss(c: int, r: int) -> void:
+	var b := Block.new().setup({"kind": Block.Kind.MOSS, "hp": 1, "color": Block.kind_color(Block.Kind.MOSS, Color.WHITE)}, c, r)
+	b.z = 20.0
+	b.flash = 0.8
+	put(c, r, b)
+
+
 # --- the quake ----------------------------------------------------------------------------------
 
 ## Brings down the bottom rows of the wall, all at once.
@@ -1477,6 +1612,13 @@ func _update_rockets(delta: float) -> void:
 			rocket["pos"].x = lerpf(rocket["from_x"], rocket["to_x"], smoothstep(0.0, 1.0, minf(rocket["t"] * 3.0, 1.0)))
 		if rng.randf() < 0.7:
 			particles.smoke(rocket["pos"] + Vector2(0, Balance.PX * 3.0), 1, 6.0, Color(0.8, 0.75, 0.7, 0.5))
+		if boss and not boss.dead and not boss.collide(rocket["pos"], Balance.PX * 2.0).is_empty():
+			var weak: bool = boss.collide(rocket["pos"], Balance.PX * 2.0)["weak"]
+			rockets.erase(rocket)
+			particles.burst(rocket["pos"], Color("ffb03b"), 8, 0.8)
+			if weak:
+				_hurt_boss(1, rocket["pos"])
+			continue
 		var cell := _cell_of(rocket["pos"])
 		var b := at(cell.x, cell.y)
 		if b == null and rocket["pos"].y > 0.0:

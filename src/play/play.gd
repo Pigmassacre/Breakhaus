@@ -93,6 +93,8 @@ func _ready() -> void:
 	board.quake_ready.connect(func() -> void: hud.show_message("QUAKE READY!", Color("ffb03b"), 0.5))
 	board.floor_cleared.connect(_on_floor_cleared)
 	board.final_blow.connect(_slowmo)
+	board.boss_arrived.connect(func(title: String) -> void: hud.show_message("WARNING!\n" + title.to_upper(), Color("ff3d3d"), 1.6))
+	board.boss_beaten.connect(Game.note.bind("boss"))
 	# What the challenges are waiting for.
 	board.combo_changed.connect(func(c: int, _m: int) -> void: Game.note("combo", c))
 	board.fever_started.connect(Game.note.bind("fever"))
@@ -154,6 +156,9 @@ func _ready() -> void:
 					var hp: int = {Block.Kind.BUMPER: Balance.BUMPER_HP, Block.Kind.PORTAL: 2}.get(kind, 1)
 					board.put(c, 4 + i, Block.new().setup({"kind": kind, "hp": hp, "color": Block.kind_color(kind, Color("46d9ff")), "link": 1}, c, 4 + i))
 			board._find_lowest()
+		# `--boss=crane` (or vault, or heart): that boss comes once this floor's rows are gone.
+		elif arg.begins_with("--boss="):
+			board.boss_due = arg.trim_prefix("--boss=")
 		# `--sweep-at=5`: every block is broken after that many seconds, for a clean sweep.
 		elif arg.begins_with("--sweep-at="):
 			await get_tree().create_timer(float(arg.trim_prefix("--sweep-at="))).timeout
@@ -331,7 +336,7 @@ func _process(delta: float) -> void:
 	post.set_shader_parameter("vignette", danger * danger * 0.6 if not _over else 0.0)
 	var combo_heat := clampf(board.combo / 30.0, 0.0, 1.0)
 	Audio.heat = 0.0 if _over else maxf(maxf(danger, combo_heat), 0.5 if board.effects.size() >= 2 else 0.0)
-	if board.fever > 0.0 and not _over:
+	if (board.fever > 0.0 or (board.boss and not board.boss.dead)) and not _over:
 		Audio.heat = 1.0
 	_update_cursor()
 

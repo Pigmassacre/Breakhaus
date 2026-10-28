@@ -81,6 +81,16 @@ static func long_label(level: int) -> String:
 	return "Basement %d" % (level - Balance.FLOORS + 1)
 
 
+## The boss at the end of floor `level`, or "": the Lobby's vault, then one every fourth basement.
+static func boss_of(level: int) -> String:
+	if level == Balance.FLOORS - 1:
+		return "vault"
+	var past := level - (Balance.FLOORS - 1)
+	if past > 0 and past % 4 == 0:
+		return ["crane", "heart", "vault"][(past / 4 - 1) % 3]
+	return ""
+
+
 static func wave_time(level: int) -> float:
 	return maxf(Balance.WAVE_TIME - level * Balance.WAVE_TIME_STEP, Balance.WAVE_TIME_MIN)
 

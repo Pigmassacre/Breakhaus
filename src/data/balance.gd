@@ -108,6 +108,9 @@ const COIN_DRAIN := 20.0
 const SCORE_BLOCK := 10
 const SCORE_GOLD := 250
 const SCORE_FLOOR := 2500
+## Beating a boss, and every hit on one.
+const SCORE_BOSS := 10000
+const SCORE_BOSS_HIT := 150
 ## Sweeping the board clean with rows still to come: this, and SWEEP_ROWS rows rain in at once
 ## (taken off the rows to come, and made up with new ones if fewer are left).
 const SCORE_SWEEP := 2000

@@ -66,6 +66,8 @@ func _draw() -> void:
 		_draw_shield()
 	_draw_shadows()
 	_draw_blocks()
+	if board.boss and not board.boss.dead:
+		board.boss.draw(self, board.clock)
 	_draw_pickups()
 	_draw_paddle()
 	_draw_laser()
