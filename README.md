@@ -82,10 +82,8 @@ checked before anything goes up, and a build that hasn't changed isn't
 pushed again. `--dry-run` shows what the page has now and what would go
 up, and pushes nothing; `--status` just shows what the page has. The web
 build has to be marked "played in the browser" on the page once, by hand
-(a portrait viewport, 720 by 1280 or smaller, suits it). butler is the one
-in `butler-linux-amd64/` or `butler-windows-amd64/` beside the repo, or
-GoreDash's (in a `goredash` folder beside this one or any folder above,
-so a worktree finds it), or one on the PATH; it signs in with the key in
+(a portrait viewport, 720 by 1280 or smaller, suits it). butler is in
+`butler-linux-amd64/` and `butler-windows-amd64/`; it signs in with the key in
 `~/.config/itch/butler_olofkarlsson_creds`, or asks to log in without it.
 `upload_to_itchio.bat` does the same on Windows.
 
@@ -322,6 +320,7 @@ src/play/              the game: play.gd (the screen), board.gd (the rules), boa
 src/ui/                splash, title (logo.gd), how to play, high scores, locker, options, ui_kit.gd, spring.gd
 src/fx/                backdrop.gd and the screen-wide shaders
 tools/                 import_audio.py, check_gdscript.gd, make_icon.gd, write_godot_copyright.gd
+butler-*/              itch.io's butler, which upload_to_itchio.py pushes the builds with
 ```
 
 Nothing is a scene but `main.tscn`: every screen builds itself in code.
