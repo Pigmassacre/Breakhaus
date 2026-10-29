@@ -7,8 +7,9 @@ beside it.
     ./build_game.sh Web Linux       just the ones named (an error if one can't be built)
     ./build_game.sh --zip           and a zip of each, builds/Breakhaus-<preset>-<commit>.zip
 
-Uses the stock editor in the Godot folder next to the repository, which
-exports with its own installed templates (Editor > Manage Export
+Uses the stock editor in the Godot folder next to the repository (or next to
+the checkout this worktree is of), or the one GODOT=/path/to/godot names,
+which exports with its own installed templates (Editor > Manage Export
 Templates). Android also needs the Android SDK and a JDK set in the
 editor's settings (Editor Settings > Export > Android): an editor that
 rewrites its settings can leave the JDK's blank, so it is filled in from
@@ -50,10 +51,10 @@ TEMPLATE_FOR = {
 }
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-# Beside the repository, or beside the checkout this worktree is of.
-godot_path = os.path.join(os.path.dirname(script_dir), "Godot", GODOT_EXE)
+# GODOT overrides; otherwise beside the repository, or beside the checkout this worktree is of.
+godot_path = os.environ.get("GODOT") or os.path.join(os.path.dirname(script_dir), "Godot", GODOT_EXE)
 folder = script_dir
-while folder != os.path.dirname(folder):
+while not os.environ.get("GODOT") and folder != os.path.dirname(folder):
     folder = os.path.dirname(folder)
     if os.path.isfile(os.path.join(folder, "Godot", GODOT_EXE)):
         godot_path = os.path.join(folder, "Godot", GODOT_EXE)

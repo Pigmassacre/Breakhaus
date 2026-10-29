@@ -45,7 +45,9 @@ lets broken ones through, and draws the Windows icon, `icon.ico`, from
 `icon.svg` (`tools/make_icon.gd`). The commit goes into the build as
 `commit.txt` for the title's version (run from the project, the game asks
 git instead). `build_game.bat` does the same on Windows. It uses the stock
-editor in `../Godot/` and its installed 4.7.2 export templates.
+editor in `../Godot/` (beside the main checkout, from a worktree) and its
+installed 4.7.2 export templates; `GODOT=/path/to/godot` points it at
+another.
 
 - **Web** is the single-threaded build (`web_nothreads_release.zip`), so it
   runs on itch.io and anywhere else without the cross-origin isolation
@@ -82,7 +84,8 @@ up, and pushes nothing; `--status` just shows what the page has. The web
 build has to be marked "played in the browser" on the page once, by hand
 (a portrait viewport, 720 by 1280 or smaller, suits it). butler is the one
 in `butler-linux-amd64/` or `butler-windows-amd64/` beside the repo, or
-GoreDash's; it signs in with the key in
+GoreDash's (in a `goredash` folder beside this one or any folder above,
+so a worktree finds it), or one on the PATH; it signs in with the key in
 `~/.config/itch/butler_olofkarlsson_creds`, or asks to log in without it.
 `upload_to_itchio.bat` does the same on Windows.
 

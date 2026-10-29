@@ -11,12 +11,14 @@ to html5, Android to android).
 Build first with ./build_game.sh. Every build named is checked before
 anything is pushed, so a missing one can't leave a half-released version.
 The version is config/version in project.godot. Uses the butler for the
-host in butler-linux-amd64/ or butler-windows-amd64/ (beside the repo, or
-the copies next to GoreDash's).
+host in butler-linux-amd64/ or butler-windows-amd64/ beside the repo, or
+the copies next to GoreDash's (found from the checkout or any folder above
+it, so worktrees work too), or one on the PATH.
 """
 import argparse
 import datetime
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -44,10 +46,16 @@ def find_butler() -> Path:
     if sys.platform not in BUTLER_BY_HOST:
         fail(f"no butler for {sys.platform}")
     folder, exe = BUTLER_BY_HOST[sys.platform]
-    for base in (repo_root, repo_root.parent / "goredash"):
-        if (base / folder / exe).exists():
-            return base / folder / exe
-    fail(f"{folder}/{exe} not found beside the repo")
+    if (repo_root / folder / exe).exists():
+        return repo_root / folder / exe
+    # GoreDash's, from any folder above, so a worktree finds it too.
+    for base in repo_root.parents:
+        if (base / "goredash" / folder / exe).exists():
+            return base / "goredash" / folder / exe
+    on_path = shutil.which(exe)
+    if on_path:
+        return Path(on_path)
+    fail(f"{folder}/{exe} not found beside the repo or GoreDash, nor on the PATH")
 
 
 def main():
