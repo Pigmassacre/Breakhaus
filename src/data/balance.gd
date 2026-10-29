@@ -130,7 +130,7 @@ const FEVER_TIME := 8.0
 ## Breaks it takes to charge (a combo charges it faster), and how many rows it brings down.
 const QUAKE_CHARGE := 120.0
 ## A ball let through to the bottom (not off a shield) drains this much of the charge.
-const QUAKE_MISS := 30.0
+const QUAKE_MISS := 12.0
 const QUAKE_ROWS := 3
 
 # --- pickups ------------------------------------------------------------------------------------

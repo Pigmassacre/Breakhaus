@@ -135,7 +135,7 @@ charges it faster). When it is full the paddle hums, and the quake (Shift,
 right click, Y, or the button on a touch screen) brings down the bottom
 three rows of the wall at once, from the bottom up, and knocks the wave
 bar back to empty. It is the way out when the wall is at the line. A
-ball let through to the bottom drains a quarter of the charge
+ball let through to the bottom drains a tenth of the charge
 (`QUAKE_MISS`; a shield's bounce doesn't), the lost part flashing red on
 the meter as it runs out.
 
