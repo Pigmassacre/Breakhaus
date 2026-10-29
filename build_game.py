@@ -10,7 +10,9 @@ beside it.
 Uses the stock editor in the Godot folder next to the repository, which
 exports with its own installed templates (Editor > Manage Export
 Templates). Android also needs the Android SDK and a JDK set in the
-editor's settings (Editor Settings > Export > Android), and the keystore
+editor's settings (Editor Settings > Export > Android): an editor that
+rewrites its settings can leave the JDK's blank, so it is filled in from
+JAVA_HOME or the newest JDK in ~/.local/share/jdk when it is. And the keystore
 to sign it with in GODOT_ANDROID_KEYSTORE_RELEASE_PATH, _USER and
 _PASSWORD; without those it is signed with the editor's debug key
 (DEBUG_KEYSTORE), to try out but not to publish. Either way it is the
@@ -27,14 +29,17 @@ if sys.platform == "win32":
     GODOT_EXE = "Godot_v4.7.2-stable_win64.exe"
     TEMPLATES = os.path.join(os.environ.get("APPDATA", ""), "Godot", "export_templates", GODOT_VERSION)
     DEBUG_KEYSTORE = os.path.join(os.environ.get("APPDATA", ""), "Godot", "keystores", "debug.keystore")
+    EDITOR_SETTINGS = os.path.join(os.environ.get("APPDATA", ""), "Godot", "editor_settings-4.7.tres")
 elif sys.platform == "darwin":
     GODOT_EXE = "Godot.app/Contents/MacOS/Godot"
     TEMPLATES = os.path.expanduser(f"~/Library/Application Support/Godot/export_templates/{GODOT_VERSION}")
     DEBUG_KEYSTORE = os.path.expanduser("~/Library/Application Support/Godot/keystores/debug.keystore")
+    EDITOR_SETTINGS = os.path.expanduser("~/Library/Application Support/Godot/editor_settings-4.7.tres")
 else:
     GODOT_EXE = "Godot_v4.7.2-stable_linux.x86_64"
     TEMPLATES = os.path.expanduser(f"~/.local/share/godot/export_templates/{GODOT_VERSION}")
     DEBUG_KEYSTORE = os.path.expanduser("~/.local/share/godot/keystores/debug.keystore")
+    EDITOR_SETTINGS = os.path.expanduser("~/.config/godot/editor_settings-4.7.tres")
 
 # The template file each platform's release export needs.
 TEMPLATE_FOR = {
@@ -53,6 +58,42 @@ while folder != os.path.dirname(folder):
     if os.path.isfile(os.path.join(folder, "Godot", GODOT_EXE)):
         godot_path = os.path.join(folder, "Godot", GODOT_EXE)
         break
+
+
+def find_jdk():
+    """JAVA_HOME, or the newest JDK unpacked in ~/.local/share/jdk, or None."""
+    home = os.environ.get("JAVA_HOME")
+    if home and os.path.isdir(home):
+        return home
+    jdks = os.path.expanduser("~/.local/share/jdk")
+    if os.path.isdir(jdks):
+        found = sorted(d for d in os.listdir(jdks) if os.path.isfile(os.path.join(jdks, d, "bin", "java")))
+        if found:
+            return os.path.join(jdks, found[-1])
+    return None
+
+
+def ensure_java_sdk_path():
+    """Puts a JDK in the editor's settings for the Android export, if its path there is blank."""
+    if not os.path.isfile(EDITOR_SETTINGS):
+        return
+    with open(EDITOR_SETTINGS, encoding="utf-8") as f:
+        text = f.read()
+    if re.search(r'^export/android/java_sdk_path = "[^"]+"$', text, re.MULTILINE):
+        return
+    jdk = find_jdk()
+    if not jdk:
+        print("Error: no JDK set for Android (Editor Settings > Export > Android > Java SDK Path), "
+            "and none in JAVA_HOME or ~/.local/share/jdk", file=sys.stderr)
+        sys.exit(1)
+    line = f'export/android/java_sdk_path = "{jdk}"'
+    if re.search(r'^export/android/java_sdk_path = .*$', text, re.MULTILINE):
+        text = re.sub(r'^export/android/java_sdk_path = .*$', line, text, flags=re.MULTILINE)
+    else:
+        text = text.rstrip("\n") + "\n" + line + "\n"
+    with open(EDITOR_SETTINGS, "w", encoding="utf-8") as f:
+        f.write(text)
+    print(f"The editor's Java SDK path was blank: set it to {jdk}.")
 
 
 def run(args, what, env=None):
@@ -114,6 +155,8 @@ for preset in presets:
         shutil.rmtree(build_dir)
     os.makedirs(build_dir, exist_ok=True)
     env = None
+    if platforms[preset] == "Android":
+        ensure_java_sdk_path()
     if platforms[preset] == "Android" and not os.environ.get("GODOT_ANDROID_KEYSTORE_RELEASE_PATH"):
         print("No release keystore (GODOT_ANDROID_KEYSTORE_RELEASE_PATH): Android is signed with the debug key.")
         if not os.path.isfile(DEBUG_KEYSTORE):
